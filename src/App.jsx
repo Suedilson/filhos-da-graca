@@ -1,273 +1,208 @@
 import './App.css'
 
-const modules = [
+const quickActions = [
   {
-    title: 'Secretaria',
-    description: 'Organize membros, visitantes, congregados, dados cadastrais e histórico.',
-    icon: '👥',
+    title: 'Cultos',
+    description: 'Veja os horários dos nossos encontros semanais.',
+    icon: '✦',
+    href: '#cultos',
   },
   {
-    title: 'Financeiro',
-    description: 'Controle receitas, despesas, contas a pagar, recebimentos e relatórios.',
-    icon: '🏦',
+    title: 'Oração',
+    description: 'Envie seu pedido de oração para a liderança.',
+    icon: '✚',
+    href: '#oracao',
   },
   {
-    title: 'Eventos',
-    description: 'Gerencie cultos, eventos, inscrições, check-in e presença.',
-    icon: '📅',
+    title: 'Vídeos',
+    description: 'Acompanhe mensagens, estudos e transmissões.',
+    icon: '▶',
+    href: '#midia',
   },
   {
-    title: 'Escalas',
-    description: 'Organize equipes, ministérios, voluntários e responsáveis.',
-    icon: '✅',
-  },
-  {
-    title: 'Ensino / EBD',
-    description: 'Gerencie turmas, alunos, professores, frequência e conteúdos.',
-    icon: '📖',
-  },
-  {
-    title: 'Atendimento Pastoral',
-    description: 'Registre solicitações, acompanhe atendimentos e mantenha histórico.',
-    icon: '🤝',
-  },
-  {
-    title: 'Células / Grupos',
-    description: 'Acompanhe pequenos grupos, líderes, participantes e encontros.',
-    icon: '🏠',
-  },
-  {
-    title: 'Patrimônio',
-    description: 'Controle bens, categorias, movimentações e manutenções da igreja.',
-    icon: '📦',
-  },
-  {
-    title: 'WhatsApp Automático',
-    description: 'Automatize avisos, lembretes e comunicações importantes.',
-    icon: '💬',
-  },
-  {
-    title: 'Contribuições Online',
-    description: 'Acompanhe dízimos, ofertas e campanhas online com organização.',
-    icon: '💚',
-  },
-  {
-    title: 'Transmissão Online',
-    description: 'Centralize transmissões, vídeos e facilite o acesso dos membros.',
-    icon: '📺',
-  },
-  {
-    title: 'Portal da Transparência',
-    description: 'Publique relatórios, documentos, receitas, despesas e prestação de contas.',
-    icon: '📊',
+    title: 'Como chegar',
+    description: 'Encontre o caminho para nos visitar.',
+    icon: '⌖',
+    href: '#contato',
   },
 ]
 
-const events = [
+const schedules = [
   {
-    day: 'Dom',
-    date: '19h',
-    title: 'Culto da Família',
+    day: 'Domingo',
+    name: 'Culto da Família',
+    time: '19h',
   },
   {
-    day: 'Qua',
-    date: '19h30',
-    title: 'Culto de Ensino',
+    day: 'Quarta-feira',
+    name: 'Culto de Ensino',
+    time: '19h30',
   },
   {
-    day: 'Sáb',
-    date: '18h',
-    title: 'Encontro de Jovens',
+    day: 'Sábado',
+    name: 'Jovens e Comunhão',
+    time: '18h',
   },
 ]
 
 function App() {
   return (
-    <main className="app">
+    <main className="site">
+      <div className="top-strip">
+        <span>Gerados no coração de Deus</span>
+      </div>
+
       <header className="header">
-        <a href="#inicio" className="brand" aria-label="Filhos da Graça">
-          <div className="brand-symbol">FG</div>
+        <a className="brand" href="#inicio">
+          <div className="brand-mark">
+  <img
+    src="/logo-filhos-colorida.png"
+    alt="Filhos da Graça"
+    className="brand-logo-img"
+  />
+</div>
           <div>
             <strong>Filhos da Graça</strong>
             <span>Gerados no coração de Deus</span>
           </div>
         </a>
 
-        <nav className="nav">
-          <a href="#modulos">Módulos</a>
-          <a href="#agenda">Agenda</a>
-          <a href="#transparencia">Transparência</a>
+        <nav className="menu">
+          <a href="#inicio">Início</a>
+          <a href="#cultos">Cultos</a>
+          <a href="#visitante">Visitantes</a>
+          <a href="#midia">Mídia</a>
           <a href="#contato">Contato</a>
         </nav>
 
-        <a className="login-button" href="#area-membro">
+        <a href="#membro" className="member-link">
           Área do Membro
         </a>
       </header>
 
-      <section id="inicio" className="hero">
-        <div className="hero-content">
-          <span className="tag">Igreja Evangélica Filhos da Graça</span>
-          <h1>Um portal moderno para conectar, cuidar e organizar a igreja.</h1>
+      <section className="hero" id="inicio">
+        <div className="hero-image" aria-hidden="true"></div>
+
+        <div className="hero-card">
+          <span className="hero-kicker"></span>
+
+          <img
+  src="/logo-filhos.png"
+  alt="Filhos da Graça"
+  className="hero-logo"
+/>
+
           <p>
-            Site e aplicativo responsivo para membros, visitantes, secretaria,
-            eventos, transparência, fotos, vídeos, enquetes e comunicação da igreja.
+            Seja bem-vindo. Aqui caminhamos em família, servimos com amor
+            e vivemos a Palavra de Deus.
           </p>
 
           <div className="hero-actions">
-            <a href="#contato" className="primary-button">
+            <a href="#visitante" className="primary-button">
               Sou visitante
             </a>
-            <a href="#agenda" className="secondary-button">
-              Ver agenda
+            <a href="#cultos" className="secondary-button">
+              Horários dos cultos
             </a>
           </div>
-
-          <div className="hero-stats">
-            <div>
-              <strong>100%</strong>
-              <span>Responsivo</span>
-            </div>
-            <div>
-              <strong>PWA</strong>
-              <span>Instalável no celular</span>
-            </div>
-            <div>
-              <strong>R$ 0</strong>
-              <span>Hospedagem inicial gratuita</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="hero-card">
-          <div className="card-glow"></div>
-          <h2>Bem-vindo</h2>
-          <p>
-            Aqui você encontrará informações da igreja, próximos eventos,
-            pedidos de oração, vídeos, fotos e prestação de contas.
-          </p>
-
-          <div className="quick-links">
-            <a href="#oracao">🙏 Pedido de oração</a>
-            <a href="#transparencia">📊 Transparência</a>
-            <a href="#videos">▶️ Vídeos</a>
-            <a href="#como-chegar">📍 Como chegar</a>
-          </div>
         </div>
       </section>
 
-      <section className="section" id="modulos">
-        <div className="section-heading">
-          <span>Gestão da igreja</span>
-          <h2>Módulos do sistema</h2>
-          <p>
-            Estrutura preparada para administrar a igreja com organização,
-            simplicidade e transparência.
-          </p>
-        </div>
-
-        <div className="module-grid">
-          {modules.map((module) => (
-            <article className="module-card" key={module.title}>
-              <div className="module-icon">{module.icon}</div>
-              <h3>{module.title}</h3>
-              <p>{module.description}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="split-section" id="agenda">
-        <div>
-          <span className="section-label">Comunhão</span>
-          <h2>Agenda e eventos</h2>
-          <p>
-            Acompanhe os cultos, encontros, reuniões, eventos especiais,
-            inscrições e atividades da igreja.
-          </p>
-          <a href="#eventos" className="primary-button small">
-            Ver todos os eventos
+      <section className="quick-actions">
+        {quickActions.map((item) => (
+          <a className="quick-card" href={item.href} key={item.title}>
+            <span>{item.icon}</span>
+            <h3>{item.title}</h3>
+            <p>{item.description}</p>
           </a>
+        ))}
+      </section>
+
+      <section className="welcome" id="visitante">
+        <div className="section-copy">
+          <span className="section-label">Bem-vindo</span>
+          <h2>Sua família tem um lugar especial entre nós.</h2>
+          <p>
+            A Igreja Filhos da Graça é uma comunidade cristã que valoriza
+            a comunhão, o cuidado, a adoração e o ensino da Palavra.
+            Será uma alegria receber você.
+          </p>
         </div>
 
-        <div className="event-list">
-          {events.map((event) => (
-            <article className="event-card" key={event.title}>
-              <div>
-                <strong>{event.day}</strong>
-                <span>{event.date}</span>
-              </div>
-              <h3>{event.title}</h3>
+        <div className="welcome-note">
+          <strong>Primeira visita?</strong>
+          <p>
+            Venha como está. Nossa equipe estará pronta para acolher você
+            e sua família com carinho.
+          </p>
+          <a href="#contato">Ver como chegar</a>
+        </div>
+      </section>
+
+      <section className="services" id="cultos">
+        <div className="section-heading">
+          <span className="section-label">Programação</span>
+          <h2>Nossos encontros</h2>
+        </div>
+
+        <div className="service-list">
+          {schedules.map((item) => (
+            <article className="service-card" key={item.name}>
+              <span>{item.day}</span>
+              <strong>{item.name}</strong>
+              <p>{item.time}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="feature-band" id="transparencia">
+      <section className="feature-row" id="midia">
+        <article className="feature-card feature-video">
+          <div>
+            <span>Mídia</span>
+            <h2>Mensagens, vídeos e transmissões.</h2>
+            <p>Acompanhe os conteúdos da igreja em um só lugar.</p>
+          </div>
+          <a href="#videos">Acessar vídeos</a>
+        </article>
+
+        <article className="feature-card feature-transparency">
+          <div>
+            <span>Transparência</span>
+            <h2>Informações e documentos para membros.</h2>
+            <p>Prestação de contas com clareza e organização.</p>
+          </div>
+          <a href="#membro">Acessar portal</a>
+        </article>
+      </section>
+
+      <section className="prayer" id="oracao">
         <div>
-          <span className="section-label">Portal da Transparência</span>
-          <h2>Prestação de contas clara para a comunidade.</h2>
+          <span className="section-label">Pedido de oração</span>
+          <h2>Podemos orar por você?</h2>
           <p>
-            Área dedicada à publicação de receitas, despesas, contas a pagar,
-            documentos, relatórios e comunicados importantes.
+            Envie seu pedido de oração. Nossa liderança terá alegria em
+            interceder por você e sua família.
           </p>
         </div>
-        <a href="#documentos" className="secondary-button light">
-          Acessar documentos
+
+        <a className="primary-button dark" href="#contato">
+          Enviar pedido
         </a>
       </section>
 
-      <section className="content-grid">
-        <article id="aniversariantes" className="content-card">
-          <span>🎂</span>
-          <h3>Aniversariantes do mês</h3>
-          <p>Espaço para celebrar e honrar os membros aniversariantes.</p>
-        </article>
-
-        <article id="fotos" className="content-card">
-          <span>📸</span>
-          <h3>Álbum de fotos</h3>
-          <p>Galerias de cultos, eventos, células, encontros e ações sociais.</p>
-        </article>
-
-        <article id="videos" className="content-card">
-          <span>▶️</span>
-          <h3>Vídeos e transmissões</h3>
-          <p>Central de pregações, estudos, lives e transmissões online.</p>
-        </article>
-
-        <article id="oracao" className="content-card">
-          <span>🙏</span>
-          <h3>Pedidos de oração</h3>
-          <p>Canal para membros e visitantes enviarem pedidos à liderança.</p>
-        </article>
-      </section>
-
-      <section className="contact-section" id="contato">
-        <div>
-          <span className="section-label">Visite-nos</span>
-          <h2>Como chegar</h2>
-          <p>
-            Em breve, esta área terá endereço, mapa, horários dos cultos,
-            telefone, WhatsApp e redes sociais oficiais da igreja.
-          </p>
-        </div>
-
-        <div className="contact-card">
-          <h3>Igreja Filhos da Graça</h3>
-          <p>Gerados no coração de Deus</p>
-          <a href="https://www.google.com/maps" target="_blank" rel="noreferrer">
-            Abrir mapa
-          </a>
-        </div>
-      </section>
-
-      <footer className="footer">
+      <footer className="footer" id="contato">
         <div>
           <strong>Filhos da Graça</strong>
-          <span>Site e aplicativo em desenvolvimento</span>
+          <span>Gerados no coração de Deus</span>
         </div>
-        <p>© 2026 Igreja Filhos da Graça. Todos os direitos reservados.</p>
+
+        <nav>
+          <a href="#cultos">Cultos</a>
+          <a href="#oracao">Oração</a>
+          <a href="#midia">Mídia</a>
+          <a href="#membro">Área do Membro</a>
+        </nav>
       </footer>
     </main>
   )
