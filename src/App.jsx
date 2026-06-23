@@ -48,11 +48,11 @@ const schedules = [
 function App() {
   return (
     <main className="site">
-      <div className="top-strip">
-        <span>Gerados no coração de Deus</span>
+      <div className="top-strip notranslate" translate="no">
+        <span></span>
       </div>
 
-      <header className="header">
+      <header className="header notranslate" translate="no">
         <a className="brand" href="#inicio">
           <div className="brand-mark">
   <img
@@ -67,7 +67,7 @@ function App() {
           </div>
         </a>
 
-        <nav className="menu">
+        <nav className="menu notranslate" translate="no">
           <a href="#inicio">Início</a>
           <a href="#cultos">Cultos</a>
           <a href="#visitante">Visitantes</a>
@@ -75,9 +75,9 @@ function App() {
           <a href="#contato">Contato</a>
         </nav>
 
-        <a href="#membro" className="member-link">
-          Área do Membro
-        </a>
+       <a href="#membro" className="member-link notranslate" translate="no">
+       Área do Membro
+       </a>
       </header>
 
       <section className="hero" id="inicio">
