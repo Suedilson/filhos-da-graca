@@ -27,6 +27,7 @@ function Admin() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [abaAtiva, setAbaAtiva] = useState('programacao')
 
   const [programacao, setProgramacao] = useState([])
   const [editandoId, setEditandoId] = useState(null)
@@ -152,6 +153,7 @@ function Admin() {
   }
 
   function editarCulto(culto) {
+    setAbaAtiva('programacao')
     setEditandoId(culto.id)
 
     setForm({
@@ -307,6 +309,7 @@ function Admin() {
   }
 
   function editarEvento(evento) {
+    setAbaAtiva('eventos')
     setEditandoEventoId(evento.id)
 
     setEventoForm({
@@ -441,7 +444,24 @@ eventoFormRef.current?.scrollIntoView({
 
         <button onClick={sair}>Sair</button>
       </header>
+<nav className="admin-tabs">
+  <button
+    type="button"
+    className={abaAtiva === 'programacao' ? 'active' : ''}
+    onClick={() => setAbaAtiva('programacao')}
+  >
+    Programação
+  </button>
 
+  <button
+    type="button"
+    className={abaAtiva === 'eventos' ? 'active' : ''}
+    onClick={() => setAbaAtiva('eventos')}
+  >
+    Eventos
+  </button>
+</nav>
+        {abaAtiva === 'programacao' && (
       <section className="admin-grid">
         <form className="admin-card" onSubmit={cadastrarCulto}>
           <span className="admin-section-label">Programação</span>
@@ -590,7 +610,9 @@ eventoFormRef.current?.scrollIntoView({
           </div>
         </section>
       </section>
+)}
 
+       {abaAtiva === 'eventos' && (
       <section className="admin-grid admin-events-grid">
        <form
   ref={eventoFormRef}
@@ -757,8 +779,9 @@ eventoFormRef.current?.scrollIntoView({
               </article>
             ))}
           </div>
-        </section>
+       </section>
       </section>
+      )}
     </main>
   )
 }
