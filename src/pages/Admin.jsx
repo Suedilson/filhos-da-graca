@@ -19,6 +19,7 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 import { auth, db } from '../services/firebase'
+import { uploadArquivoCloudinary } from '../services/cloudinary'
 import './Admin.css'
 
 const ADMIN_EMAILS = ['suedilsonfilho@gmail.com']
@@ -46,6 +47,9 @@ function Admin() {
   const [pedidosOracao, setPedidosOracao] = useState([])
   const [videos, setVideos] = useState([])
   const [editandoVideoId, setEditandoVideoId] = useState(null)
+  const [documentos, setDocumentos] = useState([])
+  const [editandoDocumentoId, setEditandoDocumentoId] = useState(null)
+  const [enviandoArquivo, setEnviandoArquivo] = useState(false)
 
   const [eventoForm, setEventoForm] = useState({
     titulo: '',
@@ -59,6 +63,13 @@ const [videoForm, setVideoForm] = useState({
   titulo: '',
   descricao: '',
   url: '',
+})
+const [documentoForm, setDocumentoForm] = useState({
+  titulo: '',
+  categoria: '',
+  descricao: '',
+  url: '',
+  publicId: '',
 })
 const [localizacaoForm, setLocalizacaoForm] = useState({
   nomeLocal: '',
@@ -81,16 +92,16 @@ const [localizacaoForm, setLocalizacaoForm] = useState({
     return () => unsubscribe()
   }, [])
 
-  useEffect(() => {
+useEffect(() => {
   if (isAdmin) {
     carregarProgramacao()
     carregarEventos()
     carregarLocalizacao()
     carregarPedidosOracao()
     carregarVideos()
+    carregarDocumentos()
   }
 }, [isAdmin])
-
   async function login(event) {
     event.preventDefault()
     setLoading(true)
@@ -615,6 +626,159 @@ async function excluirVideo(id) {
     console.error(error)
   }
 }
+async function carregarDocumentos() {
+  try {
+    const q = query(collection(db, 'documentos'), orderBy('criadoEm', 'desc'))
+    const snapshot = await getDocs(q)
+
+    const lista = snapshot.docs.map((item) => ({
+      id: item.id,
+      ...item.data(),
+    }))
+
+    setDocumentos(lista)
+  } catch (error) {
+    alert('Erro ao carregar documentos.')
+    console.error(error)
+  }
+}
+
+async function enviarArquivoDocumento(event) {
+  const file = event.target.files?.[0]
+
+  if (!file) return
+
+  setEnviandoArquivo(true)
+
+  try {
+    const arquivo = await uploadArquivoCloudinary(file)
+
+    setDocumentoForm((formAtual) => ({
+      ...formAtual,
+      url: arquivo.url,
+      publicId: arquivo.publicId,
+    }))
+
+    alert('Arquivo enviado com sucesso!')
+  } catch (error) {
+    alert('Erro ao enviar arquivo.')
+    console.error(error)
+  } finally {
+    setEnviandoArquivo(false)
+  }
+}
+
+async function salvarDocumento(event) {
+  event.preventDefault()
+
+  if (!documentoForm.titulo || !documentoForm.url) {
+    alert('Preencha pelo menos o título e o link do documento.')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    if (editandoDocumentoId) {
+      await updateDoc(doc(db, 'documentos', editandoDocumentoId), {
+        titulo: documentoForm.titulo,
+        categoria: documentoForm.categoria,
+        descricao: documentoForm.descricao,
+        url: documentoForm.url,
+        publicId: documentoForm.publicId,
+        atualizadoEm: serverTimestamp(),
+      })
+
+      alert('Documento atualizado com sucesso!')
+    } else {
+      await addDoc(collection(db, 'documentos'), {
+        titulo: documentoForm.titulo,
+        categoria: documentoForm.categoria,
+        descricao: documentoForm.descricao,
+        url: documentoForm.url,
+        publicId: documentoForm.publicId,
+        ativo: true,
+        criadoEm: serverTimestamp(),
+      })
+
+      alert('Documento cadastrado com sucesso!')
+    }
+
+    setDocumentoForm({
+      titulo: '',
+      categoria: '',
+      descricao: '',
+      url: '',
+      publicId: '',
+    })
+
+    setEditandoDocumentoId(null)
+    await carregarDocumentos()
+  } catch (error) {
+    alert('Erro ao salvar documento.')
+    console.error(error)
+  } finally {
+    setLoading(false)
+  }
+}
+
+function editarDocumento(documento) {
+  setAbaAtiva('documentos')
+  setEditandoDocumentoId(documento.id)
+
+  setDocumentoForm({
+    titulo: documento.titulo || '',
+    categoria: documento.categoria || '',
+    descricao: documento.descricao || '',
+    url: documento.url || '',
+    publicId: documento.publicId || '',
+  })
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
+
+function cancelarEdicaoDocumento() {
+  setEditandoDocumentoId(null)
+
+  setDocumentoForm({
+    titulo: '',
+    categoria: '',
+    descricao: '',
+    url: '',
+    publicId: '',
+  })
+}
+
+async function alternarStatusDocumento(documento) {
+  try {
+    await updateDoc(doc(db, 'documentos', documento.id), {
+      ativo: documento.ativo === false ? true : false,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await carregarDocumentos()
+  } catch (error) {
+    alert('Erro ao alterar status do documento.')
+    console.error(error)
+  }
+}
+
+async function excluirDocumento(id) {
+  const confirmar = confirm('Deseja realmente excluir este documento?')
+
+  if (!confirmar) return
+
+  try {
+    await deleteDoc(doc(db, 'documentos', id))
+    await carregarDocumentos()
+  } catch (error) {
+    alert('Erro ao excluir documento.')
+    console.error(error)
+  }
+}
 
   function formatarData(data) {
     if (!data) return ''
@@ -725,6 +889,13 @@ async function excluirVideo(id) {
   >
     Mídia
   </button>
+<button
+  type="button"
+  className={abaAtiva === 'documentos' ? 'active' : ''}
+  onClick={() => setAbaAtiva('documentos')}
+>
+  Documentos
+</button>
 
   <button
     type="button"
@@ -1231,6 +1402,178 @@ async function excluirVideo(id) {
               </button>
 
               <button type="button" onClick={() => excluirVideo(video.id)}>
+                Excluir
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  </section>
+)}
+{abaAtiva === 'documentos' && (
+  <section className="admin-grid admin-events-grid">
+    <form className="admin-card" onSubmit={salvarDocumento}>
+      <span className="admin-section-label">Documentos</span>
+
+      <h2>
+        {editandoDocumentoId ? 'Editar documento' : 'Cadastrar documento'}
+      </h2>
+
+      <p>
+        Envie arquivos pelo Cloudinary ou cole um link externo, como Google Drive.
+      </p>
+
+      <label>
+        Título do documento
+        <input
+          value={documentoForm.titulo}
+          onChange={(event) =>
+            setDocumentoForm({
+              ...documentoForm,
+              titulo: event.target.value,
+            })
+          }
+          placeholder="Ex: Prestação de contas mensal"
+        />
+      </label>
+
+      <label>
+        Categoria
+        <input
+          value={documentoForm.categoria}
+          onChange={(event) =>
+            setDocumentoForm({
+              ...documentoForm,
+              categoria: event.target.value,
+            })
+          }
+          placeholder="Ex: Transparência, Ata, Comunicado"
+        />
+      </label>
+
+      <label>
+        Descrição
+        <textarea
+          value={documentoForm.descricao}
+          onChange={(event) =>
+            setDocumentoForm({
+              ...documentoForm,
+              descricao: event.target.value,
+            })
+          }
+          placeholder="Descrição opcional do documento"
+        />
+      </label>
+
+      <label>
+        Enviar arquivo
+        <input
+          type="file"
+          onChange={enviarArquivoDocumento}
+          disabled={enviandoArquivo}
+        />
+      </label>
+
+      {enviandoArquivo && <p>Enviando arquivo...</p>}
+
+      <label>
+        Link do documento
+        <input
+          value={documentoForm.url}
+          onChange={(event) =>
+            setDocumentoForm({
+              ...documentoForm,
+              url: event.target.value,
+            })
+          }
+          placeholder="Cole um link ou envie um arquivo acima"
+        />
+      </label>
+
+      {documentoForm.url && (
+        <a
+          className="admin-file-link"
+          href={documentoForm.url}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Abrir documento enviado
+        </a>
+      )}
+
+      <button type="submit" disabled={loading || enviandoArquivo}>
+        {loading
+          ? 'Salvando...'
+          : editandoDocumentoId
+            ? 'Salvar alterações'
+            : 'Salvar documento'}
+      </button>
+
+      {editandoDocumentoId && (
+        <button
+          type="button"
+          className="cancel-button"
+          onClick={cancelarEdicaoDocumento}
+        >
+          Cancelar edição
+        </button>
+      )}
+    </form>
+
+    <section className="admin-card">
+      <span className="admin-section-label">Documentos publicados</span>
+      <h2>Lista de documentos</h2>
+      <p>Documentos que poderão aparecer na área de transparência do site.</p>
+
+      <div className="admin-list">
+        {documentos.length === 0 && <p>Nenhum documento cadastrado ainda.</p>}
+
+        {documentos.map((documento) => (
+          <article
+            className={`admin-list-item ${
+              documento.ativo === false ? 'inactive-item' : ''
+            }`}
+            key={documento.id}
+          >
+            <div>
+              <span>{documento.ativo === false ? 'Inativo' : 'Ativo'}</span>
+              <strong>{documento.titulo}</strong>
+
+              {documento.categoria && <p>{documento.categoria}</p>}
+              {documento.descricao && <small>{documento.descricao}</small>}
+
+              {documento.url && (
+                <small>
+                  <a href={documento.url} target="_blank" rel="noreferrer">
+                    Abrir documento
+                  </a>
+                </small>
+              )}
+            </div>
+
+            <div className="admin-actions">
+              <button
+                type="button"
+                className="edit-button"
+                onClick={() => editarDocumento(documento)}
+              >
+                Editar
+              </button>
+
+              <button
+                type="button"
+                className={
+                  documento.ativo === false
+                    ? 'activate-button'
+                    : 'deactivate-button'
+                }
+                onClick={() => alternarStatusDocumento(documento)}
+              >
+                {documento.ativo === false ? 'Ativar' : 'Desativar'}
+              </button>
+
+              <button type="button" onClick={() => excluirDocumento(documento.id)}>
                 Excluir
               </button>
             </div>

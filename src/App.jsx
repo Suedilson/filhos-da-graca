@@ -71,6 +71,7 @@ function Home() {
   const [eventosHome, setEventosHome] = useState([])
   const [localizacaoHome, setLocalizacaoHome] = useState(null)
   const [videosHome, setVideosHome] = useState([])
+  const [documentosHome, setDocumentosHome] = useState([])
   const [pedidoForm, setPedidoForm] = useState({
   nome: '',
   telefone: '',
@@ -79,7 +80,7 @@ function Home() {
 
 const [enviandoPedido, setEnviandoPedido] = useState(false)
 
-  useEffect(() => {
+   useEffect(() => {
     async function carregarProgramacaoHome() {
       try {
         const q = query(collection(db, 'programacao'), orderBy('ordem', 'asc'))
@@ -97,18 +98,19 @@ const [enviandoPedido, setEnviandoPedido] = useState(false)
         console.error('Erro ao carregar programação da home:', error)
       }
     }
-async function carregarLocalizacaoHome() {
-  try {
-    const ref = doc(db, 'configuracoes', 'localizacao')
-    const snapshot = await getDoc(ref)
 
-    if (snapshot.exists()) {
-      setLocalizacaoHome(snapshot.data())
+    async function carregarLocalizacaoHome() {
+      try {
+        const ref = doc(db, 'configuracoes', 'localizacao')
+        const snapshot = await getDoc(ref)
+
+        if (snapshot.exists()) {
+          setLocalizacaoHome(snapshot.data())
+        }
+      } catch (error) {
+        console.error('Erro ao carregar localização da home:', error)
+      }
     }
-  } catch (error) {
-    console.error('Erro ao carregar localização da home:', error)
-  }
-}
 
     async function carregarEventosHome() {
       try {
@@ -128,10 +130,47 @@ async function carregarLocalizacaoHome() {
       }
     }
 
+    async function carregarVideosHome() {
+      try {
+        const q = query(collection(db, 'videos'), orderBy('criadoEm', 'desc'))
+        const snapshot = await getDocs(q)
+
+        const lista = snapshot.docs
+          .map((item) => ({
+            id: item.id,
+            ...item.data(),
+          }))
+          .filter((item) => item.ativo !== false)
+
+        setVideosHome(lista)
+      } catch (error) {
+        console.error('Erro ao carregar vídeos da home:', error)
+      }
+    }
+
+    async function carregarDocumentosHome() {
+      try {
+        const q = query(collection(db, 'documentos'), orderBy('criadoEm', 'desc'))
+        const snapshot = await getDocs(q)
+
+        const lista = snapshot.docs
+          .map((item) => ({
+            id: item.id,
+            ...item.data(),
+          }))
+          .filter((item) => item.ativo !== false)
+
+        setDocumentosHome(lista)
+      } catch (error) {
+        console.error('Erro ao carregar documentos da home:', error)
+      }
+    }
+
     carregarProgramacaoHome()
-carregarEventosHome()
-carregarLocalizacaoHome()
-carregarVideosHome()
+    carregarEventosHome()
+    carregarLocalizacaoHome()
+    carregarVideosHome()
+    carregarDocumentosHome()
   }, [])
 
   const programacaoExibida =
@@ -175,6 +214,23 @@ async function enviarPedidoOracao(event) {
     console.error('Erro ao enviar pedido de oração:', error)
   } finally {
     setEnviandoPedido(false)
+  }
+}
+async function carregarDocumentosHome() {
+  try {
+    const q = query(collection(db, 'documentos'), orderBy('criadoEm', 'desc'))
+    const snapshot = await getDocs(q)
+
+    const lista = snapshot.docs
+      .map((item) => ({
+        id: item.id,
+        ...item.data(),
+      }))
+      .filter((item) => item.ativo !== false)
+
+    setDocumentosHome(lista)
+  } catch (error) {
+    console.error('Erro ao carregar documentos da home:', error)
   }
 }
 async function carregarVideosHome() {
@@ -448,15 +504,38 @@ function obterThumbnailYoutube(url) {
   )}
 </section>
 
-<section className="feature-row">
-  <article className="feature-card feature-transparency">
-    <div>
-      <span>Transparência</span>
-      <h2>Informações e documentos para membros.</h2>
-      <p>Prestação de contas com clareza e organização.</p>
+<section className="documents-section" id="transparencia">
+  <div className="section-heading">
+    <span className="section-label">Transparência</span>
+    <h2>Documentos e informações para membros</h2>
+  </div>
+
+  {documentosHome.length > 0 ? (
+    <div className="documents-list">
+      {documentosHome.map((documento) => (
+        <article className="document-card" key={documento.id}>
+          <span>{documento.categoria || 'Documento'}</span>
+
+          <h3>{documento.titulo}</h3>
+
+          {documento.descricao && <p>{documento.descricao}</p>}
+
+          <a href={documento.url} target="_blank" rel="noreferrer">
+            Abrir documento
+          </a>
+        </article>
+      ))}
     </div>
-    <a href="/admin">Acessar portal</a>
-  </article>
+  ) : (
+    <article className="feature-card feature-transparency">
+      <div>
+        <span>Transparência</span>
+        <h2>Informações e documentos para membros.</h2>
+        <p>Prestação de contas com clareza e organização.</p>
+      </div>
+      <a href="/admin">Acessar portal</a>
+    </article>
+  )}
 </section>
 
      <section className="prayer prayer-form-section" id="oracao">

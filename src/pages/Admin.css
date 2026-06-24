@@ -654,3 +654,15 @@ textarea {
 .prayer-request-item.inactive-item {
   opacity: 0.78;
 }
+.admin-file-link {
+  width: fit-content;
+  color: #17105f;
+  font-weight: 900;
+  text-decoration: underline;
+}
+
+.admin-list-item a {
+  color: #17105f;
+  font-weight: 900;
+  text-decoration: underline;
+}
