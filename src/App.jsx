@@ -70,6 +70,7 @@ function Home() {
   const [programacaoHome, setProgramacaoHome] = useState([])
   const [eventosHome, setEventosHome] = useState([])
   const [localizacaoHome, setLocalizacaoHome] = useState(null)
+  const [videosHome, setVideosHome] = useState([])
   const [pedidoForm, setPedidoForm] = useState({
   nome: '',
   telefone: '',
@@ -128,8 +129,9 @@ async function carregarLocalizacaoHome() {
     }
 
     carregarProgramacaoHome()
-    carregarEventosHome()
-    carregarLocalizacaoHome()
+carregarEventosHome()
+carregarLocalizacaoHome()
+carregarVideosHome()
   }, [])
 
   const programacaoExibida =
@@ -174,6 +176,34 @@ async function enviarPedidoOracao(event) {
   } finally {
     setEnviandoPedido(false)
   }
+}
+async function carregarVideosHome() {
+  try {
+    const q = query(collection(db, 'videos'), orderBy('criadoEm', 'desc'))
+    const snapshot = await getDocs(q)
+
+    const lista = snapshot.docs
+      .map((item) => ({
+        id: item.id,
+        ...item.data(),
+      }))
+      .filter((item) => item.ativo !== false)
+
+    setVideosHome(lista)
+  } catch (error) {
+    console.error('Erro ao carregar vídeos da home:', error)
+  }
+}
+function obterThumbnailYoutube(url) {
+  if (!url) return ''
+
+  const match = url.match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/
+  )
+
+  if (!match?.[1]) return ''
+
+  return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`
 }
 
   return (
@@ -374,25 +404,60 @@ async function enviarPedidoOracao(event) {
     </article>
   </div>
 </section>
-      <section className="feature-row" id="midia">
-        <article className="feature-card feature-video">
-          <div>
-            <span>Mídia</span>
-            <h2>Mensagens, vídeos e transmissões.</h2>
-            <p>Acompanhe os conteúdos da igreja em um só lugar.</p>
-          </div>
-          <a href="#videos">Acessar vídeos</a>
-        </article>
+      <section className="media-section" id="midia">
+  <div className="section-heading">
+    <span className="section-label">Mídia</span>
+    <h2>Mensagens, vídeos e transmissões</h2>
+  </div>
 
-        <article className="feature-card feature-transparency">
-          <div>
-            <span>Transparência</span>
-            <h2>Informações e documentos para membros.</h2>
-            <p>Prestação de contas com clareza e organização.</p>
-          </div>
-          <a href="/admin">Acessar portal</a>
-        </article>
-      </section>
+  {videosHome.length > 0 ? (
+    <div className="video-list">
+      {videosHome.map((video) => {
+        const thumbnail = obterThumbnailYoutube(video.url)
+
+        return (
+          <article className="video-card" key={video.id}>
+            <a href={video.url} target="_blank" rel="noreferrer">
+              {thumbnail ? (
+                <img src={thumbnail} alt={video.titulo} />
+              ) : (
+                <div className="video-placeholder">
+                  <span>Filhos da Graça</span>
+                </div>
+              )}
+
+              <div className="video-content">
+                <span>Assistir vídeo</span>
+                <h3>{video.titulo}</h3>
+                {video.descricao && <p>{video.descricao}</p>}
+              </div>
+            </a>
+          </article>
+        )
+      })}
+    </div>
+  ) : (
+    <article className="feature-card feature-video">
+      <div>
+        <span>Mídia</span>
+        <h2>Mensagens, vídeos e transmissões.</h2>
+        <p>Acompanhe os conteúdos da igreja em um só lugar.</p>
+      </div>
+      <a href="#contato">Em breve</a>
+    </article>
+  )}
+</section>
+
+<section className="feature-row">
+  <article className="feature-card feature-transparency">
+    <div>
+      <span>Transparência</span>
+      <h2>Informações e documentos para membros.</h2>
+      <p>Prestação de contas com clareza e organização.</p>
+    </div>
+    <a href="/admin">Acessar portal</a>
+  </article>
+</section>
 
      <section className="prayer prayer-form-section" id="oracao">
   <div className="prayer-copy">

@@ -44,6 +44,8 @@ function Admin() {
   const [eventos, setEventos] = useState([])
   const [editandoEventoId, setEditandoEventoId] = useState(null)
   const [pedidosOracao, setPedidosOracao] = useState([])
+  const [videos, setVideos] = useState([])
+  const [editandoVideoId, setEditandoVideoId] = useState(null)
 
   const [eventoForm, setEventoForm] = useState({
     titulo: '',
@@ -53,6 +55,11 @@ function Admin() {
     descricao: '',
     imagem: '',
   })
+const [videoForm, setVideoForm] = useState({
+  titulo: '',
+  descricao: '',
+  url: '',
+})
 const [localizacaoForm, setLocalizacaoForm] = useState({
   nomeLocal: '',
   endereco: '',
@@ -80,6 +87,7 @@ const [localizacaoForm, setLocalizacaoForm] = useState({
     carregarEventos()
     carregarLocalizacao()
     carregarPedidosOracao()
+    carregarVideos()
   }
 }, [isAdmin])
 
@@ -489,6 +497,124 @@ function formatarDataHoraFirebase(dataFirebase) {
     timeStyle: 'short',
   })
 }
+async function carregarVideos() {
+  try {
+    const q = query(collection(db, 'videos'), orderBy('criadoEm', 'desc'))
+    const snapshot = await getDocs(q)
+
+    const lista = snapshot.docs.map((item) => ({
+      id: item.id,
+      ...item.data(),
+    }))
+
+    setVideos(lista)
+  } catch (error) {
+    alert('Erro ao carregar vídeos.')
+    console.error(error)
+  }
+}
+
+async function salvarVideo(event) {
+  event.preventDefault()
+
+  if (!videoForm.titulo || !videoForm.url) {
+    alert('Preencha pelo menos o título e o link do vídeo.')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    if (editandoVideoId) {
+      await updateDoc(doc(db, 'videos', editandoVideoId), {
+        titulo: videoForm.titulo,
+        descricao: videoForm.descricao,
+        url: videoForm.url,
+        atualizadoEm: serverTimestamp(),
+      })
+
+      alert('Vídeo atualizado com sucesso!')
+    } else {
+      await addDoc(collection(db, 'videos'), {
+        titulo: videoForm.titulo,
+        descricao: videoForm.descricao,
+        url: videoForm.url,
+        ativo: true,
+        criadoEm: serverTimestamp(),
+      })
+
+      alert('Vídeo cadastrado com sucesso!')
+    }
+
+    setVideoForm({
+      titulo: '',
+      descricao: '',
+      url: '',
+    })
+
+    setEditandoVideoId(null)
+    await carregarVideos()
+  } catch (error) {
+    alert('Erro ao salvar vídeo.')
+    console.error(error)
+  } finally {
+    setLoading(false)
+  }
+}
+
+function editarVideo(video) {
+  setAbaAtiva('midia')
+  setEditandoVideoId(video.id)
+
+  setVideoForm({
+    titulo: video.titulo || '',
+    descricao: video.descricao || '',
+    url: video.url || '',
+  })
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
+
+function cancelarEdicaoVideo() {
+  setEditandoVideoId(null)
+
+  setVideoForm({
+    titulo: '',
+    descricao: '',
+    url: '',
+  })
+}
+
+async function alternarStatusVideo(video) {
+  try {
+    await updateDoc(doc(db, 'videos', video.id), {
+      ativo: video.ativo === false ? true : false,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await carregarVideos()
+  } catch (error) {
+    alert('Erro ao alterar status do vídeo.')
+    console.error(error)
+  }
+}
+
+async function excluirVideo(id) {
+  const confirmar = confirm('Deseja realmente excluir este vídeo?')
+
+  if (!confirmar) return
+
+  try {
+    await deleteDoc(doc(db, 'videos', id))
+    await carregarVideos()
+  } catch (error) {
+    alert('Erro ao excluir vídeo.')
+    console.error(error)
+  }
+}
 
   function formatarData(data) {
     if (!data) return ''
@@ -583,13 +709,22 @@ function formatarDataHoraFirebase(dataFirebase) {
   >
     Eventos
   </button>
-<button
-  type="button"
-  className={abaAtiva === 'oracao' ? 'active' : ''}
-  onClick={() => setAbaAtiva('oracao')}
->
-  Oração
-</button>
+
+  <button
+    type="button"
+    className={abaAtiva === 'oracao' ? 'active' : ''}
+    onClick={() => setAbaAtiva('oracao')}
+  >
+    Oração
+  </button>
+
+  <button
+    type="button"
+    className={abaAtiva === 'midia' ? 'active' : ''}
+    onClick={() => setAbaAtiva('midia')}
+  >
+    Mídia
+  </button>
 
   <button
     type="button"
@@ -979,6 +1114,130 @@ function formatarDataHoraFirebase(dataFirebase) {
         </article>
       ))}
     </div>
+  </section>
+)}
+{abaAtiva === 'midia' && (
+  <section className="admin-grid admin-events-grid">
+    <form className="admin-card" onSubmit={salvarVideo}>
+      <span className="admin-section-label">Mídia</span>
+
+      <h2>{editandoVideoId ? 'Editar vídeo' : 'Cadastrar vídeo'}</h2>
+
+      <p>
+        Cadastre links do YouTube para exibir mensagens, estudos e transmissões no site.
+      </p>
+
+      <label>
+        Título do vídeo
+        <input
+          value={videoForm.titulo}
+          onChange={(event) =>
+            setVideoForm({
+              ...videoForm,
+              titulo: event.target.value,
+            })
+          }
+          placeholder="Ex: Culto da Família"
+        />
+      </label>
+
+      <label>
+        Descrição
+        <textarea
+          value={videoForm.descricao}
+          onChange={(event) =>
+            setVideoForm({
+              ...videoForm,
+              descricao: event.target.value,
+            })
+          }
+          placeholder="Descrição opcional do vídeo"
+        />
+      </label>
+
+      <label>
+        Link do vídeo
+        <input
+          value={videoForm.url}
+          onChange={(event) =>
+            setVideoForm({
+              ...videoForm,
+              url: event.target.value,
+            })
+          }
+          placeholder="Cole aqui o link do YouTube"
+        />
+      </label>
+
+      <button type="submit" disabled={loading}>
+        {loading
+          ? 'Salvando...'
+          : editandoVideoId
+            ? 'Salvar alterações'
+            : 'Salvar vídeo'}
+      </button>
+
+      {editandoVideoId && (
+        <button
+          type="button"
+          className="cancel-button"
+          onClick={cancelarEdicaoVideo}
+        >
+          Cancelar edição
+        </button>
+      )}
+    </form>
+
+    <section className="admin-card">
+      <span className="admin-section-label">Página inicial</span>
+      <h2>Vídeos cadastrados</h2>
+      <p>Lista dos vídeos que serão exibidos no site.</p>
+
+      <div className="admin-list">
+        {videos.length === 0 && <p>Nenhum vídeo cadastrado ainda.</p>}
+
+        {videos.map((video) => (
+          <article
+            className={`admin-list-item ${
+              video.ativo === false ? 'inactive-item' : ''
+            }`}
+            key={video.id}
+          >
+            <div>
+              <span>{video.ativo === false ? 'Inativo' : 'Ativo'}</span>
+              <strong>{video.titulo}</strong>
+
+              {video.descricao && <small>{video.descricao}</small>}
+              {video.url && <small>{video.url}</small>}
+            </div>
+
+            <div className="admin-actions">
+              <button
+                type="button"
+                className="edit-button"
+                onClick={() => editarVideo(video)}
+              >
+                Editar
+              </button>
+
+              <button
+                type="button"
+                className={
+                  video.ativo === false ? 'activate-button' : 'deactivate-button'
+                }
+                onClick={() => alternarStatusVideo(video)}
+              >
+                {video.ativo === false ? 'Ativar' : 'Desativar'}
+              </button>
+
+              <button type="button" onClick={() => excluirVideo(video.id)}>
+                Excluir
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   </section>
 )}
 {abaAtiva === 'localizacao' && (
