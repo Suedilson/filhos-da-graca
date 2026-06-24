@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react'
+import { collection, getDocs, orderBy, query } from 'firebase/firestore'
 import './App.css'
 import Admin from './pages/Admin'
+import { db } from './services/firebase'
 
 const quickActions = [
   {
@@ -50,6 +53,36 @@ function App() {
   if (window.location.pathname === '/admin') {
     return <Admin />
   }
+
+  return <Home />
+}
+
+function Home() {
+  const [programacaoHome, setProgramacaoHome] = useState([])
+
+  useEffect(() => {
+    async function carregarProgramacaoHome() {
+      try {
+        const q = query(collection(db, 'programacao'), orderBy('ordem', 'asc'))
+        const snapshot = await getDocs(q)
+
+        const lista = snapshot.docs.map((item) => ({
+          id: item.id,
+          ...item.data(),
+        }))
+
+        setProgramacaoHome(lista)
+      } catch (error) {
+        console.error('Erro ao carregar programação da home:', error)
+      }
+    }
+
+    carregarProgramacaoHome()
+  }, [])
+
+  const programacaoExibida =
+    programacaoHome.length > 0 ? programacaoHome : schedules
+
   return (
     <main className="site">
       <div className="top-strip notranslate" translate="no">
@@ -59,12 +92,13 @@ function App() {
       <header className="header notranslate" translate="no">
         <a className="brand" href="#inicio">
           <div className="brand-mark">
-  <img
-    src="/logo-filhos-colorida.png"
-    alt="Filhos da Graça"
-    className="brand-logo-img"
-  />
-</div>
+            <img
+              src="/logo-filhos-colorida.png"
+              alt="Filhos da Graça"
+              className="brand-logo-img"
+            />
+          </div>
+
           <div>
             <strong>Filhos da Graça</strong>
             <span>Gerados no coração de Deus</span>
@@ -79,9 +113,9 @@ function App() {
           <a href="#contato">Contato</a>
         </nav>
 
-       <a href="#membro" className="member-link notranslate" translate="no">
-       Área do Membro
-       </a>
+        <a href="/admin" className="member-link notranslate" translate="no">
+          Área do Membro
+        </a>
       </header>
 
       <section className="hero" id="inicio">
@@ -91,10 +125,10 @@ function App() {
           <span className="hero-kicker"></span>
 
           <img
-  src="/logo-filhos.png"
-  alt="Filhos da Graça"
-  className="hero-logo"
-/>
+            src="/logo-filhos.png"
+            alt="Filhos da Graça"
+            className="hero-logo"
+          />
 
           <p>
             Seja bem-vindo. Aqui caminhamos em família, servimos com amor
@@ -150,11 +184,12 @@ function App() {
         </div>
 
         <div className="service-list">
-          {schedules.map((item) => (
-            <article className="service-card" key={item.name}>
-              <span>{item.day}</span>
-              <strong>{item.name}</strong>
-              <p>{item.time}</p>
+          {programacaoExibida.map((item) => (
+            <article className="service-card" key={item.id || item.name}>
+              <span>{item.dia || item.day}</span>
+              <strong>{item.titulo || item.name}</strong>
+              <p>{item.horario || item.time}</p>
+              {item.descricao && <small>{item.descricao}</small>}
             </article>
           ))}
         </div>
@@ -176,7 +211,7 @@ function App() {
             <h2>Informações e documentos para membros.</h2>
             <p>Prestação de contas com clareza e organização.</p>
           </div>
-          <a href="#membro">Acessar portal</a>
+          <a href="/admin">Acessar portal</a>
         </article>
       </section>
 
@@ -205,7 +240,7 @@ function App() {
           <a href="#cultos">Cultos</a>
           <a href="#oracao">Oração</a>
           <a href="#midia">Mídia</a>
-          <a href="#membro">Área do Membro</a>
+          <a href="/admin">Área do Membro</a>
         </nav>
       </footer>
     </main>
