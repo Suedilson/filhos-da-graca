@@ -1,4 +1,5 @@
 import './App.css'
+import Admin from './pages/Admin'
 
 const quickActions = [
   {
@@ -46,6 +47,9 @@ const schedules = [
 ]
 
 function App() {
+  if (window.location.pathname === '/admin') {
+    return <Admin />
+  }
   return (
     <main className="site">
       <div className="top-strip notranslate" translate="no">
