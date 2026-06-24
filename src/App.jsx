@@ -66,10 +66,12 @@ function Home() {
         const q = query(collection(db, 'programacao'), orderBy('ordem', 'asc'))
         const snapshot = await getDocs(q)
 
-        const lista = snapshot.docs.map((item) => ({
-          id: item.id,
-          ...item.data(),
-        }))
+        const lista = snapshot.docs
+          .map((item) => ({
+            id: item.id,
+            ...item.data(),
+          }))
+          .filter((item) => item.ativo !== false)
 
         setProgramacaoHome(lista)
       } catch (error) {

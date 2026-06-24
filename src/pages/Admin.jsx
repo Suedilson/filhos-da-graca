@@ -14,6 +14,7 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore'
 import { auth, db } from '../services/firebase'
 import './Admin.css'
@@ -28,6 +29,7 @@ function Admin() {
   const [loading, setLoading] = useState(false)
   const [programacao, setProgramacao] = useState([])
   const [editandoId, setEditandoId] = useState(null)
+
   const [form, setForm] = useState({
     dia: '',
     titulo: '',
@@ -82,40 +84,76 @@ function Admin() {
     setProgramacao(lista)
   }
 
- async function cadastrarCulto(event) {
-  event.preventDefault()
+  async function cadastrarCulto(event) {
+    event.preventDefault()
 
-  if (!form.dia || !form.titulo || !form.horario) {
-    alert('Preencha dia, título e horário.')
-    return
+    if (!form.dia || !form.titulo || !form.horario) {
+      alert('Preencha dia, título e horário.')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      if (editandoId) {
+        await updateDoc(doc(db, 'programacao', editandoId), {
+          dia: form.dia,
+          titulo: form.titulo,
+          horario: form.horario,
+          descricao: form.descricao,
+          atualizadoEm: serverTimestamp(),
+        })
+
+        alert('Programação atualizada com sucesso!')
+      } else {
+        await addDoc(collection(db, 'programacao'), {
+          dia: form.dia,
+          titulo: form.titulo,
+          horario: form.horario,
+          descricao: form.descricao,
+          ordem: programacao.length + 1,
+          ativo: true,
+          criadoEm: serverTimestamp(),
+        })
+
+        alert('Programação cadastrada com sucesso!')
+      }
+
+      setForm({
+        dia: '',
+        titulo: '',
+        horario: '',
+        descricao: '',
+      })
+
+      setEditandoId(null)
+      await carregarProgramacao()
+    } catch (error) {
+      alert('Erro ao salvar programação.')
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  setLoading(true)
+  function editarCulto(culto) {
+    setEditandoId(culto.id)
 
-  try {
-    if (editandoId) {
-      await updateDoc(doc(db, 'programacao', editandoId), {
-        dia: form.dia,
-        titulo: form.titulo,
-        horario: form.horario,
-        descricao: form.descricao,
-        atualizadoEm: serverTimestamp(),
-      })
+    setForm({
+      dia: culto.dia || '',
+      titulo: culto.titulo || '',
+      horario: culto.horario || '',
+      descricao: culto.descricao || '',
+    })
 
-      alert('Programação atualizada com sucesso!')
-    } else {
-      await addDoc(collection(db, 'programacao'), {
-        dia: form.dia,
-        titulo: form.titulo,
-        horario: form.horario,
-        descricao: form.descricao,
-        ordem: programacao.length + 1,
-        ativo: true,
-        criadoEm: serverTimestamp(),
-      })
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    })
+  }
 
-      alert('Programação cadastrada com sucesso!')
-    }
+  function cancelarEdicao() {
+    setEditandoId(null)
 
     setForm({
       dia: '',
@@ -123,41 +161,8 @@ function Admin() {
       horario: '',
       descricao: '',
     })
-
-    setEditandoId(null)
-    await carregarProgramacao()
-  } catch (error) {
-    alert('Erro ao salvar programação.')
-    console.error(error)
-  } finally {
-    setLoading(false)
   }
-}
-function editarCulto(culto) {
-  setEditandoId(culto.id)
 
-  setForm({
-    dia: culto.dia || '',
-    titulo: culto.titulo || '',
-    horario: culto.horario || '',
-    descricao: culto.descricao || '',
-  })
-
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth',
-  })
-}
-function cancelarEdicao() {
-  setEditandoId(null)
-
-  setForm({
-    dia: '',
-    titulo: '',
-    horario: '',
-    descricao: '',
-  })
-}
   async function excluirCulto(id) {
     const confirmar = confirm('Deseja realmente excluir esta programação?')
 
@@ -168,6 +173,51 @@ function cancelarEdicao() {
       await carregarProgramacao()
     } catch (error) {
       alert('Erro ao excluir programação.')
+      console.error(error)
+    }
+  }
+
+  async function alternarStatusCulto(culto) {
+    try {
+      await updateDoc(doc(db, 'programacao', culto.id), {
+        ativo: culto.ativo === false ? true : false,
+        atualizadoEm: serverTimestamp(),
+      })
+
+      await carregarProgramacao()
+    } catch (error) {
+      alert('Erro ao alterar status da programação.')
+      console.error(error)
+    }
+  }
+
+  async function moverCulto(indexAtual, direcao) {
+    const novoIndex = direcao === 'subir' ? indexAtual - 1 : indexAtual + 1
+
+    if (novoIndex < 0 || novoIndex >= programacao.length) {
+      return
+    }
+
+    const cultoAtual = programacao[indexAtual]
+    const cultoTroca = programacao[novoIndex]
+
+    try {
+      const batch = writeBatch(db)
+
+      batch.update(doc(db, 'programacao', cultoAtual.id), {
+        ordem: cultoTroca.ordem,
+        atualizadoEm: serverTimestamp(),
+      })
+
+      batch.update(doc(db, 'programacao', cultoTroca.id), {
+        ordem: cultoAtual.ordem,
+        atualizadoEm: serverTimestamp(),
+      })
+
+      await batch.commit()
+      await carregarProgramacao()
+    } catch (error) {
+      alert('Erro ao ordenar programação.')
       console.error(error)
     }
   }
@@ -244,12 +294,14 @@ function cancelarEdicao() {
       <section className="admin-grid">
         <form className="admin-card" onSubmit={cadastrarCulto}>
           <span className="admin-section-label">Programação</span>
+
           <h2>{editandoId ? 'Editar culto' : 'Cadastrar culto'}</h2>
+
           <p>
-          {editandoId
-          ? 'Altere as informações e salve para atualizar a página inicial.'
-          : 'Essas informações aparecerão automaticamente na página inicial.'}
-         </p>
+            {editandoId
+              ? 'Altere as informações e salve para atualizar a página inicial.'
+              : 'Essas informações aparecerão automaticamente na página inicial.'}
+          </p>
 
           <label>
             Dia
@@ -296,18 +348,22 @@ function cancelarEdicao() {
           </label>
 
           <button type="submit" disabled={loading}>
-  {loading
-    ? 'Salvando...'
-    : editandoId
-      ? 'Salvar alterações'
-      : 'Salvar programação'}
-</button>
+            {loading
+              ? 'Salvando...'
+              : editandoId
+                ? 'Salvar alterações'
+                : 'Salvar programação'}
+          </button>
 
-{editandoId && (
-  <button type="button" className="cancel-button" onClick={cancelarEdicao}>
-    Cancelar edição
-  </button>
-)}
+          {editandoId && (
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={cancelarEdicao}
+            >
+              Cancelar edição
+            </button>
+          )}
         </form>
 
         <section className="admin-card">
@@ -320,28 +376,67 @@ function cancelarEdicao() {
               <p>Nenhuma programação cadastrada ainda.</p>
             )}
 
-            {programacao.map((culto) => (
-              <article className="admin-list-item" key={culto.id}>
+            {programacao.map((culto, index) => (
+              <article
+                className={`admin-list-item ${
+                  culto.ativo === false ? 'inactive-item' : ''
+                }`}
+                key={culto.id}
+              >
                 <div>
                   <span>{culto.dia}</span>
                   <strong>{culto.titulo}</strong>
                   <p>{culto.horario}</p>
                   {culto.descricao && <small>{culto.descricao}</small>}
+                  <em>{culto.ativo === false ? 'Inativo' : 'Ativo'}</em>
                 </div>
 
                 <div className="admin-actions">
-  <button
-    type="button"
-    className="edit-button"
-    onClick={() => editarCulto(culto)}
-  >
-    Editar
-  </button>
+                  <button
+                    type="button"
+                    className="order-button"
+                    onClick={() => moverCulto(index, 'subir')}
+                    disabled={index === 0}
+                  >
+                    ↑
+                  </button>
 
-  <button type="button" onClick={() => excluirCulto(culto.id)}>
-    Excluir
-  </button>
-</div>
+                  <button
+                    type="button"
+                    className="order-button"
+                    onClick={() => moverCulto(index, 'descer')}
+                    disabled={index === programacao.length - 1}
+                  >
+                    ↓
+                  </button>
+
+                  <button
+                    type="button"
+                    className="edit-button"
+                    onClick={() => editarCulto(culto)}
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    type="button"
+                    className={
+                      culto.ativo === false
+                        ? 'activate-button'
+                        : 'deactivate-button'
+                    }
+                    onClick={() => alternarStatusCulto(culto)}
+                  >
+                    {culto.ativo === false ? 'Ativar' : 'Desativar'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => excluirCulto(culto.id)}
+                  >
+                    Excluir
+                  </button>
+                </div>
               </article>
             ))}
           </div>
