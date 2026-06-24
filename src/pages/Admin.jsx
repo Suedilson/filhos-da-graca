@@ -43,6 +43,7 @@ function Admin() {
 
   const [eventos, setEventos] = useState([])
   const [editandoEventoId, setEditandoEventoId] = useState(null)
+  const [pedidosOracao, setPedidosOracao] = useState([])
 
   const [eventoForm, setEventoForm] = useState({
     titulo: '',
@@ -78,6 +79,7 @@ const [localizacaoForm, setLocalizacaoForm] = useState({
     carregarProgramacao()
     carregarEventos()
     carregarLocalizacao()
+    carregarPedidosOracao()
   }
 }, [isAdmin])
 
@@ -434,6 +436,59 @@ async function salvarLocalizacao(event) {
     setLoading(false)
   }
 }
+async function carregarPedidosOracao() {
+  try {
+    const q = query(collection(db, 'pedidosOracao'), orderBy('criadoEm', 'desc'))
+    const snapshot = await getDocs(q)
+
+    const lista = snapshot.docs.map((item) => ({
+      id: item.id,
+      ...item.data(),
+    }))
+
+    setPedidosOracao(lista)
+  } catch (error) {
+    alert('Erro ao carregar pedidos de oração.')
+    console.error(error)
+  }
+}
+
+async function alternarStatusPedido(pedido) {
+  try {
+    await updateDoc(doc(db, 'pedidosOracao', pedido.id), {
+      lido: pedido.lido === true ? false : true,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await carregarPedidosOracao()
+  } catch (error) {
+    alert('Erro ao alterar status do pedido.')
+    console.error(error)
+  }
+}
+
+async function excluirPedidoOracao(id) {
+  const confirmar = confirm('Deseja realmente excluir este pedido de oração?')
+
+  if (!confirmar) return
+
+  try {
+    await deleteDoc(doc(db, 'pedidosOracao', id))
+    await carregarPedidosOracao()
+  } catch (error) {
+    alert('Erro ao excluir pedido de oração.')
+    console.error(error)
+  }
+}
+
+function formatarDataHoraFirebase(dataFirebase) {
+  if (!dataFirebase?.toDate) return ''
+
+  return dataFirebase.toDate().toLocaleString('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  })
+}
 
   function formatarData(data) {
     if (!data) return ''
@@ -528,6 +583,13 @@ async function salvarLocalizacao(event) {
   >
     Eventos
   </button>
+<button
+  type="button"
+  className={abaAtiva === 'oracao' ? 'active' : ''}
+  onClick={() => setAbaAtiva('oracao')}
+>
+  Oração
+</button>
 
   <button
     type="button"
@@ -858,6 +920,67 @@ async function salvarLocalizacao(event) {
        </section>
       </section>
       )}
+{abaAtiva === 'oracao' && (
+  <section className="admin-card admin-full-card">
+    <span className="admin-section-label">Pedidos de oração</span>
+
+    <h2>Pedidos recebidos</h2>
+
+    <p>
+      Acompanhe os pedidos enviados pelo site e marque como lidos depois de tratar.
+    </p>
+
+    <div className="admin-list">
+      {pedidosOracao.length === 0 && (
+        <p>Nenhum pedido de oração recebido ainda.</p>
+      )}
+
+      {pedidosOracao.map((pedido) => (
+        <article
+          className={`admin-list-item prayer-request-item ${
+            pedido.lido === true ? 'inactive-item' : ''
+          }`}
+          key={pedido.id}
+        >
+          <div>
+            <span>
+              {pedido.lido === true ? 'Lido' : 'Novo pedido'}
+            </span>
+
+            <strong>{pedido.nome}</strong>
+
+            {pedido.telefone && <p>{pedido.telefone}</p>}
+
+            <small>{pedido.pedido}</small>
+
+            {pedido.criadoEm && (
+              <em>{formatarDataHoraFirebase(pedido.criadoEm)}</em>
+            )}
+          </div>
+
+          <div className="admin-actions">
+            <button
+              type="button"
+              className={
+                pedido.lido === true ? 'activate-button' : 'deactivate-button'
+              }
+              onClick={() => alternarStatusPedido(pedido)}
+            >
+              {pedido.lido === true ? 'Marcar como novo' : 'Marcar como lido'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => excluirPedidoOracao(pedido.id)}
+            >
+              Excluir
+            </button>
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+)}
 {abaAtiva === 'localizacao' && (
   <section className="admin-grid admin-events-grid">
     <form className="admin-card" onSubmit={salvarLocalizacao}>

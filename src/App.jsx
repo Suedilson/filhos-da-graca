@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react'
-import { collection, doc, getDoc, getDocs, orderBy, query } from 'firebase/firestore'
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+} from 'firebase/firestore'
 import './App.css'
 import Admin from './pages/Admin'
 import { db } from './services/firebase'
@@ -61,6 +70,13 @@ function Home() {
   const [programacaoHome, setProgramacaoHome] = useState([])
   const [eventosHome, setEventosHome] = useState([])
   const [localizacaoHome, setLocalizacaoHome] = useState(null)
+  const [pedidoForm, setPedidoForm] = useState({
+  nome: '',
+  telefone: '',
+  pedido: '',
+})
+
+const [enviandoPedido, setEnviandoPedido] = useState(false)
 
   useEffect(() => {
     async function carregarProgramacaoHome() {
@@ -126,6 +142,39 @@ async function carregarLocalizacaoHome() {
 
     return `${dia}/${mes}/${ano}`
   }
+async function enviarPedidoOracao(event) {
+  event.preventDefault()
+
+  if (!pedidoForm.nome || !pedidoForm.pedido) {
+    alert('Preencha seu nome e o pedido de oração.')
+    return
+  }
+
+  setEnviandoPedido(true)
+
+  try {
+    await addDoc(collection(db, 'pedidosOracao'), {
+      nome: pedidoForm.nome,
+      telefone: pedidoForm.telefone,
+      pedido: pedidoForm.pedido,
+      lido: false,
+      criadoEm: serverTimestamp(),
+    })
+
+    setPedidoForm({
+      nome: '',
+      telefone: '',
+      pedido: '',
+    })
+
+    alert('Pedido de oração enviado com sucesso!')
+  } catch (error) {
+    alert('Não foi possível enviar o pedido de oração. Tente novamente.')
+    console.error('Erro ao enviar pedido de oração:', error)
+  } finally {
+    setEnviandoPedido(false)
+  }
+}
 
   return (
     <main className="site">
@@ -219,7 +268,7 @@ async function carregarLocalizacaoHome() {
             Venha como está. Nossa equipe estará pronta para acolher você
             e sua família com carinho.
           </p>
-          <a href="#contato">Ver como chegar</a>
+          <a href="#localizacao">Ver como chegar</a>
         </div>
       </section>
 
@@ -345,20 +394,64 @@ async function carregarLocalizacaoHome() {
         </article>
       </section>
 
-      <section className="prayer" id="oracao">
-        <div>
-          <span className="section-label">Pedido de oração</span>
-          <h2>Podemos orar por você?</h2>
-          <p>
-            Envie seu pedido de oração. Nossa liderança terá alegria em
-            interceder por você e sua família.
-          </p>
-        </div>
+     <section className="prayer prayer-form-section" id="oracao">
+  <div className="prayer-copy">
+    <span className="section-label">Pedido de oração</span>
+    <h2>Podemos orar por você?</h2>
+    <p>
+      Envie seu pedido de oração. Nossa liderança terá alegria em
+      interceder por você e sua família.
+    </p>
+  </div>
 
-        <a className="primary-button dark" href="#contato">
-          Enviar pedido
-        </a>
-      </section>
+  <form className="prayer-form" onSubmit={enviarPedidoOracao}>
+    <label>
+      Nome
+      <input
+        value={pedidoForm.nome}
+        onChange={(event) =>
+          setPedidoForm({
+            ...pedidoForm,
+            nome: event.target.value,
+          })
+        }
+        placeholder="Digite seu nome"
+      />
+    </label>
+
+    <label>
+      Telefone ou WhatsApp
+      <input
+        value={pedidoForm.telefone}
+        onChange={(event) =>
+          setPedidoForm({
+            ...pedidoForm,
+            telefone: event.target.value,
+          })
+        }
+        placeholder="Opcional"
+      />
+    </label>
+
+    <label>
+      Pedido de oração
+      <textarea
+        value={pedidoForm.pedido}
+        onChange={(event) =>
+          setPedidoForm({
+            ...pedidoForm,
+            pedido: event.target.value,
+          })
+        }
+        placeholder="Escreva seu pedido"
+      />
+    </label>
+
+    <button className="primary-button dark" type="submit" disabled={enviandoPedido}>
+      {enviandoPedido ? 'Enviando...' : 'Enviar pedido'}
+    </button>
+  </form>
+</section>
 
       <footer className="footer" id="contato">
         <div>

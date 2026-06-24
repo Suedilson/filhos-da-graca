@@ -639,3 +639,18 @@ textarea {
   color: #ffffff;
   font-weight: 900;
 }
+.admin-full-card {
+  width: min(1240px, 100%);
+  margin: 0 auto;
+}
+
+.prayer-request-item small {
+  max-width: 760px;
+  color: #172033;
+  font-size: 0.96rem;
+  white-space: pre-wrap;
+}
+
+.prayer-request-item.inactive-item {
+  opacity: 0.78;
+}
