@@ -587,3 +587,55 @@ textarea {
     flex: 1;
   }
 }
+.admin-location-preview {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-location-preview img,
+.admin-location-preview div {
+  width: 100%;
+  min-height: 260px;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.admin-location-preview img {
+  object-fit: cover;
+  display: block;
+  border: 1px solid rgba(23, 16, 95, 0.1);
+}
+
+.admin-location-preview div {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at top right, rgba(111, 189, 42, 0.18), transparent 14rem),
+    linear-gradient(135deg, #17105f, #281d88);
+}
+
+.admin-location-preview div span {
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.admin-location-preview strong {
+  color: #17105f;
+  font-size: 1.2rem;
+}
+
+.admin-location-preview p,
+.admin-location-preview small {
+  margin: 0;
+  color: #687385;
+  line-height: 1.5;
+}
+
+.admin-location-preview a {
+  width: fit-content;
+  padding: 11px 15px;
+  border-radius: 12px;
+  background: #17105f;
+  color: #ffffff;
+  font-weight: 900;
+}

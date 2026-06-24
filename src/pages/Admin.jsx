@@ -9,10 +9,12 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore'
@@ -50,6 +52,14 @@ function Admin() {
     descricao: '',
     imagem: '',
   })
+const [localizacaoForm, setLocalizacaoForm] = useState({
+  nomeLocal: '',
+  endereco: '',
+  googleMapsUrl: '',
+  latitude: '',
+  longitude: '',
+  fotoFachada: '',
+})
 
   const eventoFormRef = useRef(null)
   const isAdmin = user && ADMIN_EMAILS.includes(user.email)
@@ -64,11 +74,12 @@ function Admin() {
   }, [])
 
   useEffect(() => {
-    if (isAdmin) {
-      carregarProgramacao()
-      carregarEventos()
-    }
-  }, [isAdmin])
+  if (isAdmin) {
+    carregarProgramacao()
+    carregarEventos()
+    carregarLocalizacao()
+  }
+}, [isAdmin])
 
   async function login(event) {
     event.preventDefault()
@@ -367,6 +378,62 @@ eventoFormRef.current?.scrollIntoView({
       console.error(error)
     }
   }
+async function carregarLocalizacao() {
+  try {
+    const ref = doc(db, 'configuracoes', 'localizacao')
+    const snapshot = await getDoc(ref)
+
+    if (snapshot.exists()) {
+      const dados = snapshot.data()
+
+      setLocalizacaoForm({
+        nomeLocal: dados.nomeLocal || '',
+        endereco: dados.endereco || '',
+        googleMapsUrl: dados.googleMapsUrl || '',
+        latitude: dados.latitude || '',
+        longitude: dados.longitude || '',
+        fotoFachada: dados.fotoFachada || '',
+      })
+    }
+  } catch (error) {
+    alert('Erro ao carregar localização.')
+    console.error(error)
+  }
+}
+
+async function salvarLocalizacao(event) {
+  event.preventDefault()
+
+  if (!localizacaoForm.endereco) {
+    alert('Preencha pelo menos o endereço.')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    await setDoc(
+      doc(db, 'configuracoes', 'localizacao'),
+      {
+        nomeLocal: localizacaoForm.nomeLocal,
+        endereco: localizacaoForm.endereco,
+        googleMapsUrl: localizacaoForm.googleMapsUrl,
+        latitude: localizacaoForm.latitude,
+        longitude: localizacaoForm.longitude,
+        fotoFachada: localizacaoForm.fotoFachada,
+        atualizadoEm: serverTimestamp(),
+      },
+      { merge: true },
+    )
+
+    alert('Localização salva com sucesso!')
+  } catch (error) {
+    alert('Erro ao salvar localização.')
+    console.error(error)
+  } finally {
+    setLoading(false)
+  }
+}
 
   function formatarData(data) {
     if (!data) return ''
@@ -444,6 +511,7 @@ eventoFormRef.current?.scrollIntoView({
 
         <button onClick={sair}>Sair</button>
       </header>
+
 <nav className="admin-tabs">
   <button
     type="button"
@@ -459,6 +527,14 @@ eventoFormRef.current?.scrollIntoView({
     onClick={() => setAbaAtiva('eventos')}
   >
     Eventos
+  </button>
+
+  <button
+    type="button"
+    className={abaAtiva === 'localizacao' ? 'active' : ''}
+    onClick={() => setAbaAtiva('localizacao')}
+  >
+    Localização
   </button>
 </nav>
         {abaAtiva === 'programacao' && (
@@ -782,6 +858,154 @@ eventoFormRef.current?.scrollIntoView({
        </section>
       </section>
       )}
+{abaAtiva === 'localizacao' && (
+  <section className="admin-grid admin-events-grid">
+    <form className="admin-card" onSubmit={salvarLocalizacao}>
+      <span className="admin-section-label">Localização</span>
+
+      <h2>Dados de endereço</h2>
+
+      <p>
+        Essas informações serão exibidas na seção Como chegar da página inicial.
+      </p>
+
+      <label>
+        Nome do local
+        <input
+          value={localizacaoForm.nomeLocal}
+          onChange={(event) =>
+            setLocalizacaoForm({
+              ...localizacaoForm,
+              nomeLocal: event.target.value,
+            })
+          }
+          placeholder="Ex: Igreja Filhos da Graça"
+        />
+      </label>
+
+      <label>
+        Endereço completo
+        <textarea
+          value={localizacaoForm.endereco}
+          onChange={(event) =>
+            setLocalizacaoForm({
+              ...localizacaoForm,
+              endereco: event.target.value,
+            })
+          }
+          placeholder="Ex: Rua, número, bairro, cidade e estado"
+        />
+      </label>
+
+      <label>
+        Link do Google Maps
+        <input
+          value={localizacaoForm.googleMapsUrl}
+          onChange={(event) =>
+            setLocalizacaoForm({
+              ...localizacaoForm,
+              googleMapsUrl: event.target.value,
+            })
+          }
+          placeholder="Cole aqui o link do Google Maps"
+        />
+      </label>
+
+      <label>
+        Latitude
+        <input
+          value={localizacaoForm.latitude}
+          onChange={(event) =>
+            setLocalizacaoForm({
+              ...localizacaoForm,
+              latitude: event.target.value,
+            })
+          }
+          placeholder="Ex: -8.047562"
+        />
+      </label>
+
+      <label>
+        Longitude
+        <input
+          value={localizacaoForm.longitude}
+          onChange={(event) =>
+            setLocalizacaoForm({
+              ...localizacaoForm,
+              longitude: event.target.value,
+            })
+          }
+          placeholder="Ex: -34.877003"
+        />
+      </label>
+
+      <label>
+        Foto da fachada
+        <input
+          value={localizacaoForm.fotoFachada}
+          onChange={(event) =>
+            setLocalizacaoForm({
+              ...localizacaoForm,
+              fotoFachada: event.target.value,
+            })
+          }
+          placeholder="Ex: /fachada.jpg ou https://..."
+        />
+      </label>
+
+      {localizacaoForm.fotoFachada && (
+        <img
+          className="admin-preview-image"
+          src={localizacaoForm.fotoFachada}
+          alt="Prévia da fachada"
+        />
+      )}
+
+      <button type="submit" disabled={loading}>
+        {loading ? 'Salvando...' : 'Salvar localização'}
+      </button>
+    </form>
+
+    <section className="admin-card">
+      <span className="admin-section-label">Prévia</span>
+      <h2>Como aparecerá no site</h2>
+
+      <div className="admin-location-preview">
+        {localizacaoForm.fotoFachada ? (
+          <img src={localizacaoForm.fotoFachada} alt="Fachada da igreja" />
+        ) : (
+          <div>
+            <span>Filhos da Graça</span>
+          </div>
+        )}
+
+        <strong>
+          {localizacaoForm.nomeLocal || 'Igreja Filhos da Graça'}
+        </strong>
+
+        <p>
+          {localizacaoForm.endereco || 'Endereço ainda não preenchido.'}
+        </p>
+
+        {(localizacaoForm.latitude || localizacaoForm.longitude) && (
+          <small>
+            Coordenadas: {localizacaoForm.latitude}, {localizacaoForm.longitude}
+          </small>
+        )}
+
+        {localizacaoForm.googleMapsUrl && (
+          <a
+            href={localizacaoForm.googleMapsUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Abrir mapa
+          </a>
+        )}
+      </div>
+    </section>
+  </section>
+)}
     </main>
   )
 }

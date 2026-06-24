@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { collection, getDocs, orderBy, query } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, orderBy, query } from 'firebase/firestore'
 import './App.css'
 import Admin from './pages/Admin'
 import { db } from './services/firebase'
@@ -24,11 +24,11 @@ const quickActions = [
     href: '#midia',
   },
   {
-    title: 'Como chegar',
-    description: 'Encontre o caminho para nos visitar.',
-    icon: '⌖',
-    href: '#contato',
-  },
+  title: 'Como chegar',
+  description: 'Encontre o caminho para nos visitar.',
+  icon: '⌖',
+  href: '#localizacao',
+},
 ]
 
 const schedules = [
@@ -60,6 +60,7 @@ function App() {
 function Home() {
   const [programacaoHome, setProgramacaoHome] = useState([])
   const [eventosHome, setEventosHome] = useState([])
+  const [localizacaoHome, setLocalizacaoHome] = useState(null)
 
   useEffect(() => {
     async function carregarProgramacaoHome() {
@@ -79,6 +80,18 @@ function Home() {
         console.error('Erro ao carregar programação da home:', error)
       }
     }
+async function carregarLocalizacaoHome() {
+  try {
+    const ref = doc(db, 'configuracoes', 'localizacao')
+    const snapshot = await getDoc(ref)
+
+    if (snapshot.exists()) {
+      setLocalizacaoHome(snapshot.data())
+    }
+  } catch (error) {
+    console.error('Erro ao carregar localização da home:', error)
+  }
+}
 
     async function carregarEventosHome() {
       try {
@@ -100,6 +113,7 @@ function Home() {
 
     carregarProgramacaoHome()
     carregarEventosHome()
+    carregarLocalizacaoHome()
   }, [])
 
   const programacaoExibida =
@@ -140,6 +154,7 @@ function Home() {
           <a href="#cultos">Cultos</a>
           <a href="#visitante">Visitantes</a>
           <a href="#eventos">Eventos</a>
+          <a href="#localizacao">Como chegar</a>
           <a href="#midia">Mídia</a>
           <a href="#contato">Contato</a>
         </nav>
@@ -257,7 +272,59 @@ function Home() {
           </div>
         </section>
       )}
+       
+       <section className="location-section" id="localizacao">
+  <div className="section-heading">
+    <span className="section-label">Como chegar</span>
+    <h2>Venha nos visitar</h2>
+  </div>
 
+  <div className="location-grid">
+    <article className="location-card">
+      {localizacaoHome?.fotoFachada ? (
+        <img
+          src={localizacaoHome.fotoFachada}
+          alt="Fachada da Igreja Filhos da Graça"
+        />
+      ) : (
+        <div className="location-placeholder">
+          <span>Filhos da Graça</span>
+        </div>
+      )}
+    </article>
+
+    <article className="location-info">
+      <span className="section-label">Endereço</span>
+
+      <h3>
+        {localizacaoHome?.nomeLocal || 'Igreja Filhos da Graça'}
+      </h3>
+
+      {localizacaoHome?.endereco ? (
+        <p>{localizacaoHome.endereco}</p>
+      ) : (
+        <p>O endereço será cadastrado em breve.</p>
+      )}
+
+      {(localizacaoHome?.latitude || localizacaoHome?.longitude) && (
+        <small>
+          Coordenadas: {localizacaoHome.latitude}, {localizacaoHome.longitude}
+        </small>
+      )}
+
+      {localizacaoHome?.googleMapsUrl && (
+        <a
+          className="primary-button"
+          href={localizacaoHome.googleMapsUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Abrir no Google Maps
+        </a>
+      )}
+    </article>
+  </div>
+</section>
       <section className="feature-row" id="midia">
         <article className="feature-card feature-video">
           <div>
