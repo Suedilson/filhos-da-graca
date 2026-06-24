@@ -59,6 +59,7 @@ function App() {
 
 function Home() {
   const [programacaoHome, setProgramacaoHome] = useState([])
+  const [eventosHome, setEventosHome] = useState([])
 
   useEffect(() => {
     async function carregarProgramacaoHome() {
@@ -79,11 +80,38 @@ function Home() {
       }
     }
 
+    async function carregarEventosHome() {
+      try {
+        const q = query(collection(db, 'eventos'), orderBy('data', 'asc'))
+        const snapshot = await getDocs(q)
+
+        const lista = snapshot.docs
+          .map((item) => ({
+            id: item.id,
+            ...item.data(),
+          }))
+          .filter((item) => item.ativo !== false)
+
+        setEventosHome(lista)
+      } catch (error) {
+        console.error('Erro ao carregar eventos da home:', error)
+      }
+    }
+
     carregarProgramacaoHome()
+    carregarEventosHome()
   }, [])
 
   const programacaoExibida =
     programacaoHome.length > 0 ? programacaoHome : schedules
+
+  function formatarData(data) {
+    if (!data) return ''
+
+    const [ano, mes, dia] = data.split('-')
+
+    return `${dia}/${mes}/${ano}`
+  }
 
   return (
     <main className="site">
@@ -111,6 +139,7 @@ function Home() {
           <a href="#inicio">Início</a>
           <a href="#cultos">Cultos</a>
           <a href="#visitante">Visitantes</a>
+          <a href="#eventos">Eventos</a>
           <a href="#midia">Mídia</a>
           <a href="#contato">Contato</a>
         </nav>
@@ -197,6 +226,38 @@ function Home() {
         </div>
       </section>
 
+      {eventosHome.length > 0 && (
+        <section className="events-section" id="eventos">
+          <div className="section-heading">
+            <span className="section-label">Eventos</span>
+            <h2>Próximos eventos</h2>
+          </div>
+
+          <div className="events-list">
+            {eventosHome.map((evento) => (
+              <article className="event-card" key={evento.id}>
+                {evento.imagem ? (
+                  <img src={evento.imagem} alt={evento.titulo} />
+                ) : (
+                  <div className="event-placeholder">
+                    <span>Filhos da Graça</span>
+                  </div>
+                )}
+
+                <div className="event-content">
+                  <span>{formatarData(evento.data)}</span>
+                  <h3>{evento.titulo}</h3>
+
+                  {evento.horario && <p>{evento.horario}</p>}
+                  {evento.local && <small>{evento.local}</small>}
+                  {evento.descricao && <small>{evento.descricao}</small>}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="feature-row" id="midia">
         <article className="feature-card feature-video">
           <div>
@@ -240,6 +301,7 @@ function Home() {
 
         <nav>
           <a href="#cultos">Cultos</a>
+          <a href="#eventos">Eventos</a>
           <a href="#oracao">Oração</a>
           <a href="#midia">Mídia</a>
           <a href="/admin">Área do Membro</a>

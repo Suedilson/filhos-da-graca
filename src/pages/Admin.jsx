@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -27,6 +27,7 @@ function Admin() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+
   const [programacao, setProgramacao] = useState([])
   const [editandoId, setEditandoId] = useState(null)
 
@@ -37,6 +38,19 @@ function Admin() {
     descricao: '',
   })
 
+  const [eventos, setEventos] = useState([])
+  const [editandoEventoId, setEditandoEventoId] = useState(null)
+
+  const [eventoForm, setEventoForm] = useState({
+    titulo: '',
+    data: '',
+    horario: '',
+    local: '',
+    descricao: '',
+    imagem: '',
+  })
+
+  const eventoFormRef = useRef(null)
   const isAdmin = user && ADMIN_EMAILS.includes(user.email)
 
   useEffect(() => {
@@ -51,6 +65,7 @@ function Admin() {
   useEffect(() => {
     if (isAdmin) {
       carregarProgramacao()
+      carregarEventos()
     }
   }, [isAdmin])
 
@@ -220,6 +235,142 @@ function Admin() {
       alert('Erro ao ordenar programação.')
       console.error(error)
     }
+  }
+
+  async function carregarEventos() {
+    const q = query(collection(db, 'eventos'), orderBy('data', 'asc'))
+    const snapshot = await getDocs(q)
+
+    const lista = snapshot.docs.map((item) => ({
+      id: item.id,
+      ...item.data(),
+    }))
+
+    setEventos(lista)
+  }
+
+  async function cadastrarEvento(event) {
+    event.preventDefault()
+
+    if (!eventoForm.titulo || !eventoForm.data) {
+      alert('Preencha pelo menos o título e a data do evento.')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      if (editandoEventoId) {
+        await updateDoc(doc(db, 'eventos', editandoEventoId), {
+          titulo: eventoForm.titulo,
+          data: eventoForm.data,
+          horario: eventoForm.horario,
+          local: eventoForm.local,
+          descricao: eventoForm.descricao,
+          imagem: eventoForm.imagem,
+          atualizadoEm: serverTimestamp(),
+        })
+
+        alert('Evento atualizado com sucesso!')
+      } else {
+        await addDoc(collection(db, 'eventos'), {
+          titulo: eventoForm.titulo,
+          data: eventoForm.data,
+          horario: eventoForm.horario,
+          local: eventoForm.local,
+          descricao: eventoForm.descricao,
+          imagem: eventoForm.imagem,
+          ativo: true,
+          criadoEm: serverTimestamp(),
+        })
+
+        alert('Evento cadastrado com sucesso!')
+      }
+
+      setEventoForm({
+        titulo: '',
+        data: '',
+        horario: '',
+        local: '',
+        descricao: '',
+        imagem: '',
+      })
+
+      setEditandoEventoId(null)
+      await carregarEventos()
+    } catch (error) {
+      alert('Erro ao salvar evento.')
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function editarEvento(evento) {
+    setEditandoEventoId(evento.id)
+
+    setEventoForm({
+      titulo: evento.titulo || '',
+      data: evento.data || '',
+      horario: evento.horario || '',
+      local: evento.local || '',
+      descricao: evento.descricao || '',
+      imagem: evento.imagem || '',
+    })
+
+eventoFormRef.current?.scrollIntoView({
+  behavior: 'smooth',
+  block: 'start',
+})  
+}
+ 
+  function cancelarEdicaoEvento() {
+    setEditandoEventoId(null)
+
+    setEventoForm({
+      titulo: '',
+      data: '',
+      horario: '',
+      local: '',
+      descricao: '',
+      imagem: '',
+    })
+  }
+
+  async function excluirEvento(id) {
+    const confirmar = confirm('Deseja realmente excluir este evento?')
+
+    if (!confirmar) return
+
+    try {
+      await deleteDoc(doc(db, 'eventos', id))
+      await carregarEventos()
+    } catch (error) {
+      alert('Erro ao excluir evento.')
+      console.error(error)
+    }
+  }
+
+  async function alternarStatusEvento(evento) {
+    try {
+      await updateDoc(doc(db, 'eventos', evento.id), {
+        ativo: evento.ativo === false ? true : false,
+        atualizadoEm: serverTimestamp(),
+      })
+
+      await carregarEventos()
+    } catch (error) {
+      alert('Erro ao alterar status do evento.')
+      console.error(error)
+    }
+  }
+
+  function formatarData(data) {
+    if (!data) return ''
+
+    const [ano, mes, dia] = data.split('-')
+
+    return `${dia}/${mes}/${ano}`
   }
 
   if (checkingAuth) {
@@ -430,10 +581,176 @@ function Admin() {
                     {culto.ativo === false ? 'Ativar' : 'Desativar'}
                   </button>
 
+                  <button type="button" onClick={() => excluirCulto(culto.id)}>
+                    Excluir
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      </section>
+
+      <section className="admin-grid admin-events-grid">
+       <form
+  ref={eventoFormRef}
+  className="admin-card"
+  onSubmit={cadastrarEvento}
+>
+          <span className="admin-section-label">Eventos</span>
+
+          <h2>{editandoEventoId ? 'Editar evento' : 'Cadastrar evento'}</h2>
+
+          <p>
+            {editandoEventoId
+              ? 'Altere as informações e salve para atualizar a página inicial.'
+              : 'Cadastre eventos especiais para aparecerem na página inicial.'}
+          </p>
+
+          <label>
+            Título do evento
+            <input
+              value={eventoForm.titulo}
+              onChange={(event) =>
+                setEventoForm({ ...eventoForm, titulo: event.target.value })
+              }
+              placeholder="Ex: Conferência da Família"
+            />
+          </label>
+
+          <label>
+            Data
+            <input
+              type="date"
+              value={eventoForm.data}
+              onChange={(event) =>
+                setEventoForm({ ...eventoForm, data: event.target.value })
+              }
+            />
+          </label>
+
+          <label>
+            Horário
+            <input
+              value={eventoForm.horario}
+              onChange={(event) =>
+                setEventoForm({ ...eventoForm, horario: event.target.value })
+              }
+              placeholder="Ex: 19h30"
+            />
+          </label>
+
+          <label>
+            Local
+            <input
+              value={eventoForm.local}
+              onChange={(event) =>
+                setEventoForm({ ...eventoForm, local: event.target.value })
+              }
+              placeholder="Ex: Templo sede"
+            />
+          </label>
+
+          <label>
+            Descrição
+            <textarea
+              value={eventoForm.descricao}
+              onChange={(event) =>
+                setEventoForm({
+                  ...eventoForm,
+                  descricao: event.target.value,
+                })
+              }
+              placeholder="Descrição opcional do evento"
+            />
+          </label>
+
+          <label>
+            Imagem do evento
+            <input
+              value={eventoForm.imagem}
+              onChange={(event) =>
+                setEventoForm({ ...eventoForm, imagem: event.target.value })
+              }
+              placeholder="Ex: /evento.jpg ou https://..."
+            />
+          </label>
+
+          {eventoForm.imagem && (
+            <img
+              className="admin-preview-image"
+              src={eventoForm.imagem}
+              alt="Prévia do evento"
+            />
+          )}
+
+          <button type="submit" disabled={loading}>
+            {loading
+              ? 'Salvando...'
+              : editandoEventoId
+                ? 'Salvar alterações'
+                : 'Salvar evento'}
+          </button>
+
+          {editandoEventoId && (
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={cancelarEdicaoEvento}
+            >
+              Cancelar edição
+            </button>
+          )}
+        </form>
+
+        <section className="admin-card">
+          <span className="admin-section-label">Página inicial</span>
+          <h2>Eventos cadastrados</h2>
+          <p>Lista dos eventos que serão exibidos no site.</p>
+
+          <div className="admin-list">
+            {eventos.length === 0 && <p>Nenhum evento cadastrado ainda.</p>}
+
+            {eventos.map((evento) => (
+              <article
+                className={`admin-list-item ${
+                  evento.ativo === false ? 'inactive-item' : ''
+                }`}
+                key={evento.id}
+              >
+                <div>
+                  <span>{formatarData(evento.data)}</span>
+                  <strong>{evento.titulo}</strong>
+
+                  {evento.horario && <p>{evento.horario}</p>}
+                  {evento.local && <small>{evento.local}</small>}
+                  {evento.descricao && <small>{evento.descricao}</small>}
+
+                  <em>{evento.ativo === false ? 'Inativo' : 'Ativo'}</em>
+                </div>
+
+                <div className="admin-actions">
                   <button
                     type="button"
-                    onClick={() => excluirCulto(culto.id)}
+                    className="edit-button"
+                    onClick={() => editarEvento(evento)}
                   >
+                    Editar
+                  </button>
+
+                  <button
+                    type="button"
+                    className={
+                      evento.ativo === false
+                        ? 'activate-button'
+                        : 'deactivate-button'
+                    }
+                    onClick={() => alternarStatusEvento(evento)}
+                  >
+                    {evento.ativo === false ? 'Ativar' : 'Desativar'}
+                  </button>
+
+                  <button type="button" onClick={() => excluirEvento(evento.id)}>
                     Excluir
                   </button>
                 </div>

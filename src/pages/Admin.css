@@ -1,24 +1,25 @@
 .admin-page {
   min-height: 100vh;
-  padding: 32px;
+  padding: 28px;
   color: #172033;
   background:
-    radial-gradient(circle at top left, rgba(111, 189, 42, 0.16), transparent 28rem),
+    radial-gradient(circle at top left, rgba(111, 189, 42, 0.13), transparent 26rem),
+    radial-gradient(circle at top right, rgba(23, 16, 95, 0.09), transparent 24rem),
     linear-gradient(180deg, #fffaf2 0%, #f8fafc 100%);
 }
 
 .login-card,
 .admin-card {
-  background: #ffffff;
-  border: 1px solid rgba(23, 16, 95, 0.1);
-  box-shadow: 0 24px 70px rgba(23, 16, 95, 0.12);
-  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(23, 16, 95, 0.09);
+  box-shadow: 0 18px 55px rgba(23, 16, 95, 0.1);
+  border-radius: 24px;
 }
 
 .login-card {
   width: min(460px, 100%);
   margin: 80px auto;
-  padding: 34px;
+  padding: 32px;
 }
 
 .admin-logo {
@@ -40,6 +41,11 @@
   margin: 0;
 }
 
+.admin-card h2 {
+  font-size: 1.45rem;
+  letter-spacing: -0.02em;
+}
+
 .login-card p,
 .admin-card p,
 .admin-header span {
@@ -49,7 +55,7 @@
 .login-card form,
 .admin-card {
   display: grid;
-  gap: 18px;
+  gap: 15px;
 }
 
 .login-card form {
@@ -57,160 +63,483 @@
 }
 
 .admin-header {
-  width: min(1180px, 100%);
-  margin: 0 auto 28px;
+  width: min(1240px, 100%);
+  margin: 0 auto 22px;
+  padding: 18px 22px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(23, 16, 95, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 14px 40px rgba(23, 16, 95, 0.07);
+  backdrop-filter: blur(14px);
+}
+
+.admin-header h1 {
+  font-size: clamp(1.55rem, 3vw, 2.3rem);
+  letter-spacing: -0.04em;
 }
 
 .admin-grid {
-  width: min(1180px, 100%);
+  width: min(1240px, 100%);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 420px 1fr;
-  gap: 22px;
+  grid-template-columns: 390px 1fr;
+  gap: 18px;
+}
+
+.admin-events-grid {
+  margin-top: 18px;
 }
 
 .admin-card {
-  padding: 28px;
+  padding: 24px;
 }
 
 .admin-section-label {
   color: #6fbd2a;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 label {
   display: grid;
-  gap: 8px;
-  font-weight: 800;
+  gap: 7px;
+  font-weight: 850;
   color: #17105f;
+  font-size: 0.95rem;
 }
 
 input,
 textarea {
   width: 100%;
-  border: 1px solid rgba(23, 16, 95, 0.16);
+  border: 1px solid rgba(23, 16, 95, 0.13);
   border-radius: 14px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   font: inherit;
   outline: none;
+  color: #172033;
   background: #fbfcfd;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 
 textarea {
-  min-height: 110px;
+  min-height: 96px;
   resize: vertical;
+  line-height: 1.45;
 }
 
 input:focus,
 textarea:focus {
   border-color: #6fbd2a;
+  background: #ffffff;
   box-shadow: 0 0 0 4px rgba(111, 189, 42, 0.12);
 }
 
 button {
   border: 0;
   border-radius: 14px;
-  padding: 14px 18px;
-  background: #17105f;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #17105f, #251a82);
   color: #ffffff;
   font-weight: 900;
   cursor: pointer;
+  box-shadow: 0 10px 22px rgba(23, 16, 95, 0.18);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease,
+    filter 0.18s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(23, 16, 95, 0.22);
+  filter: brightness(1.03);
+}
+
+button:active {
+  transform: translateY(0);
 }
 
 button:disabled {
-  opacity: 0.7;
+  opacity: 0.55;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .admin-list {
   display: grid;
-  gap: 14px;
-  margin-top: 8px;
+  gap: 12px;
+  margin-top: 4px;
 }
 
 .admin-list-item {
-  border: 1px solid rgba(23, 16, 95, 0.1);
-  border-radius: 18px;
+  border: 1px solid rgba(23, 16, 95, 0.08);
+  border-radius: 20px;
   padding: 16px;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto;
   gap: 16px;
   align-items: center;
-  background: #fbfcfd;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 250, 242, 0.62));
+  box-shadow: 0 12px 30px rgba(23, 16, 95, 0.06);
+}
+
+.admin-list-item.inactive-item {
+  opacity: 0.68;
+  background: #f4f5f7;
 }
 
 .admin-list-item span {
   color: #6fbd2a;
   font-weight: 900;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .admin-list-item strong {
   display: block;
   color: #17105f;
   margin-top: 4px;
+  font-size: 1.08rem;
+  line-height: 1.22;
 }
 
 .admin-list-item p {
-  margin: 4px 0 0;
+  margin: 5px 0 0;
+  color: #172033;
+  font-weight: 750;
 }
 
 .admin-list-item small {
   display: block;
   margin-top: 6px;
   color: #687385;
+  line-height: 1.45;
 }
 
-.admin-list-item button {
-  background: #b42318;
+.admin-list-item em {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 9px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: #17105f;
+  background: rgba(23, 16, 95, 0.08);
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 900;
 }
+
 .admin-actions {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
   align-items: center;
+  justify-content: flex-end;
+  max-width: 360px;
+}
+
+.admin-actions button {
+  padding: 10px 12px;
+  min-height: 42px;
+  border-radius: 13px;
+  font-size: 0.86rem;
+  box-shadow: 0 8px 18px rgba(23, 16, 95, 0.13);
 }
 
 .admin-actions .edit-button {
-  background: #6fbd2a;
+  background: linear-gradient(135deg, #6fbd2a, #4f9f18);
   color: #ffffff;
 }
 
+.admin-actions .order-button {
+  min-width: 42px;
+  background: linear-gradient(135deg, #e8bf55, #c99117);
+  color: #211700;
+}
+
+.admin-actions .activate-button {
+  background: linear-gradient(135deg, #157347, #0f5c38);
+}
+
+.admin-actions .deactivate-button {
+  background: linear-gradient(135deg, #687385, #4e5868);
+}
+
+.admin-actions button:last-child {
+  background: linear-gradient(135deg, #b42318, #87180f);
+}
+
 .cancel-button {
-  background: #687385;
+  background: linear-gradient(135deg, #687385, #4e5868);
+}
+
+.admin-preview-image {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 1px solid rgba(23, 16, 95, 0.1);
+  box-shadow: 0 14px 34px rgba(23, 16, 95, 0.1);
+}
+
+@media (max-width: 980px) {
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-actions {
+    max-width: none;
+  }
 }
 
 @media (max-width: 860px) {
   .admin-page {
-    padding: 18px;
+    padding: 16px;
   }
 
   .admin-header {
     align-items: flex-start;
     flex-direction: column;
+    padding: 18px;
   }
 
-  .admin-grid {
-    grid-template-columns: 1fr;
+  .admin-card {
+    padding: 20px;
   }
 
   .admin-list-item {
     align-items: flex-start;
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .admin-actions {
     width: 100%;
+    justify-content: flex-start;
   }
 
   .admin-actions button {
     flex: 1;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-page {
+    padding: 12px;
+  }
+
+  .login-card,
+  .admin-card,
+  .admin-header {
+    border-radius: 20px;
+  }
+
+  .admin-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-actions button {
+    width: 100%;
+  }
+}
+/* Ajuste premium compacto do painel */
+
+.admin-grid {
+  align-items: start;
+  grid-template-columns: 360px 1fr;
+  gap: 16px;
+}
+
+.admin-card {
+  align-content: start;
+  gap: 13px;
+  padding: 22px;
+}
+
+.admin-card h2 {
+  font-size: 1.35rem;
+}
+
+.admin-card p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.admin-events-grid {
+  align-items: start;
+}
+
+.admin-list {
+  gap: 10px;
+}
+
+.admin-list-item {
+  padding: 14px 16px;
+  min-height: auto;
+  align-items: center;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(23, 16, 95, 0.055);
+}
+
+.admin-list-item strong {
+  font-size: 1.02rem;
+}
+
+.admin-list-item p {
+  font-size: 0.92rem;
+}
+
+.admin-list-item small {
+  font-size: 0.9rem;
+}
+
+input,
+textarea {
+  padding: 11px 13px;
+}
+
+textarea {
+  min-height: 88px;
+}
+
+.admin-actions {
+  gap: 7px;
+  max-width: 320px;
+}
+
+/* Botões mais premium e menos coloridos */
+
+.admin-actions button {
+  min-height: 38px;
+  padding: 9px 12px;
+  border-radius: 11px;
+  font-size: 0.82rem;
+  box-shadow: none;
+  border: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.admin-actions .edit-button {
+  background: #eef7e8;
+  color: #2f7417;
+}
+
+.admin-actions .deactivate-button {
+  background: #f1f4f8;
+  color: #4e5868;
+}
+
+.admin-actions .activate-button {
+  background: #edf8f2;
+  color: #157347;
+}
+
+.admin-actions .order-button {
+  background: #f8f4e8;
+  color: #8a640f;
+}
+
+.admin-actions button:last-child {
+  background: #fff0ee;
+  color: #9d241a;
+}
+
+.admin-actions button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(23, 16, 95, 0.08);
+}
+
+/* Botões principais dos formulários */
+
+.admin-card > button[type='submit'] {
+  background: #17105f;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(23, 16, 95, 0.16);
+}
+
+.cancel-button {
+  background: #f1f4f8;
+  color: #4e5868;
+  box-shadow: none;
+  border: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+/* Status ativo/inativo mais discreto */
+
+.admin-list-item em {
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  background: #f1f4f8;
+  color: #17105f;
+}
+
+/* Preview da imagem menor */
+
+.admin-preview-image {
+  max-height: 170px;
+}
+
+/* Evita o card da direita ficar visualmente gigante quando tem poucos itens */
+
+.admin-card:has(.admin-list) {
+  min-height: auto;
+}
+
+@media (max-width: 980px) {
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+/* Mantém os botões da lista na mesma linha em telas grandes */
+
+.admin-list-item {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.admin-actions {
+  flex-wrap: nowrap;
+  max-width: none;
+  min-width: fit-content;
+}
+
+.admin-actions button {
+  white-space: nowrap;
+}
+
+/* Botões de subir/descer mais compactos */
+.admin-actions .order-button {
+  min-width: 38px;
+  width: 38px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Em telas menores, permite quebrar para não cortar texto */
+@media (max-width: 860px) {
+  .admin-actions {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .admin-actions .order-button {
+    width: auto;
   }
 }
