@@ -349,13 +349,25 @@ function obterThumbnailYoutube(url) {
         </div>
 
         <div className="welcome-note">
-          <strong>Primeira visita?</strong>
-          <p>
-            Venha como está. Nossa equipe estará pronta para acolher você
-            e sua família com carinho.
-          </p>
-          <a href="#localizacao">Ver como chegar</a>
-        </div>
+  <img
+    src="/Pastor.png"
+    alt="Casal de pastores da Igreja Filhos da Graça"
+    className="welcome-note-image"
+  />
+
+  <div className="welcome-note-overlay"></div>
+
+  <div className="welcome-note-content">
+    <strong>Primeira visita?</strong>
+
+    <p>
+      Venha como está. Nossa equipe estará pronta para acolher você
+      e sua família com carinho.
+    </p>
+
+    <a href="#localizacao">Ver como chegar</a>
+  </div>
+</div>
       </section>
 
       <section className="services" id="cultos">

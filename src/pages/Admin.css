@@ -666,3 +666,16 @@ textarea {
   font-weight: 900;
   text-decoration: underline;
 }
+.admin-brand-link {
+  display: block;
+  text-decoration: none;
+}
+
+.admin-brand-link span,
+.admin-brand-link h1 {
+  transition: color 0.18s ease;
+}
+
+.admin-brand-link:hover h1 {
+  color: #6fbd2a;
+}

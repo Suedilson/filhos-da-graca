@@ -849,13 +849,13 @@ async function excluirDocumento(id) {
   return (
     <main className="admin-page">
       <header className="admin-header">
-        <div>
-          <span>Painel administrativo</span>
-          <h1>Filhos da Graça</h1>
-        </div>
+  <a className="admin-brand-link" href="/">
+    <span>Painel administrativo</span>
+    <h1>Filhos da Graça</h1>
+  </a>
 
-        <button onClick={sair}>Sair</button>
-      </header>
+  <button onClick={sair}>Sair</button>
+</header>
 
 <nav className="admin-tabs">
   <button
