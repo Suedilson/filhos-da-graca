@@ -60,6 +60,7 @@ function Admin() {
   const [buscaMembro, setBuscaMembro] = useState('')
   const [filtroStatusMembro, setFiltroStatusMembro] = useState('Todos')
   const [filtroMinisterioMembro, setFiltroMinisterioMembro] = useState('Todos')
+  const [modoMembros, setModoMembros] = useState('lista')
   const [mesAniversariantes, setMesAniversariantes] = useState(
   String(new Date().getMonth() + 1),
 )
@@ -88,17 +89,22 @@ function Admin() {
   })
 
   const [membroForm, setMembroForm] = useState({
-    nome: '',
-    telefone: '',
-    nascimento: '',
-    endereco: '',
-    ministerio: '',
-    status: 'Ativo',
-    foto: '',
-    fotoPublicId: '',
-    observacoes: '',
-  })
-
+  nome: '',
+  telefone: '',
+  nascimento: '',
+  endereco: '',
+  ministerio: '',
+  status: 'Ativo',
+  foto: '',
+  fotoPublicId: '',
+  observacoes: '',
+  responsavelAcompanhamento: '',
+  situacaoPastoral: 'Em acompanhamento',
+  ultimoContato: '',
+  proximaAcao: '',
+  dataProximaAcao: '',
+  observacaoAcompanhamento: '',
+})
   const [localizacaoForm, setLocalizacaoForm] = useState({
     nomeLocal: '',
     endereco: '',
@@ -867,19 +873,25 @@ function Admin() {
     setLoading(true)
 
     try {
-      const dadosMembro = {
-        nome: membroForm.nome,
-        telefone: membroForm.telefone,
-        nascimento: membroForm.nascimento,
-        endereco: membroForm.endereco,
-        ministerio: membroForm.ministerio,
-        status: membroForm.status,
-        foto: membroForm.foto,
-        fotoPublicId: membroForm.fotoPublicId,
-        observacoes: membroForm.observacoes,
-        ativo: membroForm.status !== 'Inativo',
-        atualizadoEm: serverTimestamp(),
-      }
+     const dadosMembro = {
+  nome: membroForm.nome,
+  telefone: membroForm.telefone,
+  nascimento: membroForm.nascimento,
+  endereco: membroForm.endereco,
+  ministerio: membroForm.ministerio,
+  status: membroForm.status,
+  foto: membroForm.foto,
+  fotoPublicId: membroForm.fotoPublicId,
+  observacoes: membroForm.observacoes,
+  responsavelAcompanhamento: membroForm.responsavelAcompanhamento,
+  situacaoPastoral: membroForm.situacaoPastoral,
+  ultimoContato: membroForm.ultimoContato,
+  proximaAcao: membroForm.proximaAcao,
+  dataProximaAcao: membroForm.dataProximaAcao,
+  observacaoAcompanhamento: membroForm.observacaoAcompanhamento,
+  ativo: membroForm.status !== 'Inativo',
+  atualizadoEm: serverTimestamp(),
+}
 
       if (editandoMembroId) {
         await updateDoc(doc(db, 'membros', editandoMembroId), dadosMembro)
@@ -893,20 +905,27 @@ function Admin() {
         alert('Membro cadastrado com sucesso!')
       }
 
-      setMembroForm({
-        nome: '',
-        telefone: '',
-        nascimento: '',
-        endereco: '',
-        ministerio: '',
-        status: 'Ativo',
-        foto: '',
-        fotoPublicId: '',
-        observacoes: '',
-      })
+     setMembroForm({
+  nome: '',
+  telefone: '',
+  nascimento: '',
+  endereco: '',
+  ministerio: '',
+  status: 'Ativo',
+  foto: '',
+  fotoPublicId: '',
+  observacoes: '',
+  responsavelAcompanhamento: '',
+  situacaoPastoral: 'Em acompanhamento',
+  ultimoContato: '',
+  proximaAcao: '',
+  dataProximaAcao: '',
+  observacaoAcompanhamento: '',
+})
 
       setEditandoMembroId(null)
       await carregarMembros()
+      setModoMembros('lista')
     } catch (error) {
       alert('Erro ao salvar membro.')
       console.error(error)
@@ -917,6 +936,7 @@ function Admin() {
 
   function editarMembro(membro) {
     setAbaAtiva('membros')
+    setModoMembros('cadastro')
     setEditandoMembroId(membro.id)
 
     setMembroForm({
@@ -929,6 +949,12 @@ function Admin() {
       foto: membro.foto || '',
       fotoPublicId: membro.fotoPublicId || '',
       observacoes: membro.observacoes || '',
+      responsavelAcompanhamento: membro.responsavelAcompanhamento || '',
+      situacaoPastoral: membro.situacaoPastoral || 'Em acompanhamento',
+      ultimoContato: membro.ultimoContato || '',
+      proximaAcao: membro.proximaAcao || '',
+      dataProximaAcao: membro.dataProximaAcao || '',
+      observacaoAcompanhamento: membro.observacaoAcompanhamento || '',
     })
 
     window.scrollTo({
@@ -950,7 +976,15 @@ function Admin() {
       foto: '',
       fotoPublicId: '',
       observacoes: '',
+      responsavelAcompanhamento: '',
+      situacaoPastoral: 'Em acompanhamento',
+      ultimoContato: '',
+      proximaAcao: '',
+      dataProximaAcao: '',
+      observacaoAcompanhamento: '',
     })
+
+    setModoMembros('lista')
   }
 
   async function alternarStatusMembro(membro) {
@@ -1039,6 +1073,16 @@ function ehAniversarianteHoje(dataNascimento) {
   return (
     Number(obterMesNascimento(dataNascimento)) === mesAtual &&
     obterDiaNascimento(dataNascimento) === diaAtual
+  )
+}
+function temAcompanhamentoPastoral(membro) {
+  return Boolean(
+    membro.responsavelAcompanhamento ||
+      (membro.situacaoPastoral && membro.situacaoPastoral !== 'Sem acompanhamento') ||
+      membro.ultimoContato ||
+      membro.proximaAcao ||
+      membro.dataProximaAcao ||
+      membro.observacaoAcompanhamento,
   )
 }
 function obterNomeMes(numeroMes) {
@@ -1310,14 +1354,43 @@ const membrosFiltrados = membros.filter((membro) => {
 
   return (
     <main className="admin-page">
-      <header className="admin-header">
-        <a className="admin-brand-link" href="/">
-          <span>Painel administrativo</span>
-          <h1>Filhos da Graça</h1>
-        </a>
+     <header className="admin-header">
+  <a className="admin-brand-link" href="/">
+    <span>Painel administrativo</span>
+    <h1>Filhos da Graça</h1>
+  </a>
 
-        <button onClick={sair}>Sair</button>
-      </header>
+  {abaAtiva === 'membros' && (
+    <div className="header-members-summary">
+      <article>
+        <span>Total</span>
+        <strong>{resumoMembros.total}</strong>
+      </article>
+
+      <article>
+        <span>Ativos</span>
+        <strong>{resumoMembros.ativos}</strong>
+      </article>
+
+      <article>
+        <span>Visitantes</span>
+        <strong>{resumoMembros.visitantes}</strong>
+      </article>
+
+      <article>
+        <span>Afastados</span>
+        <strong>{resumoMembros.afastados}</strong>
+      </article>
+
+      <article>
+        <span>Inativos</span>
+        <strong>{resumoMembros.inativos}</strong>
+      </article>
+    </div>
+  )}
+
+  <button onClick={sair}>Sair</button>
+</header>
 
       <nav className="admin-tabs">
         <button
@@ -2064,141 +2137,82 @@ const membrosFiltrados = membros.filter((membro) => {
 
      {abaAtiva === 'membros' && (
   <section className="members-admin-area">
-    <div className="members-summary">
-      <article>
-        <span>Total</span>
-        <strong>{resumoMembros.total}</strong>
-      </article>
+  <div className="member-mode-actions member-mode-actions-four">
+  <button
+    type="button"
+    className={modoMembros === 'lista' ? 'active' : ''}
+    onClick={() => {
+      cancelarEdicaoMembro()
+      setModoMembros('lista')
+    }}
+  >
+    <span>📋</span>
+    Membros cadastrados
+  </button>
 
-      <article>
-        <span>Ativos</span>
-        <strong>{resumoMembros.ativos}</strong>
-      </article>
+  <button
+    type="button"
+    className={modoMembros === 'cadastro' ? 'active' : ''}
+    onClick={() => {
+      cancelarEdicaoMembro()
+      setModoMembros('cadastro')
+    }}
+  >
+    <span>✚</span>
+    Cadastrar membro
+  </button>
 
-      <article>
-        <span>Visitantes</span>
-        <strong>{resumoMembros.visitantes}</strong>
-      </article>
+  <button
+    type="button"
+    className={modoMembros === 'pastoral' ? 'active' : ''}
+    onClick={() => {
+      cancelarEdicaoMembro()
+      setModoMembros('pastoral')
+    }}
+  >
+    <span>❤</span>
+    Acompanhamento pastoral
+  </button>
 
-      <article>
-        <span>Afastados</span>
-        <strong>{resumoMembros.afastados}</strong>
-      </article>
-
-      <article>
-        <span>Inativos</span>
-        <strong>{resumoMembros.inativos}</strong>
-      </article>
-    </div>
-<div className="birthday-panel">
-  <div className="birthday-heading">
-    <span className="admin-section-label">Aniversariantes</span>
-    <h2>Aniversariantes do mês</h2>
-    <p>
-      Acompanhe os membros que fazem aniversário no mês selecionado.
-    </p>
-  </div>
-
-  <div className="birthday-controls">
-    <label>
-      Mês
-      <select
-        value={mesAniversariantes}
-        onChange={(event) => setMesAniversariantes(event.target.value)}
-      >
-      <option value="1">Janeiro</option>
-      <option value="2">Fevereiro</option>
-      <option value="3">Março</option>
-      <option value="4">Abril</option>
-      <option value="5">Maio</option>
-      <option value="6">Junho</option>
-      <option value="7">Julho</option>
-      <option value="8">Agosto</option>
-      <option value="9">Setembro</option>
-      <option value="10">Outubro</option>
-      <option value="11">Novembro</option>
-              <option value="12">Dezembro</option>
-      </select>
-    </label>
-
-    <div className="birthday-buttons">
-      <button
-        type="button"
-        className="report-button"
-        onClick={gerarRelatorioAniversariantes}
-      >
-        Relatório
-      </button>
-
-      <button
-        type="button"
-        className="excel-button"
-        onClick={exportarAniversariantesExcel}
-      >
-        Exportar Excel
-      </button>
-    </div>
-  </div>
-
-  <div className="birthday-stats">
-    <article>
-      <span>No mês</span>
-      <strong>{aniversariantesDoMes.length}</strong>
-    </article>
-
-    <article>
-      <span>Hoje</span>
-      <strong>{aniversariantesHoje.length}</strong>
-    </article>
-  </div>
-
-  <div className="birthday-list">
-    {aniversariantesDoMes.length === 0 && (
-      <p>Nenhum aniversariante neste mês.</p>
-    )}
-
-    {aniversariantesDoMes.map((membro) => (
-      <article
-        className={
-          'birthday-item ' +
-          (ehAniversarianteHoje(membro.nascimento) ? 'birthday-today' : '')
-        }
-        key={membro.id}
-      >
-        {membro.foto ? (
-          <img src={membro.foto} alt={membro.nome} />
-        ) : (
-          <div>{membro.nome?.charAt(0) || '?'}</div>
-        )}
-
-        <section>
-          <span>
-            Dia {obterDiaNascimento(membro.nascimento)}
-            {ehAniversarianteHoje(membro.nascimento) ? ' - hoje' : ''}
-          </span>
-
-          <strong>{membro.nome}</strong>
-
-          <small>
-            Idade atual: {calcularIdade(membro.nascimento)} anos
-          </small>
-
-          <small>
-            Nova idade: {calcularNovaIdade(membro.nascimento)} anos
-          </small>
-        </section>
-      </article>
-    ))}
-  </div>
+  <button
+    type="button"
+    className={modoMembros === 'aniversariantes' ? 'active' : ''}
+    onClick={() => {
+      cancelarEdicaoMembro()
+      setModoMembros('aniversariantes')
+    }}
+  >
+    <span>🎂</span>
+    Aniversariantes
+  </button>
 </div>
-
-    <div className="admin-grid admin-events-grid">
-          <form className="admin-card" onSubmit={salvarMembro}>
+<div className="admin-grid admin-events-grid">
+ <form
+  className={`admin-card member-form-panel ${
+    modoMembros === 'lista' || modoMembros === 'aniversariantes'
+      ? 'member-hidden-panel'
+      : ''
+  } ${
+    modoMembros === 'pastoral' ? 'member-form-pastoral' : 'member-form-cadastro'
+  }`}
+  onSubmit={salvarMembro}
+>
+   
             <span className="admin-section-label">Membros</span>
 
-            <h2>{editandoMembroId ? 'Editar membro' : 'Cadastrar membro'}</h2>
+            <h2>
+  {editandoMembroId
+    ? 'Editar membro'
+    : modoMembros === 'pastoral'
+      ? 'Acompanhamento pastoral'
+      : 'Cadastrar membro'}
+</h2>
 
-            <p>Cadastre membros, visitantes e pessoas acompanhadas pela igreja.</p>
+<p>
+  {modoMembros === 'pastoral'
+    ? 'Registre informações de cuidado, contato, próxima ação e acompanhamento.'
+    : 'Cadastre membros, visitantes e pessoas acompanhadas pela igreja.'}
+</p>
 
             <label>
               Nome completo
@@ -2327,6 +2341,99 @@ const membrosFiltrados = membros.filter((membro) => {
                 placeholder="Observações internas sobre acompanhamento, família ou integração"
               />
             </label>
+<div className="pastoral-form-section">
+  <span>Acompanhamento pastoral</span>
+
+  <label>
+    Responsável pelo acompanhamento
+    <input
+      value={membroForm.responsavelAcompanhamento}
+      onChange={(event) =>
+        setMembroForm({
+          ...membroForm,
+          responsavelAcompanhamento: event.target.value,
+        })
+      }
+      placeholder="Ex: Pastor, líder, discipulador"
+    />
+  </label>
+
+  <label>
+    Situação pastoral
+    <select
+      value={membroForm.situacaoPastoral}
+      onChange={(event) =>
+        setMembroForm({
+          ...membroForm,
+          situacaoPastoral: event.target.value,
+        })
+      }
+    >
+      <option value="Em acompanhamento">Em acompanhamento</option>
+      <option value="Integrado">Integrado</option>
+      <option value="Precisa de contato">Precisa de contato</option>
+      <option value="Novo convertido">Novo convertido</option>
+      <option value="Visitante recorrente">Visitante recorrente</option>
+      <option value="Sem acompanhamento">Sem acompanhamento</option>
+    </select>
+  </label>
+
+  <label>
+    Último contato
+    <input
+      type="date"
+      value={membroForm.ultimoContato}
+      onChange={(event) =>
+        setMembroForm({
+          ...membroForm,
+          ultimoContato: event.target.value,
+        })
+      }
+    />
+  </label>
+
+  <label>
+    Próxima ação
+    <input
+      value={membroForm.proximaAcao}
+      onChange={(event) =>
+        setMembroForm({
+          ...membroForm,
+          proximaAcao: event.target.value,
+        })
+      }
+      placeholder="Ex: Ligar, visitar, convidar para célula"
+    />
+  </label>
+
+  <label>
+    Data da próxima ação
+    <input
+      type="date"
+      value={membroForm.dataProximaAcao}
+      onChange={(event) =>
+        setMembroForm({
+          ...membroForm,
+          dataProximaAcao: event.target.value,
+        })
+      }
+    />
+  </label>
+
+  <label>
+    Observação do acompanhamento
+    <textarea
+      value={membroForm.observacaoAcompanhamento}
+      onChange={(event) =>
+        setMembroForm({
+          ...membroForm,
+          observacaoAcompanhamento: event.target.value,
+        })
+      }
+      placeholder="Registre informações importantes do cuidado pastoral"
+    />
+  </label>
+</div>
 
             <button type="submit" disabled={loading || enviandoFotoMembro}>
               {loading
@@ -2345,9 +2452,13 @@ const membrosFiltrados = membros.filter((membro) => {
                 Cancelar edição
               </button>
             )}
-          </form>
+                             </form>
 
-          <section className="admin-card">
+          <section
+            className={`admin-card ${
+              modoMembros !== 'lista' ? 'member-hidden-panel' : ''
+            }`}
+          >
            <span className="admin-section-label">Lista de membros</span>
 <h2>Membros cadastrados</h2>
 <p>Controle interno de membros e visitantes.</p>
@@ -2424,9 +2535,15 @@ const membrosFiltrados = membros.filter((membro) => {
                   )}
 
                  <div className="member-info">
-  <span>{membro.status || 'Ativo'}</span>
+ <span className="member-status-line">
+  {membro.status || 'Ativo'}
 
-  <strong>{membro.nome}</strong>
+  {temAcompanhamentoPastoral(membro) && (
+    <em title="Possui acompanhamento pastoral">💚</em>
+  )}
+</span>
+
+<strong>{membro.nome}</strong>
 
   <div className="member-details">
     {membro.telefone && (
@@ -2464,6 +2581,42 @@ const membrosFiltrados = membros.filter((membro) => {
         <b>Observações:</b> {membro.observacoes}
       </small>
     )}
+
+    {membro.situacaoPastoral && (
+      <small>
+        <b>Situação pastoral:</b> {membro.situacaoPastoral}
+      </small>
+    )}
+
+    {membro.responsavelAcompanhamento && (
+      <small>
+        <b>Responsável:</b> {membro.responsavelAcompanhamento}
+      </small>
+    )}
+
+    {membro.ultimoContato && (
+      <small>
+        <b>Último contato:</b> {formatarData(membro.ultimoContato)}
+      </small>
+    )}
+
+    {membro.proximaAcao && (
+      <small>
+        <b>Próxima ação:</b> {membro.proximaAcao}
+      </small>
+    )}
+
+    {membro.dataProximaAcao && (
+      <small>
+        <b>Data da próxima ação:</b> {formatarData(membro.dataProximaAcao)}
+      </small>
+    )}
+
+    {membro.observacaoAcompanhamento && (
+      <small>
+        <b>Obs. acompanhamento:</b> {membro.observacaoAcompanhamento}
+      </small>
+    )}
   </div>
 </div>
 
@@ -2494,8 +2647,124 @@ const membrosFiltrados = membros.filter((membro) => {
                   </div>
                 </article>
                            ))}
-            </div>
+                      </div>
           </section>
+
+          {modoMembros === 'aniversariantes' && (
+            <section className="admin-card member-birthday-card">
+              <div className="birthday-page-header">
+                <div>
+                  <span className="admin-section-label">Aniversariantes</span>
+                  <h2>🎂 Aniversariantes do mês</h2>
+                  <p>
+                    Consulte os aniversariantes, gere relatório para impressão e exporte para Excel.
+                  </p>
+                </div>
+
+                <div className="birthday-page-actions">
+                  <label>
+                    Mês
+                    <select
+                      value={mesAniversariantes}
+                      onChange={(event) => setMesAniversariantes(event.target.value)}
+                    >
+                      <option value="1">Janeiro</option>
+                      <option value="2">Fevereiro</option>
+                      <option value="3">Março</option>
+                      <option value="4">Abril</option>
+                      <option value="5">Maio</option>
+                      <option value="6">Junho</option>
+                      <option value="7">Julho</option>
+                      <option value="8">Agosto</option>
+                      <option value="9">Setembro</option>
+                      <option value="10">Outubro</option>
+                      <option value="11">Novembro</option>
+                      <option value="12">Dezembro</option>
+                    </select>
+                  </label>
+
+                  <div className="birthday-buttons">
+                    <button
+                      type="button"
+                      className="report-button"
+                      onClick={gerarRelatorioAniversariantes}
+                    >
+                      📄 Relatório
+                    </button>
+
+                    <button
+                      type="button"
+                      className="excel-button"
+                      onClick={exportarAniversariantesExcel}
+                    >
+                      📊 Exportar Excel
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="birthday-page-stats">
+                <article>
+                  <span>No mês</span>
+                  <strong>{aniversariantesDoMes.length}</strong>
+                </article>
+
+                <article>
+                  <span>Hoje</span>
+                  <strong>{aniversariantesHoje.length}</strong>
+                </article>
+              </div>
+
+              <div className="birthday-page-list">
+                {aniversariantesDoMes.length === 0 && (
+                  <p>Nenhum aniversariante neste mês.</p>
+                )}
+
+                {aniversariantesDoMes.map((membro) => (
+                  <article
+                    className={
+                      'birthday-page-item ' +
+                      (ehAniversarianteHoje(membro.nascimento)
+                        ? 'birthday-today'
+                        : '')
+                    }
+                    key={membro.id}
+                  >
+                    {membro.foto ? (
+                      <img src={membro.foto} alt={membro.nome} />
+                    ) : (
+                      <div>{membro.nome?.charAt(0) || '?'}</div>
+                    )}
+
+                    <section>
+                      <span>
+                        Dia {obterDiaNascimento(membro.nascimento)}
+                        {ehAniversarianteHoje(membro.nascimento) ? ' - hoje' : ''}
+                      </span>
+
+                      <strong>{membro.nome}</strong>
+
+                      <small>
+                        Idade atual: {calcularIdade(membro.nascimento)} anos
+                      </small>
+
+                      <small>
+                        Nova idade: {calcularNovaIdade(membro.nascimento)} anos
+                      </small>
+
+                      {membro.telefone && (
+                        <small>Telefone: {membro.telefone}</small>
+                      )}
+
+                      {membro.ministerio && (
+                        <small>Ministério: {membro.ministerio}</small>
+                      )}
+                    </section>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </section>
     )}

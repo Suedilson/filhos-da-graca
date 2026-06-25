@@ -1239,3 +1239,1053 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+/* Ajuste correto da aba Membros - formulário em modelo ficha */
+
+.members-admin-area > .admin-grid.admin-events-grid {
+  grid-template-columns: 1fr;
+  gap: 22px;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
+  align-items: start;
+  width: 100%;
+  max-width: 100%;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > .admin-section-label,
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > h2,
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > p {
+  grid-column: 1 / -1;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card label {
+  margin: 0;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > label:has(textarea) {
+  grid-column: 1 / -1;
+}
+
+.members-admin-area .member-photo-preview {
+  align-self: end;
+}
+
+.pastoral-form-section {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  padding: 20px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 250, 242, 0.72));
+  border: 1px solid rgba(23, 16, 95, 0.1);
+  box-shadow: 0 12px 30px rgba(23, 16, 95, 0.06);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.pastoral-form-section > span {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #6fbd2a;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pastoral-form-section > span::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #6fbd2a;
+}
+
+.pastoral-form-section label:last-child {
+  grid-column: 1 / -1;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > button {
+  grid-column: 1 / -1;
+  max-width: 320px;
+  justify-self: start;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > .cancel-button {
+  margin-top: -8px;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > section.admin-card {
+  width: 100%;
+}
+
+.members-admin-area .member-list-item {
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  padding: 16px;
+}
+
+@media (max-width: 900px) {
+  .members-admin-area > .admin-grid.admin-events-grid > form.admin-card,
+  .pastoral-form-section {
+    grid-template-columns: 1fr;
+  }
+
+  .members-admin-area > .admin-grid.admin-events-grid > form.admin-card > button {
+    max-width: 100%;
+    justify-self: stretch;
+  }
+}
+
+@media (max-width: 760px) {
+  .members-admin-area .member-list-item {
+    grid-template-columns: 54px 1fr;
+  }
+
+  .members-admin-area .member-list-item .admin-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Correção definitiva da aba Membros */
+
+/* Esconde completamente a ficha que não está selecionada */
+.member-hidden-panel {
+  display: none !important;
+}
+
+/* Área dos botões internos */
+.member-mode-actions {
+  width: min(100%, 980px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 20px 0 22px;
+}
+
+.member-mode-actions button {
+  min-height: 68px;
+  padding: 14px 18px;
+  border: 1px solid rgba(23, 16, 95, 0.1);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 250, 242, 0.82));
+  color: #17105f;
+  font-size: 0.95rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(23, 16, 95, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.member-mode-actions button span {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(111, 189, 42, 0.13);
+  color: #17105f;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.member-mode-actions button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(111, 189, 42, 0.35);
+  box-shadow: 0 16px 34px rgba(23, 16, 95, 0.1);
+}
+
+.member-mode-actions button.active {
+  background: linear-gradient(135deg, #17105f, #27137a);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 16px 34px rgba(23, 16, 95, 0.18);
+}
+
+.member-mode-actions button.active span {
+  background: rgba(255, 255, 255, 0.94);
+  color: #17105f;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(23, 16, 95, 0.08);
+}
+
+/* Formulário de membros em modelo ficha */
+.members-admin-area > .admin-grid.admin-events-grid {
+  grid-template-columns: 1fr;
+  gap: 22px;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card,
+.members-admin-area > form.admin-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
+  align-items: start;
+  width: 100%;
+  max-width: 100%;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > .admin-section-label,
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > h2,
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > p,
+.members-admin-area > form.admin-card > .admin-section-label,
+.members-admin-area > form.admin-card > h2,
+.members-admin-area > form.admin-card > p {
+  grid-column: 1 / -1;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card label,
+.members-admin-area > form.admin-card label {
+  margin: 0;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card textarea,
+.members-admin-area > form.admin-card textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > label:has(textarea),
+.members-admin-area > form.admin-card > label:has(textarea) {
+  grid-column: 1 / -1;
+}
+
+.members-admin-area .member-photo-preview {
+  align-self: end;
+}
+
+/* Acompanhamento pastoral como ficha grande */
+.pastoral-form-section {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  padding: 20px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 250, 242, 0.72));
+  border: 1px solid rgba(23, 16, 95, 0.1);
+  box-shadow: 0 12px 30px rgba(23, 16, 95, 0.06);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.pastoral-form-section > span {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #6fbd2a;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pastoral-form-section > span::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #6fbd2a;
+}
+
+.pastoral-form-section label:last-child {
+  grid-column: 1 / -1;
+}
+
+/* Botão salvar */
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > button,
+.members-admin-area > form.admin-card > button {
+  grid-column: 1 / -1;
+  max-width: 320px;
+  justify-self: start;
+}
+
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > .cancel-button,
+.members-admin-area > form.admin-card > .cancel-button {
+  margin-top: -8px;
+}
+
+/* Modo Cadastrar membro: esconde acompanhamento pastoral */
+.member-form-cadastro .pastoral-form-section {
+  display: none !important;
+}
+
+/* Modo Acompanhamento pastoral:
+   esconde os campos cadastrais que não devem aparecer */
+.member-form-pastoral > label:nth-of-type(3),
+.member-form-pastoral > label:nth-of-type(4),
+.member-form-pastoral > label:nth-of-type(5),
+.member-form-pastoral > label:nth-of-type(6),
+.member-form-pastoral > label:nth-of-type(7),
+.member-form-pastoral > label:nth-of-type(8),
+.member-form-pastoral .member-age-note,
+.member-form-pastoral .member-photo-preview {
+  display: none !important;
+}
+
+/* Modo Acompanhamento pastoral:
+   mantém nome, telefone e a ficha pastoral */
+.member-form-pastoral > label:nth-of-type(1),
+.member-form-pastoral > label:nth-of-type(2),
+.member-form-pastoral .pastoral-form-section {
+  display: grid !important;
+}
+
+/* Lista de membros */
+.members-admin-area > .admin-grid.admin-events-grid > section.admin-card,
+.members-admin-area > section.admin-card {
+  width: 100%;
+}
+
+.members-admin-area .member-list-item {
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  padding: 16px;
+}
+
+/* Ícone na ficha de quem tem acompanhamento pastoral */
+.member-status-line {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-status-line em {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(111, 189, 42, 0.14);
+  border: 1px solid rgba(111, 189, 42, 0.24);
+  font-style: normal;
+  font-size: 0.85rem;
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+  .members-admin-area > .admin-grid.admin-events-grid > form.admin-card,
+  .members-admin-area > form.admin-card,
+  .pastoral-form-section {
+    grid-template-columns: 1fr;
+  }
+
+  .members-admin-area > .admin-grid.admin-events-grid > form.admin-card > button,
+  .members-admin-area > form.admin-card > button {
+    max-width: 100%;
+    justify-self: stretch;
+  }
+
+  .member-mode-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .members-admin-area .member-list-item {
+    grid-template-columns: 54px 1fr;
+  }
+
+  .members-admin-area .member-list-item .admin-actions {
+    grid-column: 1 / -1;
+  }
+}
+/* Compactação elegante da aba Membros */
+
+.members-admin-area {
+  gap: 14px;
+}
+
+/* Cards de resumo mais compactos */
+.members-summary {
+  gap: 10px;
+}
+
+.members-summary article {
+  min-height: 58px;
+  padding: 11px 14px;
+  border-radius: 16px;
+}
+
+.members-summary span {
+  font-size: 0.66rem;
+}
+
+.members-summary strong {
+  margin-top: 4px;
+  font-size: 1.35rem;
+}
+
+/* Botões internos mais elegantes */
+.member-mode-actions {
+  width: min(100%, 820px);
+  gap: 10px;
+  margin: 14px 0 16px;
+}
+
+.member-mode-actions button {
+  min-height: 54px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 0.88rem;
+  box-shadow: 0 8px 22px rgba(23, 16, 95, 0.06);
+}
+
+.member-mode-actions button span {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 11px;
+  font-size: 1rem;
+}
+
+.member-mode-actions button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(23, 16, 95, 0.1);
+}
+
+.member-mode-actions button.active {
+  box-shadow: 0 12px 28px rgba(23, 16, 95, 0.16);
+}
+
+/* Cards principais mais compactos */
+.members-admin-area .admin-card {
+  padding: 22px;
+  border-radius: 22px;
+}
+
+.members-admin-area .admin-card h2 {
+  margin: 6px 0 8px;
+  font-size: 1.35rem;
+}
+
+.members-admin-area .admin-card p {
+  margin-bottom: 14px;
+  font-size: 0.95rem;
+}
+
+/* Formulário mais compacto */
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card,
+.members-admin-area > form.admin-card {
+  gap: 12px 16px;
+}
+
+.members-admin-area label {
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.members-admin-area input,
+.members-admin-area select {
+  height: 44px;
+  border-radius: 13px;
+  font-size: 0.92rem;
+}
+
+.members-admin-area textarea {
+  min-height: 78px !important;
+  border-radius: 14px;
+  font-size: 0.92rem;
+}
+
+/* Ficha de acompanhamento pastoral mais compacta */
+.pastoral-form-section {
+  margin-top: 0;
+  padding: 16px;
+  border-radius: 20px;
+  gap: 11px 14px;
+  box-shadow: 0 8px 22px rgba(23, 16, 95, 0.05);
+}
+
+.pastoral-form-section > span {
+  font-size: 0.72rem;
+}
+
+.pastoral-form-section > span::before {
+  width: 8px;
+  height: 8px;
+}
+
+/* Botão salvar menor */
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > button,
+.members-admin-area > form.admin-card > button {
+  max-width: 260px;
+  min-height: 46px;
+  border-radius: 15px;
+}
+
+/* Lista mais compacta */
+.member-filters {
+  gap: 10px;
+  margin: 14px 0 10px;
+}
+
+.member-results-count {
+  margin-bottom: 12px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 0.86rem;
+}
+
+.members-admin-area .member-list-item {
+  padding: 13px 14px;
+  gap: 13px;
+  border-radius: 18px;
+}
+
+.members-admin-area .member-list-photo,
+.members-admin-area .member-list-placeholder {
+  width: 54px;
+  height: 54px;
+  min-width: 54px;
+  border-radius: 15px;
+}
+
+.member-info strong {
+  margin: 3px 0 6px;
+  font-size: 1rem;
+}
+
+.member-details {
+  gap: 3px;
+}
+
+.member-details small {
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+/* Botões da lista menores */
+.members-admin-area .admin-actions {
+  gap: 8px;
+}
+
+.members-admin-area .admin-actions button {
+  min-height: 38px;
+  padding: 9px 13px;
+  border-radius: 12px;
+  font-size: 0.84rem;
+}
+
+/* Ajuste responsivo */
+@media (max-width: 900px) {
+  .member-mode-actions {
+    width: 100%;
+  }
+
+  .members-admin-area .admin-card {
+    padding: 18px;
+  }
+}
+/* Compactação elegante da aba Membros */
+
+.members-admin-area {
+  gap: 14px;
+}
+
+/* Cards de resumo mais compactos */
+.members-summary {
+  gap: 10px;
+}
+
+.members-summary article {
+  min-height: 58px;
+  padding: 11px 14px;
+  border-radius: 16px;
+}
+
+.members-summary span {
+  font-size: 0.66rem;
+}
+
+.members-summary strong {
+  margin-top: 4px;
+  font-size: 1.35rem;
+}
+
+/* Botões internos mais elegantes */
+.member-mode-actions {
+  width: min(100%, 820px);
+  gap: 10px;
+  margin: 14px 0 16px;
+}
+
+.member-mode-actions button {
+  min-height: 54px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 0.88rem;
+  box-shadow: 0 8px 22px rgba(23, 16, 95, 0.06);
+}
+
+.member-mode-actions button span {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 11px;
+  font-size: 1rem;
+}
+
+.member-mode-actions button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(23, 16, 95, 0.1);
+}
+
+.member-mode-actions button.active {
+  box-shadow: 0 12px 28px rgba(23, 16, 95, 0.16);
+}
+
+/* Cards principais mais compactos */
+.members-admin-area .admin-card {
+  padding: 22px;
+  border-radius: 22px;
+}
+
+.members-admin-area .admin-card h2 {
+  margin: 6px 0 8px;
+  font-size: 1.35rem;
+}
+
+.members-admin-area .admin-card p {
+  margin-bottom: 14px;
+  font-size: 0.95rem;
+}
+
+/* Formulário mais compacto */
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card,
+.members-admin-area > form.admin-card {
+  gap: 12px 16px;
+}
+
+.members-admin-area label {
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.members-admin-area input,
+.members-admin-area select {
+  height: 44px;
+  border-radius: 13px;
+  font-size: 0.92rem;
+}
+
+.members-admin-area textarea {
+  min-height: 78px !important;
+  border-radius: 14px;
+  font-size: 0.92rem;
+}
+
+/* Ficha de acompanhamento pastoral mais compacta */
+.pastoral-form-section {
+  margin-top: 0;
+  padding: 16px;
+  border-radius: 20px;
+  gap: 11px 14px;
+  box-shadow: 0 8px 22px rgba(23, 16, 95, 0.05);
+}
+
+.pastoral-form-section > span {
+  font-size: 0.72rem;
+}
+
+.pastoral-form-section > span::before {
+  width: 8px;
+  height: 8px;
+}
+
+/* Botão salvar menor */
+.members-admin-area > .admin-grid.admin-events-grid > form.admin-card > button,
+.members-admin-area > form.admin-card > button {
+  max-width: 260px;
+  min-height: 46px;
+  border-radius: 15px;
+}
+
+/* Lista mais compacta */
+.member-filters {
+  gap: 10px;
+  margin: 14px 0 10px;
+}
+
+.member-results-count {
+  margin-bottom: 12px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 0.86rem;
+}
+
+.members-admin-area .member-list-item {
+  padding: 13px 14px;
+  gap: 13px;
+  border-radius: 18px;
+}
+
+.members-admin-area .member-list-photo,
+.members-admin-area .member-list-placeholder {
+  width: 54px;
+  height: 54px;
+  min-width: 54px;
+  border-radius: 15px;
+}
+
+.member-info strong {
+  margin: 3px 0 6px;
+  font-size: 1rem;
+}
+
+.member-details {
+  gap: 3px;
+}
+
+.member-details small {
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+/* Botões da lista menores */
+.members-admin-area .admin-actions {
+  gap: 8px;
+}
+
+.members-admin-area .admin-actions button {
+  min-height: 38px;
+  padding: 9px 13px;
+  border-radius: 12px;
+  font-size: 0.84rem;
+}
+
+/* Ajuste responsivo */
+@media (max-width: 900px) {
+  .member-mode-actions {
+    width: 100%;
+  }
+
+  .members-admin-area .admin-card {
+    padding: 18px;
+  }
+}
+.member-mode-actions-four {
+  width: min(100%, 980px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.member-mode-actions-four button {
+  min-height: 46px;
+  padding: 8px 11px;
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+.member-mode-actions-four button span {
+  width: 27px;
+  height: 27px;
+  min-width: 27px;
+  border-radius: 10px;
+  font-size: 0.94rem;
+}
+
+.member-birthday-card {
+  width: 100%;
+}
+
+.member-birthday-card .birthday-page-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 16px;
+  align-items: start;
+}
+
+.member-birthday-card h2 {
+  margin: 4px 0 6px;
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+
+.member-birthday-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.birthday-page-actions {
+  display: grid;
+  gap: 9px;
+}
+
+.birthday-page-actions label {
+  margin: 0;
+}
+
+.birthday-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.birthday-buttons button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 13px;
+  font-size: 0.84rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.report-button {
+  background: #17105f;
+  color: white;
+}
+
+.excel-button {
+  background: rgba(111, 189, 42, 0.14);
+  color: #2f7f12;
+  border: 1px solid rgba(111, 189, 42, 0.22) !important;
+}
+
+.birthday-page-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 140px);
+  gap: 9px;
+  margin: 12px 0;
+}
+
+.birthday-page-stats article {
+  padding: 10px 12px;
+  border-radius: 15px;
+  background: rgba(111, 189, 42, 0.08);
+  border: 1px solid rgba(111, 189, 42, 0.22);
+}
+
+.birthday-page-stats span {
+  display: block;
+  color: #6fbd2a;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.birthday-page-stats strong {
+  display: block;
+  margin-top: 4px;
+  color: #17105f;
+  font-size: 1.25rem;
+}
+
+.birthday-page-list {
+  display: grid;
+  gap: 9px;
+}
+
+.birthday-page-item {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 11px;
+  border-radius: 16px;
+  background: #fffaf2;
+  border: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.birthday-page-item img,
+.birthday-page-item > div {
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+}
+
+.birthday-page-item img {
+  object-fit: cover;
+  display: block;
+}
+
+.birthday-page-item > div {
+  display: grid;
+  place-items: center;
+  background: white;
+  color: #17105f;
+  font-weight: 900;
+}
+
+.birthday-page-item span {
+  display: block;
+  color: #6fbd2a;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.birthday-page-item strong {
+  display: block;
+  margin: 2px 0 4px;
+  color: #17105f;
+  font-size: 0.94rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.birthday-page-item small {
+  display: block;
+  color: #60708a;
+  font-size: 0.79rem;
+  line-height: 1.32;
+  overflow-wrap: anywhere;
+}
+
+.birthday-today {
+  border-color: rgba(216, 165, 38, 0.45);
+  background: rgba(216, 165, 38, 0.12);
+}
+
+@media (max-width: 980px) {
+  .member-mode-actions-four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .member-birthday-card .birthday-page-header {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .member-mode-actions-four {
+    grid-template-columns: 1fr;
+  }
+
+  .birthday-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .birthday-page-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+/* Resumo de membros dentro do cabeçalho */
+
+.admin-header {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.header-members-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(78px, 1fr));
+  gap: 8px;
+  width: min(100%, 520px);
+}
+
+.header-members-summary article {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 250, 242, 0.72));
+  border: 1px solid rgba(23, 16, 95, 0.08);
+  box-shadow: 0 8px 20px rgba(23, 16, 95, 0.05);
+}
+
+.header-members-summary span {
+  display: block;
+  color: #6fbd2a;
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+}
+
+.header-members-summary strong {
+  display: block;
+  margin-top: 3px;
+  color: #17105f;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+/* Como o resumo saiu da aba Membros, reduz o espaço superior */
+.members-admin-area {
+  margin-top: 0;
+}
+
+@media (max-width: 1100px) {
+  .admin-header {
+    grid-template-columns: 1fr auto;
+  }
+
+  .header-members-summary {
+    grid-column: 1 / -1;
+    width: 100%;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    order: 3;
+  }
+}
+
+@media (max-width: 680px) {
+  .header-members-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* Cabeçalho administrativo com cor principal */
+
+.admin-header {
+  background:
+    radial-gradient(circle at top left, rgba(111, 189, 42, 0.18), transparent 34%),
+    linear-gradient(135deg, #17105f, #27137a);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 18px 42px rgba(23, 16, 95, 0.18);
+}
+
+.admin-header .admin-brand-link span {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.admin-header .admin-brand-link h1 {
+  color: #ffffff;
+}
+
+.admin-header > button {
+  background: #ffffff;
+  color: #17105f;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+.admin-header > button:hover {
+  background: #f3ffe8;
+  color: #17105f;
+  transform: translateY(-1px);
+}
+.header-members-summary article {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: none;
+}
+
+.header-members-summary span {
+  color: #9be15d;
+}
+
+.header-members-summary strong {
+  color: #ffffff;
+}
