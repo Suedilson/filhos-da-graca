@@ -2289,3 +2289,273 @@ textarea {
 .header-members-summary strong {
   color: #ffffff;
 }
+/* Cabeçalho azul nos cards internos da aba Membros */
+
+.members-admin-area .admin-card {
+  overflow: hidden;
+}
+
+/* Cria faixa azul no topo dos cards de Membros */
+.members-admin-area .admin-card > .admin-section-label,
+.member-birthday-card .admin-section-label {
+  display: block;
+  margin: -18px -20px 16px;
+  padding: 14px 20px 4px;
+  background: linear-gradient(135deg, #17105f, #27137a);
+  color: #9be15d;
+  border-radius: 20px 20px 0 0;
+}
+
+/* Título dentro do cabeçalho azul */
+.members-admin-area .admin-card > h2,
+.member-birthday-card h2 {
+  margin: -16px -20px 0;
+  padding: 0 20px 6px;
+  background: linear-gradient(135deg, #17105f, #27137a);
+  color: #ffffff;
+}
+
+/* Descrição dentro do cabeçalho azul */
+.members-admin-area .admin-card > p,
+.member-birthday-card > .birthday-page-header p {
+  margin: 0 -20px 18px;
+  padding: 0 20px 16px;
+  background: linear-gradient(135deg, #17105f, #27137a);
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* Ajuste específico do card de aniversariantes */
+.member-birthday-card .birthday-page-header {
+  margin: -18px -20px 18px;
+  padding: 14px 20px 16px;
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(135deg, #17105f, #27137a);
+}
+
+.member-birthday-card .birthday-page-header .admin-section-label,
+.member-birthday-card .birthday-page-header h2,
+.member-birthday-card .birthday-page-header p {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.member-birthday-card .birthday-page-header .admin-section-label {
+  color: #9be15d;
+}
+
+.member-birthday-card .birthday-page-header h2 {
+  margin-top: 6px;
+  color: #ffffff;
+}
+
+.member-birthday-card .birthday-page-header p {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* Select e botões dentro do cabeçalho de aniversariantes */
+.member-birthday-card .birthday-page-actions label {
+  color: #ffffff;
+}
+
+.member-birthday-card .birthday-page-actions select {
+  background-color: #ffffff;
+}
+
+.member-birthday-card .report-button {
+  background: #ffffff;
+  color: #17105f;
+}
+
+.member-birthday-card .excel-button {
+  background: rgba(155, 225, 93, 0.18);
+  color: #ffffff;
+  border: 1px solid rgba(155, 225, 93, 0.35) !important;
+}
+/* Corrige cabeçalhos azuis dos cards internos sem faixas brancas */
+
+.members-admin-area .admin-card > .admin-section-label,
+.members-admin-area .admin-card > h2,
+.members-admin-area .admin-card > p {
+  background: transparent !important;
+}
+
+/* Cabeçalho azul único nos cards de membros */
+.members-admin-area .admin-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.members-admin-area .admin-card > .admin-section-label {
+  margin: -18px -20px 0 !important;
+  padding: 14px 20px 4px !important;
+  background: linear-gradient(135deg, #17105f, #27137a) !important;
+  color: #9be15d !important;
+  border-radius: 20px 20px 0 0;
+}
+
+.members-admin-area .admin-card > h2 {
+  margin: 0 -20px !important;
+  padding: 2px 20px 4px !important;
+  background: linear-gradient(135deg, #17105f, #27137a) !important;
+  color: #ffffff !important;
+}
+
+.members-admin-area .admin-card > p {
+  margin: 0 -20px 18px !important;
+  padding: 4px 20px 16px !important;
+  background: linear-gradient(135deg, #17105f, #27137a) !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+/* Remove bordas brancas internas causadas por margens antigas */
+.members-admin-area .admin-card > .admin-section-label + h2,
+.members-admin-area .admin-card > h2 + p {
+  border-top: 0 !important;
+}
+
+/* Card de aniversariantes com cabeçalho único */
+.member-birthday-card .birthday-page-header {
+  margin: -18px -20px 18px !important;
+  padding: 14px 20px 16px !important;
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(135deg, #17105f, #27137a) !important;
+}
+
+.member-birthday-card .birthday-page-header .admin-section-label,
+.member-birthday-card .birthday-page-header h2,
+.member-birthday-card .birthday-page-header p {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.member-birthday-card .birthday-page-header .admin-section-label {
+  color: #9be15d !important;
+}
+
+.member-birthday-card .birthday-page-header h2 {
+  margin-top: 5px !important;
+  color: #ffffff !important;
+}
+
+.member-birthday-card .birthday-page-header p {
+  margin-top: 5px !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+/* Correção definitiva: cabeçalho azul contínuo nos cards da aba Membros */
+
+.members-admin-area .admin-card {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Cria uma faixa azul única atrás do topo do card */
+.members-admin-area .admin-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 118px;
+  background: linear-gradient(135deg, #17105f, #27137a);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Mantém o conteúdo acima da faixa azul */
+.members-admin-area .admin-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Remove os fundos separados que estavam criando as listras */
+.members-admin-area .admin-card > .admin-section-label,
+.members-admin-area .admin-card > h2,
+.members-admin-area .admin-card > p {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+/* Ajusta o bloco de texto do cabeçalho */
+.members-admin-area .admin-card > .admin-section-label {
+  margin: -18px -20px 0 !important;
+  padding: 14px 20px 0 !important;
+  color: #9be15d !important;
+  border-radius: 20px 20px 0 0 !important;
+}
+
+.members-admin-area .admin-card > h2 {
+  margin: 0 -20px !important;
+  padding: 6px 20px 0 !important;
+  color: #ffffff !important;
+}
+
+.members-admin-area .admin-card > p {
+  margin: 0 -20px 26px !important;
+  padding: 8px 20px 18px !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+/* Garante que os campos comecem depois do cabeçalho azul */
+.members-admin-area .admin-card > label:first-of-type,
+.members-admin-area .admin-card .member-filters,
+.members-admin-area .admin-card .birthday-page-stats {
+  margin-top: 8px;
+}
+
+/* Ajuste específico para a ficha de aniversariantes */
+.member-birthday-card::before {
+  height: 136px !important;
+}
+
+.member-birthday-card .birthday-page-header {
+  position: relative;
+  z-index: 1;
+  margin: -18px -20px 22px !important;
+  padding: 14px 20px 16px !important;
+  background: transparent !important;
+  border-radius: 20px 20px 0 0 !important;
+}
+
+.member-birthday-card .birthday-page-header .admin-section-label,
+.member-birthday-card .birthday-page-header h2,
+.member-birthday-card .birthday-page-header p {
+  background: transparent !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.member-birthday-card .birthday-page-header .admin-section-label {
+  color: #9be15d !important;
+}
+
+.member-birthday-card .birthday-page-header h2 {
+  color: #ffffff !important;
+}
+
+.member-birthday-card .birthday-page-header p {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+/* Aumenta a faixa azul dos cards de membros */
+
+.members-admin-area .admin-card::before {
+  height: 136px !important;
+}
+
+.members-admin-area .admin-card > p {
+  margin: 0 -20px 34px !important;
+  padding: 8px 20px 24px !important;
+}
+
+.member-birthday-card::before {
+  height: 154px !important;
+}
+.members-admin-area .admin-card::before {
+  height: 146px !important;
+}
+
+.member-birthday-card::before {
+  height: 164px !important;
+}
