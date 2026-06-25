@@ -2559,3 +2559,67 @@ textarea {
 .member-birthday-card::before {
   height: 164px !important;
 }
+
+/* Botão de exportação na lista de membros */
+
+.members-list-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.members-list-header .admin-section-label,
+.members-list-header h2,
+.members-list-header p {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.export-members-button {
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid rgba(111, 189, 42, 0.22);
+  border-radius: 14px;
+  background: rgba(111, 189, 42, 0.14);
+  color: #2f7f12;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.export-members-button:hover {
+  background: rgba(111, 189, 42, 0.2);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 760px) {
+  .members-list-header {
+    display: grid;
+  }
+
+  .export-members-button {
+    width: 100%;
+  }
+}
+
+/* Ajuste visual do botão Exportar membros no cabeçalho azul */
+
+.members-list-header .export-members-button {
+  background: #ffffff !important;
+  color: #17105f !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+}
+
+.members-list-header .export-members-button:hover {
+  background: #f3ffe8 !important;
+  color: #17105f !important;
+  border-color: rgba(155, 225, 93, 0.72) !important;
+  transform: translateY(-1px);
+}
+
+.members-list-header .export-members-button:active {
+  transform: translateY(0);
+}

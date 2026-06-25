@@ -1253,6 +1253,62 @@ const ministeriosDisponiveis = Array.from(
   ),
 ).sort()
 
+function exportarMembrosExcel() {
+  const cabecalho = [
+    'Nome',
+    'Telefone',
+    'Data de nascimento',
+    'Idade',
+    'Endereço',
+    'Ministério',
+    'Status',
+    'Observações internas',
+    'Responsável pelo acompanhamento',
+    'Situação pastoral',
+    'Último contato',
+    'Próxima ação',
+    'Data da próxima ação',
+    'Observação do acompanhamento',
+  ]
+
+  const linhas = membrosFiltrados.map((membro) => [
+    membro.nome || '',
+    membro.telefone || '',
+    membro.nascimento ? formatarData(membro.nascimento) : '',
+    membro.nascimento ? calcularIdade(membro.nascimento) : '',
+    membro.endereco || '',
+    membro.ministerio || '',
+    membro.status || '',
+    membro.observacoes || '',
+    membro.responsavelAcompanhamento || '',
+    membro.situacaoPastoral || '',
+    membro.ultimoContato ? formatarData(membro.ultimoContato) : '',
+    membro.proximaAcao || '',
+    membro.dataProximaAcao ? formatarData(membro.dataProximaAcao) : '',
+    membro.observacaoAcompanhamento || '',
+  ])
+
+  const conteudo = [cabecalho, ...linhas]
+    .map((linha) =>
+      linha
+        .map((campo) => `"${String(campo).replaceAll('"', '""')}"`)
+        .join(';'),
+    )
+    .join('\n')
+
+  const blob = new Blob(['\uFEFF' + conteudo], {
+    type: 'text/csv;charset=utf-8;',
+  })
+
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = url
+  link.download = 'membros-filhos-da-graca.csv'
+  link.click()
+
+  URL.revokeObjectURL(url)
+}
 const resumoMembros = {
   total: membros.length,
   ativos: membros.filter((membro) => membro.status === 'Ativo').length,
@@ -2459,9 +2515,21 @@ const membrosFiltrados = membros.filter((membro) => {
               modoMembros !== 'lista' ? 'member-hidden-panel' : ''
             }`}
           >
-           <span className="admin-section-label">Lista de membros</span>
-<h2>Membros cadastrados</h2>
-<p>Controle interno de membros e visitantes.</p>
+<div className="members-list-header">
+  <div>
+    <span className="admin-section-label">Lista de membros</span>
+    <h2>Membros cadastrados</h2>
+    <p>Controle interno de membros e visitantes.</p>
+  </div>
+
+  <button
+    type="button"
+    className="export-members-button"
+    onClick={exportarMembrosExcel}
+  >
+    📊 Exportar membros
+  </button>
+</div>
 
 <div className="member-filters">
   <label>
