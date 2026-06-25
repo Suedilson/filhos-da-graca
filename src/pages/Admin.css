@@ -2623,3 +2623,111 @@ textarea {
 .members-list-header .export-members-button:active {
   transform: translateY(0);
 }
+/* Relatório e filtros de pedidos de oração */
+
+.prayer-admin-card {
+  overflow: hidden;
+}
+
+.prayer-card-header {
+  margin: -18px -20px 18px;
+  padding: 16px 20px;
+  border-radius: 20px 20px 0 0;
+  background:
+    radial-gradient(circle at top left, rgba(111, 189, 42, 0.18), transparent 34%),
+    linear-gradient(135deg, #17105f, #27137a);
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+}
+
+.prayer-card-header .admin-section-label {
+  color: #9be15d;
+}
+
+.prayer-card-header h2 {
+  margin: 6px 0;
+  color: #ffffff;
+}
+
+.prayer-card-header p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.export-prayer-button {
+  min-height: 40px;
+  padding: 9px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 14px;
+  background: #ffffff;
+  color: #17105f;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+}
+
+.export-prayer-button:hover {
+  background: #f3ffe8;
+  transform: translateY(-1px);
+}
+
+.prayer-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.prayer-summary article {
+  padding: 10px 13px;
+  border-radius: 15px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 250, 242, 0.72));
+  border: 1px solid rgba(23, 16, 95, 0.08);
+  box-shadow: 0 8px 20px rgba(23, 16, 95, 0.05);
+}
+
+.prayer-summary span {
+  display: block;
+  color: #6fbd2a;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.prayer-summary strong {
+  display: block;
+  margin-top: 4px;
+  color: #17105f;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.prayer-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.prayer-filters label {
+  margin: 0;
+}
+
+@media (max-width: 860px) {
+  .prayer-card-header {
+    display: grid;
+  }
+
+  .export-prayer-button {
+    width: 100%;
+  }
+
+  .prayer-summary,
+  .prayer-filters {
+    grid-template-columns: 1fr;
+  }
+}

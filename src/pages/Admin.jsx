@@ -46,6 +46,9 @@ function Admin() {
   const [editandoEventoId, setEditandoEventoId] = useState(null)
 
   const [pedidosOracao, setPedidosOracao] = useState([])
+const [filtroStatusOracao, setFiltroStatusOracao] = useState('Todos')
+const [filtroDataInicialOracao, setFiltroDataInicialOracao] = useState('')
+const [filtroDataFinalOracao, setFiltroDataFinalOracao] = useState('')
 
   const [videos, setVideos] = useState([])
   const [editandoVideoId, setEditandoVideoId] = useState(null)
@@ -546,6 +549,25 @@ function Admin() {
       timeStyle: 'short',
     })
   }
+function obterDataPedidoOracao(pedido) {
+  if (!pedido.criadoEm?.toDate) return ''
+
+  return pedido.criadoEm.toDate().toISOString().slice(0, 10)
+}
+
+function pedidoOracaoDentroDoPeriodo(pedido) {
+  const dataPedido = obterDataPedidoOracao(pedido)
+
+  if (!dataPedido) return true
+
+  const depoisDaDataInicial =
+    !filtroDataInicialOracao || dataPedido >= filtroDataInicialOracao
+
+  const antesDaDataFinal =
+    !filtroDataFinalOracao || dataPedido <= filtroDataFinalOracao
+
+  return depoisDaDataInicial && antesDaDataFinal
+}
 
   async function carregarVideos() {
     try {
@@ -1309,6 +1331,44 @@ function exportarMembrosExcel() {
 
   URL.revokeObjectURL(url)
 }
+function exportarPedidosOracaoExcel() {
+  const cabecalho = [
+    'Status',
+    'Nome',
+    'Telefone',
+    'Pedido',
+    'Data e hora',
+  ]
+
+  const linhas = pedidosOracaoFiltrados.map((pedido) => [
+    pedido.lido === true ? 'Lido' : 'Novo',
+    pedido.nome || '',
+    pedido.telefone || '',
+    pedido.pedido || '',
+    pedido.criadoEm ? formatarDataHoraFirebase(pedido.criadoEm) : '',
+  ])
+
+  const conteudo = [cabecalho, ...linhas]
+    .map((linha) =>
+      linha
+        .map((campo) => `"${String(campo).replaceAll('"', '""')}"`)
+        .join(';'),
+    )
+    .join('\n')
+
+  const blob = new Blob(['\uFEFF' + conteudo], {
+    type: 'text/csv;charset=utf-8;',
+  })
+
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = url
+  link.download = 'pedidos-oracao-filhos-da-graca.csv'
+  link.click()
+
+  URL.revokeObjectURL(url)
+}
 const resumoMembros = {
   total: membros.length,
   ativos: membros.filter((membro) => membro.status === 'Ativo').length,
@@ -1323,6 +1383,21 @@ const aniversariantesDoMes = membros
 const aniversariantesHoje = aniversariantesDoMes.filter((membro) =>
   ehAniversarianteHoje(membro.nascimento),
 )
+const pedidosOracaoFiltrados = pedidosOracao.filter((pedido) => {
+  const correspondeStatus =
+    filtroStatusOracao === 'Todos' ||
+    (filtroStatusOracao === 'Novo' && pedido.lido !== true) ||
+    (filtroStatusOracao === 'Lido' && pedido.lido === true)
+
+  return correspondeStatus && pedidoOracaoDentroDoPeriodo(pedido)
+})
+
+const resumoPedidosOracao = {
+  total: pedidosOracao.length,
+  novos: pedidosOracao.filter((pedido) => pedido.lido !== true).length,
+  lidos: pedidosOracao.filter((pedido) => pedido.lido === true).length,
+  filtrados: pedidosOracaoFiltrados.length,
+}
 const membrosFiltrados = membros.filter((membro) => {
   const textoBusca = buscaMembro.toLowerCase().trim()
 
@@ -1828,65 +1903,136 @@ const membrosFiltrados = membros.filter((membro) => {
         </section>
       )}
 
-      {abaAtiva === 'oracao' && (
-        <section className="admin-card admin-full-card">
-          <span className="admin-section-label">Pedidos de oração</span>
+    {abaAtiva === 'oracao' && (
+  <section className="admin-card admin-full-card prayer-admin-card">
+    <div className="prayer-card-header">
+      <div>
+        <span className="admin-section-label">Pedidos de oração</span>
 
-          <h2>Pedidos recebidos</h2>
+        <h2>Pedidos recebidos</h2>
 
-          <p>
-            Acompanhe os pedidos enviados pelo site e marque como lidos depois de tratar.
-          </p>
+        <p>
+          Acompanhe os pedidos enviados pelo site, filtre por status e período,
+          e exporte para Excel.
+        </p>
+      </div>
 
-          <div className="admin-list">
-            {pedidosOracao.length === 0 && (
-              <p>Nenhum pedido de oração recebido ainda.</p>
-            )}
+      <button
+        type="button"
+        className="export-prayer-button"
+        onClick={exportarPedidosOracaoExcel}
+      >
+        📊 Exportar pedidos
+      </button>
+    </div>
 
-            {pedidosOracao.map((pedido) => (
-              <article
-                className={`admin-list-item prayer-request-item ${
-                  pedido.lido === true ? 'inactive-item' : ''
-                }`}
-                key={pedido.id}
-              >
-                <div>
-                  <span>{pedido.lido === true ? 'Lido' : 'Novo pedido'}</span>
+    <div className="prayer-summary">
+      <article>
+        <span>Total</span>
+        <strong>{resumoPedidosOracao.total}</strong>
+      </article>
 
-                  <strong>{pedido.nome}</strong>
+      <article>
+        <span>Novos</span>
+        <strong>{resumoPedidosOracao.novos}</strong>
+      </article>
 
-                  {pedido.telefone && <p>{pedido.telefone}</p>}
+      <article>
+        <span>Lidos</span>
+        <strong>{resumoPedidosOracao.lidos}</strong>
+      </article>
 
-                  <small>{pedido.pedido}</small>
+      <article>
+        <span>Filtrados</span>
+        <strong>{resumoPedidosOracao.filtrados}</strong>
+      </article>
+    </div>
 
-                  {pedido.criadoEm && (
-                    <em>{formatarDataHoraFirebase(pedido.criadoEm)}</em>
-                  )}
-                </div>
+    <div className="prayer-filters">
+      <label>
+        Status
+        <select
+          value={filtroStatusOracao}
+          onChange={(event) => setFiltroStatusOracao(event.target.value)}
+        >
+          <option value="Todos">Todos</option>
+          <option value="Novo">Novo</option>
+          <option value="Lido">Lido</option>
+        </select>
+      </label>
 
-                <div className="admin-actions">
-                  <button
-                    type="button"
-                    className={
-                      pedido.lido === true ? 'activate-button' : 'deactivate-button'
-                    }
-                    onClick={() => alternarStatusPedido(pedido)}
-                  >
-                    {pedido.lido === true ? 'Marcar como novo' : 'Marcar como lido'}
-                  </button>
+      <label>
+        Data inicial
+        <input
+          type="date"
+          value={filtroDataInicialOracao}
+          onChange={(event) => setFiltroDataInicialOracao(event.target.value)}
+        />
+      </label>
 
-                  <button
-                    type="button"
-                    onClick={() => excluirPedidoOracao(pedido.id)}
-                  >
-                    Excluir
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+      <label>
+        Data final
+        <input
+          type="date"
+          value={filtroDataFinalOracao}
+          onChange={(event) => setFiltroDataFinalOracao(event.target.value)}
+        />
+      </label>
+    </div>
+
+    <div className="admin-list">
+      {pedidosOracao.length === 0 && (
+        <p>Nenhum pedido de oração recebido ainda.</p>
       )}
+
+      {pedidosOracao.length > 0 && pedidosOracaoFiltrados.length === 0 && (
+        <p>Nenhum pedido encontrado com os filtros selecionados.</p>
+      )}
+
+      {pedidosOracaoFiltrados.map((pedido) => (
+        <article
+          className={`admin-list-item prayer-request-item ${
+            pedido.lido === true ? 'inactive-item' : ''
+          }`}
+          key={pedido.id}
+        >
+          <div>
+            <span>{pedido.lido === true ? 'Lido' : 'Novo pedido'}</span>
+
+            <strong>{pedido.nome}</strong>
+
+            {pedido.telefone && <p>{pedido.telefone}</p>}
+
+            <small>{pedido.pedido}</small>
+
+            {pedido.criadoEm && (
+              <em>{formatarDataHoraFirebase(pedido.criadoEm)}</em>
+            )}
+          </div>
+
+          <div className="admin-actions">
+            <button
+              type="button"
+              className={
+                pedido.lido === true ? 'activate-button' : 'deactivate-button'
+              }
+              onClick={() => alternarStatusPedido(pedido)}
+            >
+              {pedido.lido === true ? 'Marcar como novo' : 'Marcar como lido'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => excluirPedidoOracao(pedido.id)}
+            >
+              Excluir
+            </button>
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+)}
 
       {abaAtiva === 'midia' && (
         <section className="admin-grid admin-events-grid">
