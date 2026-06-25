@@ -138,6 +138,19 @@ const categoriasGaleria = [
     longitude: '',
     fotoFachada: '',
   })
+const [contribuicaoForm, setContribuicaoForm] = useState({
+  titulo: 'Contribua com a obra',
+  descricao:
+    'Sua contribuição nos ajuda a manter a missão, os projetos sociais, os cultos e o cuidado com vidas.',
+  chavePix: '',
+  favorecido: '',
+  banco: '',
+  qrCodePix: '',
+  qrCodePixPublicId: '',
+  ativo: true,
+})
+
+const [enviandoQrCodePix, setEnviandoQrCodePix] = useState(false)
 
   const eventoFormRef = useRef(null)
   const isAdmin = user && ADMIN_EMAILS.includes(user.email)
@@ -153,15 +166,16 @@ const categoriasGaleria = [
 
   useEffect(() => {
   if (isAdmin) {
-    carregarProgramacao()
-    carregarEventos()
-    carregarLocalizacao()
-    carregarPedidosOracao()
-    carregarVideos()
-    carregarDocumentos()
-    carregarGaleria()
-    carregarMembros()
-  }
+  carregarProgramacao()
+  carregarEventos()
+  carregarLocalizacao()
+  carregarContribuicao()
+  carregarPedidosOracao()
+  carregarVideos()
+  carregarDocumentos()
+  carregarGaleria()
+  carregarMembros()
+}
 }, [isAdmin])
   async function login(event) {
     event.preventDefault()
@@ -517,7 +531,100 @@ const categoriasGaleria = [
       setLoading(false)
     }
   }
+async function carregarContribuicao() {
+  try {
+    const ref = doc(db, 'configuracoes', 'contribuicao')
+    const snapshot = await getDoc(ref)
 
+    if (snapshot.exists()) {
+      const dados = snapshot.data()
+
+      setContribuicaoForm({
+        titulo: dados.titulo || 'Contribua com a obra',
+        descricao:
+          dados.descricao ||
+          'Sua contribuição nos ajuda a manter a missão, os projetos sociais, os cultos e o cuidado com vidas.',
+        chavePix: dados.chavePix || '',
+        favorecido: dados.favorecido || '',
+        banco: dados.banco || '',
+        qrCodePix: dados.qrCodePix || '',
+        qrCodePixPublicId: dados.qrCodePixPublicId || '',
+        ativo: dados.ativo !== false,
+      })
+    }
+  } catch (error) {
+    alert('Erro ao carregar dados de contribuição.')
+    console.error(error)
+  }
+}
+
+async function enviarQrCodePix(event) {
+  const file = event.target.files?.[0]
+
+  if (!file) return
+
+  setEnviandoQrCodePix(true)
+
+  try {
+    const arquivo = await uploadArquivoCloudinary(file)
+
+    setContribuicaoForm((formAtual) => ({
+      ...formAtual,
+      qrCodePix: arquivo.url,
+      qrCodePixPublicId: arquivo.publicId,
+    }))
+
+    event.target.value = ''
+
+    alert('QR Code enviado com sucesso!')
+  } catch (error) {
+    alert('Erro ao enviar QR Code.')
+    console.error(error)
+  } finally {
+    setEnviandoQrCodePix(false)
+  }
+}
+
+async function salvarContribuicao(event) {
+  event.preventDefault()
+
+  if (!contribuicaoForm.titulo) {
+    alert('Preencha o título da seção.')
+    return
+  }
+
+  if (!contribuicaoForm.chavePix) {
+    alert('Preencha a chave Pix.')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    await setDoc(
+      doc(db, 'configuracoes', 'contribuicao'),
+      {
+        titulo: contribuicaoForm.titulo,
+        descricao: contribuicaoForm.descricao,
+        chavePix: contribuicaoForm.chavePix,
+        favorecido: contribuicaoForm.favorecido,
+        banco: contribuicaoForm.banco,
+        qrCodePix: contribuicaoForm.qrCodePix,
+        qrCodePixPublicId: contribuicaoForm.qrCodePixPublicId,
+        ativo: contribuicaoForm.ativo,
+        atualizadoEm: serverTimestamp(),
+      },
+      { merge: true },
+    )
+
+    alert('Dados de contribuição salvos com sucesso!')
+  } catch (error) {
+    alert('Erro ao salvar dados de contribuição.')
+    console.error(error)
+  } finally {
+    setLoading(false)
+  }
+}
   async function carregarPedidosOracao() {
     try {
       const q = query(collection(db, 'pedidosOracao'), orderBy('criadoEm', 'desc'))
@@ -1879,6 +1986,13 @@ const membrosFiltrados = membros.filter((membro) => {
         >
           Documentos
         </button>
+<button
+  type="button"
+  className={abaAtiva === 'contribuicao' ? 'active' : ''}
+  onClick={() => setAbaAtiva('contribuicao')}
+>
+  Contribuição
+</button>
         <button
         type="button"
         className={abaAtiva === 'galeria' ? 'active' : ''}
@@ -2659,6 +2773,160 @@ const membrosFiltrados = membros.filter((membro) => {
           </section>
         </section>
       )}
+{abaAtiva === 'contribuicao' && (
+  <section className="admin-grid admin-events-grid contribution-admin-area">
+    <form className="admin-card contribution-form-card" onSubmit={salvarContribuicao}>
+      <span className="admin-section-label">Contribuição</span>
+
+      <h2>Dízimos e ofertas</h2>
+
+      <p>
+        Cadastre as informações de Pix e QR Code que aparecerão na página inicial.
+      </p>
+
+      <label>
+        Título da seção
+        <input
+          value={contribuicaoForm.titulo}
+          onChange={(event) =>
+            setContribuicaoForm({
+              ...contribuicaoForm,
+              titulo: event.target.value,
+            })
+          }
+          placeholder="Ex: Contribua com a obra"
+        />
+      </label>
+
+      <label>
+        Texto explicativo
+        <textarea
+          value={contribuicaoForm.descricao}
+          onChange={(event) =>
+            setContribuicaoForm({
+              ...contribuicaoForm,
+              descricao: event.target.value,
+            })
+          }
+          placeholder="Explique de forma breve como a contribuição ajuda a igreja"
+        />
+      </label>
+
+      <label>
+        Chave Pix
+        <input
+          value={contribuicaoForm.chavePix}
+          onChange={(event) =>
+            setContribuicaoForm({
+              ...contribuicaoForm,
+              chavePix: event.target.value,
+            })
+          }
+          placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória"
+        />
+      </label>
+
+      <label>
+        Favorecido
+        <input
+          value={contribuicaoForm.favorecido}
+          onChange={(event) =>
+            setContribuicaoForm({
+              ...contribuicaoForm,
+              favorecido: event.target.value,
+            })
+          }
+          placeholder="Ex: Igreja Filhos da Graça"
+        />
+      </label>
+
+      <label>
+        Banco / Instituição
+        <input
+          value={contribuicaoForm.banco}
+          onChange={(event) =>
+            setContribuicaoForm({
+              ...contribuicaoForm,
+              banco: event.target.value,
+            })
+          }
+          placeholder="Ex: Banco, instituição ou conta"
+        />
+      </label>
+
+      <label>
+        QR Code Pix
+        <input
+          type="file"
+          accept="image/*"
+          onChange={enviarQrCodePix}
+          disabled={enviandoQrCodePix}
+        />
+      </label>
+
+      {enviandoQrCodePix && <p>Enviando QR Code...</p>}
+
+      {contribuicaoForm.qrCodePix && (
+        <div className="contribution-qrcode-preview">
+          <img src={contribuicaoForm.qrCodePix} alt="QR Code Pix" />
+        </div>
+      )}
+
+      <label className="checkbox-label">
+        <input
+          type="checkbox"
+          checked={contribuicaoForm.ativo}
+          onChange={(event) =>
+            setContribuicaoForm({
+              ...contribuicaoForm,
+              ativo: event.target.checked,
+            })
+          }
+        />
+        Exibir seção no site
+      </label>
+
+      <button type="submit" disabled={loading || enviandoQrCodePix}>
+        {loading ? 'Salvando...' : 'Salvar contribuição'}
+      </button>
+    </form>
+
+    <section className="admin-card contribution-preview-card">
+      <span className="admin-section-label">Prévia</span>
+
+      <h2>Como aparecerá no site</h2>
+
+      <div className="contribution-admin-preview">
+        <span>{contribuicaoForm.ativo ? 'Ativo no site' : 'Inativo no site'}</span>
+
+        <h3>{contribuicaoForm.titulo || 'Contribua com a obra'}</h3>
+
+        <p>
+          {contribuicaoForm.descricao ||
+            'Sua contribuição nos ajuda a manter a missão da igreja.'}
+        </p>
+
+        {contribuicaoForm.qrCodePix ? (
+          <img src={contribuicaoForm.qrCodePix} alt="QR Code Pix" />
+        ) : (
+          <div className="contribution-qrcode-placeholder">
+            QR Code Pix
+          </div>
+        )}
+
+        <strong>{contribuicaoForm.chavePix || 'Chave Pix ainda não cadastrada'}</strong>
+
+        {contribuicaoForm.favorecido && (
+          <small>Favorecido: {contribuicaoForm.favorecido}</small>
+        )}
+
+        {contribuicaoForm.banco && (
+          <small>Banco: {contribuicaoForm.banco}</small>
+        )}
+      </div>
+    </section>
+  </section>
+)}
 {abaAtiva === 'galeria' && (
   <section className="admin-card admin-full-card gallery-admin-card">
     <div className="gallery-card-header">

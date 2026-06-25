@@ -32,12 +32,12 @@ const quickActions = [
     icon: '▶',
     href: '#midia',
   },
-  {
-    title: 'Galeria',
-    description: 'Veja fotos de cultos, eventos e momentos especiais.',
-    icon: '▣',
-    href: '#galeria',
-  },
+ {
+  title: 'Contribuição',
+  description: 'Contribua com dízimos, ofertas e projetos da igreja.',
+  icon: '◇',
+  href: '#contribuicao',
+},
   {
     title: 'Como chegar',
     description: 'Encontre o caminho para nos visitar.',
@@ -78,6 +78,8 @@ function Home() {
   const [videosHome, setVideosHome] = useState([])
   const [documentosHome, setDocumentosHome] = useState([])
   const [galeriaHome, setGaleriaHome] = useState([])
+  const [contribuicaoHome, setContribuicaoHome] = useState(null)
+  const [pixCopiado, setPixCopiado] = useState(false)
   const [albumAberto, setAlbumAberto] = useState(null)
   const [fotoAtualAlbum, setFotoAtualAlbum] = useState(0)
   const [pedidoForm, setPedidoForm] = useState({
@@ -193,11 +195,12 @@ const [enviandoPedido, setEnviandoPedido] = useState(false)
     }
 
        carregarProgramacaoHome()
-    carregarEventosHome()
-    carregarLocalizacaoHome()
-    carregarVideosHome()
-    carregarDocumentosHome()
-    carregarGaleriaHome()
+carregarEventosHome()
+carregarLocalizacaoHome()
+carregarVideosHome()
+carregarDocumentosHome()
+carregarGaleriaHome()
+carregarContribuicaoHome()
   }, [])
 
   const programacaoExibida =
@@ -248,6 +251,21 @@ function voltarFotoAlbum() {
     indiceAtual === 0 ? albumAberto.fotos.length - 1 : indiceAtual - 1,
   )
 }
+async function copiarChavePix() {
+  if (!contribuicaoHome?.chavePix) return
+
+  try {
+    await navigator.clipboard.writeText(contribuicaoHome.chavePix)
+    setPixCopiado(true)
+
+    setTimeout(() => {
+      setPixCopiado(false)
+    }, 2500)
+  } catch (error) {
+    alert('Não foi possível copiar a chave Pix.')
+    console.error(error)
+  }
+}
 
   function formatarData(data) {
     if (!data) return ''
@@ -287,6 +305,22 @@ async function enviarPedidoOracao(event) {
     console.error('Erro ao enviar pedido de oração:', error)
   } finally {
     setEnviandoPedido(false)
+  }
+}
+async function carregarContribuicaoHome() {
+  try {
+    const ref = doc(db, 'configuracoes', 'contribuicao')
+    const snapshot = await getDoc(ref)
+
+    if (snapshot.exists()) {
+      const dados = snapshot.data()
+
+      if (dados.ativo !== false) {
+        setContribuicaoHome(dados)
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao carregar contribuição da home:', error)
   }
 }
 async function carregarDocumentosHome() {
@@ -363,6 +397,7 @@ function obterThumbnailYoutube(url) {
           <a href="#visitante">Visitantes</a>
           <a href="#eventos">Eventos</a>
           <a href="#galeria">Galeria</a>
+          <a href="#contribuicao">Contribuição</a>
           <a href="#localizacao">Como chegar</a>
           <a href="#midia">Mídia</a>
           <a href="#contato">Contato</a>
@@ -626,7 +661,54 @@ function obterThumbnailYoutube(url) {
     </article>
   )}
 </section>
+{contribuicaoHome && (
+  <section className="contribution-section" id="contribuicao">
+    <div className="contribution-content">
+      <div className="section-copy">
+        <span className="section-label">Contribuição</span>
 
+        <h2>{contribuicaoHome.titulo || 'Contribua com a obra'}</h2>
+
+        <p>
+          {contribuicaoHome.descricao ||
+            'Sua contribuição nos ajuda a manter a missão da igreja.'}
+        </p>
+
+        <div className="contribution-info">
+          {contribuicaoHome.favorecido && (
+            <small>
+              <b>Favorecido:</b> {contribuicaoHome.favorecido}
+            </small>
+          )}
+
+          {contribuicaoHome.banco && (
+            <small>
+              <b>Banco:</b> {contribuicaoHome.banco}
+            </small>
+          )}
+        </div>
+      </div>
+
+      <article className="contribution-card">
+        {contribuicaoHome.qrCodePix ? (
+          <img src={contribuicaoHome.qrCodePix} alt="QR Code Pix" />
+        ) : (
+          <div className="contribution-public-placeholder">
+            QR Code Pix
+          </div>
+        )}
+
+        <span>Chave Pix</span>
+
+        <strong>{contribuicaoHome.chavePix}</strong>
+
+        <button type="button" onClick={copiarChavePix}>
+          {pixCopiado ? 'Chave copiada!' : 'Copiar chave Pix'}
+        </button>
+      </article>
+    </div>
+  </section>
+)}
 <section className="documents-section" id="transparencia">
   <div className="section-heading">
     <span className="section-label">Transparência</span>
@@ -815,6 +897,7 @@ function obterThumbnailYoutube(url) {
           <a href="#cultos">Cultos</a>
           <a href="#eventos">Eventos</a>
           <a href="#galeria">Galeria</a>
+          <a href="#contribuicao">Contribuição</a>
           <a href="#oracao">Oração</a>
           <a href="#midia">Mídia</a>
           <a href="/admin">Área do Membro</a>

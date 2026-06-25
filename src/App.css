@@ -1825,3 +1825,1340 @@ a {
     right: 18px !important;
   }
 }
+/* Seção pública - Contribuição */
+
+.contribution-section {
+  padding: 84px 6vw;
+  background:
+    radial-gradient(circle at top left, rgba(111, 189, 42, 0.14), transparent 24rem),
+    linear-gradient(135deg, #17105f 0%, #27137a 100%);
+  color: #ffffff;
+}
+
+.contribution-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 34px;
+  align-items: center;
+}
+
+.contribution-section .section-label {
+  color: #9be15d;
+}
+
+.contribution-section h2 {
+  color: #ffffff;
+}
+
+.contribution-section p {
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.contribution-info {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.contribution-info small {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.94rem;
+}
+
+.contribution-card {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  padding: 24px;
+  border-radius: 30px;
+  background: #ffffff;
+  color: #17105f;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.22);
+}
+
+.contribution-card img,
+.contribution-public-placeholder {
+  width: 220px;
+  height: 220px;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  border-radius: 22px;
+  background: #f8f7ff;
+  color: #17105f;
+  font-weight: 900;
+  object-fit: contain;
+}
+
+.contribution-card span {
+  color: #6fbd2a;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.contribution-card strong {
+  max-width: 100%;
+  word-break: break-all;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.contribution-card button {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 999px;
+  background: #6fbd2a;
+  color: #ffffff;
+  font-weight: 900;
+}
+
+@media (max-width: 920px) {
+  .contribution-content {
+    grid-template-columns: 1fr;
+  }
+
+  .contribution-card {
+    max-width: 420px;
+  }
+}
+
+@media (max-width: 620px) {
+  .contribution-section {
+    padding: 64px 18px;
+  }
+
+  .contribution-card {
+    max-width: 100%;
+  }
+
+  .contribution-card img,
+  .contribution-public-placeholder {
+    width: 190px;
+    height: 190px;
+  }
+}
+/* Correção de contraste da seção Contribuição */
+
+.contribution-section .section-copy {
+  padding: 48px;
+  border-radius: 30px;
+  background: #ffffff;
+  color: #17105f;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12);
+}
+
+.contribution-section .section-copy .section-label {
+  color: #6fbd2a;
+}
+
+.contribution-section .section-copy h2 {
+  color: #17105f;
+}
+
+.contribution-section .section-copy p {
+  max-width: 760px;
+  color: #60708a;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.contribution-section .contribution-info small {
+  color: #17105f;
+}
+
+.contribution-section .contribution-info b {
+  color: #17105f;
+}
+
+@media (max-width: 620px) {
+  .contribution-section .section-copy {
+    padding: 28px;
+  }
+}
+/* Ajuste compacto da seção Contribuição */
+
+.media-section {
+  padding-bottom: 72px;
+}
+
+.contribution-section {
+  margin-top: 48px;
+  padding: 56px 6vw !important;
+}
+
+.contribution-content {
+  grid-template-columns: minmax(0, 1fr) 300px !important;
+  gap: 26px !important;
+  align-items: center !important;
+}
+
+.contribution-section .section-copy {
+  padding: 34px 38px !important;
+  border-radius: 24px !important;
+}
+
+.contribution-section .section-copy h2 {
+  margin: 10px 0 16px !important;
+  font-size: clamp(2.2rem, 5vw, 4.1rem) !important;
+  line-height: 0.95 !important;
+}
+
+.contribution-section .section-copy p {
+  max-width: 780px !important;
+  font-size: 0.98rem !important;
+  line-height: 1.55 !important;
+}
+
+.contribution-info {
+  margin-top: 18px !important;
+  gap: 5px !important;
+}
+
+.contribution-info small {
+  font-size: 0.88rem !important;
+}
+
+.contribution-card {
+  padding: 20px !important;
+  border-radius: 24px !important;
+  gap: 9px !important;
+}
+
+.contribution-card img,
+.contribution-public-placeholder {
+  width: 185px !important;
+  height: 185px !important;
+  border-radius: 18px !important;
+}
+
+.contribution-card span {
+  font-size: 0.68rem !important;
+}
+
+.contribution-card strong {
+  font-size: 0.9rem !important;
+}
+
+.contribution-card button {
+  min-height: 40px !important;
+  font-size: 0.88rem !important;
+}
+
+@media (max-width: 920px) {
+  .contribution-content {
+    grid-template-columns: 1fr !important;
+  }
+
+  .contribution-card {
+    max-width: 340px !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .media-section {
+    padding-bottom: 48px;
+  }
+
+  .contribution-section {
+    margin-top: 32px;
+    padding: 44px 18px !important;
+  }
+
+  .contribution-section .section-copy {
+    padding: 26px !important;
+  }
+
+  .contribution-section .section-copy h2 {
+    font-size: 2.35rem !important;
+  }
+
+  .contribution-card {
+    max-width: 100% !important;
+  }
+
+  .contribution-card img,
+  .contribution-public-placeholder {
+    width: 170px !important;
+    height: 170px !important;
+  }
+}
+/* =========================================================
+   ORGANIZAÇÃO GERAL DA PÁGINA INICIAL
+   Boxes menores, textos legíveis e layout mais limpo
+========================================================= */
+
+/* Espaçamento padrão das seções */
+.services,
+.events-section,
+.gallery-section,
+.location-section,
+.media-section,
+.documents-section,
+.prayer,
+.contribution-section {
+  padding-top: 64px !important;
+  padding-bottom: 64px !important;
+}
+
+/* Títulos das seções mais equilibrados */
+.section-heading {
+  margin-bottom: 26px !important;
+}
+
+.section-heading h2,
+.section-copy h2 {
+  max-width: 920px;
+  margin-top: 8px !important;
+  margin-bottom: 12px !important;
+  line-height: 1.05 !important;
+}
+
+.section-copy p,
+.section-heading p {
+  max-width: 760px;
+  line-height: 1.6 !important;
+}
+
+/* =========================================================
+   AÇÕES RÁPIDAS
+========================================================= */
+
+.quick-actions {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  padding: 28px 6vw !important;
+}
+
+.quick-card {
+  min-height: auto !important;
+  padding: 20px 18px !important;
+  border-radius: 22px !important;
+}
+
+.quick-card span {
+  width: 44px !important;
+  height: 44px !important;
+  font-size: 1.25rem !important;
+}
+
+.quick-card h3 {
+  margin: 12px 0 6px !important;
+  font-size: 1.05rem !important;
+  line-height: 1.2 !important;
+}
+
+.quick-card p {
+  margin: 0 !important;
+  font-size: 0.88rem !important;
+  line-height: 1.45 !important;
+}
+
+/* =========================================================
+   PROGRAMAÇÃO / CULTOS
+========================================================= */
+
+.service-list {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+.service-card {
+  min-height: auto !important;
+  padding: 22px !important;
+  border-radius: 24px !important;
+}
+
+.service-card span {
+  font-size: 0.72rem !important;
+}
+
+.service-card strong {
+  display: block !important;
+  margin-top: 8px !important;
+  font-size: 1.25rem !important;
+  line-height: 1.18 !important;
+}
+
+.service-card p {
+  margin: 10px 0 0 !important;
+  font-size: 1rem !important;
+}
+
+.service-card small {
+  display: block !important;
+  margin-top: 8px !important;
+  font-size: 0.9rem !important;
+  line-height: 1.45 !important;
+}
+
+/* =========================================================
+   EVENTOS
+========================================================= */
+
+.events-list {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+}
+
+.event-card {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+}
+
+.event-card img,
+.event-placeholder {
+  height: 190px !important;
+  object-fit: contain !important;
+  background: #f8f7ff !important;
+}
+
+.event-content {
+  padding: 18px !important;
+}
+
+.event-content span {
+  font-size: 0.72rem !important;
+}
+
+.event-content h3 {
+  margin: 8px 0 8px !important;
+  font-size: 1.1rem !important;
+  line-height: 1.25 !important;
+}
+
+.event-content p,
+.event-content small {
+  display: block !important;
+  margin-top: 5px !important;
+  font-size: 0.88rem !important;
+  line-height: 1.4 !important;
+  word-break: normal !important;
+}
+
+/* =========================================================
+   GALERIA
+========================================================= */
+
+.gallery-section {
+  padding-top: 64px !important;
+  padding-bottom: 64px !important;
+}
+
+.gallery-album-list {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+.gallery-album-card {
+  border-radius: 22px !important;
+  overflow: hidden !important;
+}
+
+.gallery-cover-image {
+  height: 145px !important;
+}
+
+.gallery-cover-image img {
+  object-fit: contain !important;
+  background: #f8f7ff !important;
+}
+
+.gallery-card-content {
+  padding: 14px 16px 16px !important;
+}
+
+.gallery-card-content h3 {
+  font-size: 1rem !important;
+  line-height: 1.25 !important;
+}
+
+.gallery-card-content p {
+  font-size: 0.85rem !important;
+  line-height: 1.4 !important;
+}
+
+/* =========================================================
+   LOCALIZAÇÃO
+========================================================= */
+
+.location-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px) !important;
+  gap: 24px !important;
+  align-items: stretch !important;
+}
+
+.location-card,
+.location-info {
+  border-radius: 26px !important;
+}
+
+.location-card img,
+.location-placeholder {
+  height: 320px !important;
+  object-fit: cover !important;
+}
+
+.location-info {
+  padding: 28px !important;
+}
+
+.location-info h3 {
+  font-size: 1.5rem !important;
+  line-height: 1.2 !important;
+}
+
+.location-info p,
+.location-info small {
+  font-size: 0.95rem !important;
+  line-height: 1.5 !important;
+}
+
+/* =========================================================
+   MÍDIA / VÍDEOS
+========================================================= */
+
+.media-section {
+  padding-bottom: 72px !important;
+}
+
+.video-list {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+}
+
+.video-card {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+}
+
+.video-card img,
+.video-placeholder {
+  height: 180px !important;
+  object-fit: cover !important;
+}
+
+.video-content {
+  padding: 17px !important;
+}
+
+.video-content span {
+  font-size: 0.72rem !important;
+}
+
+.video-content h3 {
+  margin: 8px 0 !important;
+  font-size: 1.05rem !important;
+  line-height: 1.25 !important;
+}
+
+.video-content p {
+  font-size: 0.88rem !important;
+  line-height: 1.45 !important;
+}
+
+/* =========================================================
+   CONTRIBUIÇÃO
+========================================================= */
+
+.contribution-section {
+  margin-top: 32px !important;
+  padding-top: 52px !important;
+  padding-bottom: 52px !important;
+}
+
+.contribution-content {
+  grid-template-columns: minmax(0, 1fr) 300px !important;
+  gap: 26px !important;
+}
+
+.contribution-section .section-copy {
+  padding: 34px 38px !important;
+  border-radius: 26px !important;
+}
+
+.contribution-section .section-copy h2 {
+  font-size: clamp(2.1rem, 4.5vw, 3.8rem) !important;
+  line-height: 1 !important;
+}
+
+.contribution-section .section-copy p {
+  font-size: 0.98rem !important;
+  line-height: 1.58 !important;
+}
+
+.contribution-card {
+  padding: 20px !important;
+  border-radius: 24px !important;
+}
+
+.contribution-card img,
+.contribution-public-placeholder {
+  width: 175px !important;
+  height: 175px !important;
+}
+
+.contribution-card strong {
+  font-size: 0.92rem !important;
+}
+
+.contribution-card button {
+  min-height: 40px !important;
+  font-size: 0.88rem !important;
+}
+
+/* =========================================================
+   DOCUMENTOS / TRANSPARÊNCIA
+========================================================= */
+
+.documents-list {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+.document-card {
+  padding: 22px !important;
+  border-radius: 24px !important;
+}
+
+.document-card h3 {
+  font-size: 1.08rem !important;
+  line-height: 1.25 !important;
+}
+
+.document-card p {
+  font-size: 0.9rem !important;
+  line-height: 1.45 !important;
+}
+
+.document-card a {
+  margin-top: 14px !important;
+}
+
+/* =========================================================
+   PEDIDO DE ORAÇÃO
+========================================================= */
+
+.prayer-form-section {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 460px) !important;
+  gap: 28px !important;
+  align-items: start !important;
+}
+
+.prayer-copy {
+  padding: 34px 38px !important;
+  border-radius: 26px !important;
+}
+
+.prayer-copy h2 {
+  font-size: clamp(2.1rem, 4vw, 3.6rem) !important;
+  line-height: 1.05 !important;
+}
+
+.prayer-copy p {
+  font-size: 0.98rem !important;
+  line-height: 1.58 !important;
+}
+
+.prayer-form {
+  padding: 26px !important;
+  border-radius: 26px !important;
+}
+
+.prayer-form input,
+.prayer-form textarea {
+  font-size: 0.95rem !important;
+}
+
+.prayer-form textarea {
+  min-height: 120px !important;
+}
+
+/* =========================================================
+   RODAPÉ
+========================================================= */
+
+.footer {
+  padding: 32px 6vw !important;
+}
+
+.footer nav {
+  gap: 14px !important;
+  flex-wrap: wrap !important;
+}
+
+/* =========================================================
+   RESPONSIVO TABLET
+========================================================= */
+
+@media (max-width: 1100px) {
+  .quick-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .events-list,
+  .video-list,
+  .documents-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .gallery-album-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .contribution-content,
+  .location-grid,
+  .prayer-form-section {
+    grid-template-columns: 1fr !important;
+  }
+
+  .contribution-card {
+    max-width: 360px !important;
+  }
+}
+
+/* =========================================================
+   RESPONSIVO CELULAR
+========================================================= */
+
+@media (max-width: 720px) {
+  .services,
+  .events-section,
+  .gallery-section,
+  .location-section,
+  .media-section,
+  .documents-section,
+  .prayer,
+  .contribution-section {
+    padding: 48px 18px !important;
+  }
+
+  .quick-actions {
+    grid-template-columns: 1fr !important;
+    padding: 22px 18px !important;
+  }
+
+  .service-list,
+  .events-list,
+  .gallery-album-list,
+  .video-list,
+  .documents-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  .service-card,
+  .event-card,
+  .gallery-album-card,
+  .video-card,
+  .document-card {
+    border-radius: 22px !important;
+  }
+
+  .event-card img,
+  .event-placeholder,
+  .video-card img,
+  .video-placeholder {
+    height: 170px !important;
+  }
+
+  .gallery-cover-image {
+    height: 170px !important;
+  }
+
+  .location-card img,
+  .location-placeholder {
+    height: 240px !important;
+  }
+
+  .contribution-section .section-copy,
+  .prayer-copy {
+    padding: 26px !important;
+  }
+
+  .contribution-section .section-copy h2,
+  .prayer-copy h2 {
+    font-size: 2.2rem !important;
+  }
+
+  .contribution-card {
+    max-width: 100% !important;
+  }
+
+  .footer {
+    display: grid !important;
+    gap: 20px !important;
+  }
+}
+/* =========================================================
+   AJUSTE FORÇADO - DA GALERIA PARA BAIXO
+   Galeria, localização, mídia, contribuição, documentos e oração
+========================================================= */
+
+/* GALERIA */
+.gallery-section {
+  padding: 56px 6vw !important;
+}
+
+.gallery-section .section-heading {
+  margin-bottom: 22px !important;
+}
+
+.gallery-section .section-heading h2 {
+  font-size: clamp(2rem, 4vw, 3.4rem) !important;
+  line-height: 1.05 !important;
+}
+
+.gallery-list,
+.gallery-album-list {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  margin-top: 20px !important;
+}
+
+.gallery-card,
+.gallery-album-card {
+  min-height: auto !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+}
+
+.gallery-cover-image,
+.gallery-card img {
+  height: 135px !important;
+  min-height: 135px !important;
+  max-height: 135px !important;
+  background: #f8f7ff !important;
+}
+
+.gallery-cover-image img,
+.gallery-card > img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+.gallery-card-content {
+  padding: 12px 14px 14px !important;
+}
+
+.gallery-card-content span {
+  font-size: 0.66rem !important;
+  margin-bottom: 5px !important;
+}
+
+.gallery-card-content h3 {
+  font-size: 0.95rem !important;
+  line-height: 1.22 !important;
+  margin: 0 !important;
+}
+
+.gallery-card-content p {
+  margin-top: 6px !important;
+  font-size: 0.82rem !important;
+  line-height: 1.35 !important;
+}
+
+.gallery-card-content small {
+  margin-top: 8px !important;
+  font-size: 0.68rem !important;
+}
+
+/* LOCALIZAÇÃO */
+.location-section {
+  padding: 56px 6vw !important;
+}
+
+.location-section .section-heading h2 {
+  font-size: clamp(2rem, 4vw, 3.4rem) !important;
+}
+
+.location-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 380px !important;
+  gap: 22px !important;
+}
+
+.location-card,
+.location-info {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+}
+
+.location-card img,
+.location-placeholder {
+  height: 280px !important;
+  min-height: 280px !important;
+  max-height: 280px !important;
+  object-fit: cover !important;
+}
+
+.location-info {
+  padding: 26px !important;
+}
+
+.location-info h3 {
+  font-size: 1.35rem !important;
+  line-height: 1.2 !important;
+}
+
+.location-info p,
+.location-info small {
+  font-size: 0.9rem !important;
+  line-height: 1.45 !important;
+}
+
+/* MÍDIA / VÍDEOS */
+.media-section {
+  padding: 56px 6vw 72px !important;
+}
+
+.media-section .section-heading h2 {
+  font-size: clamp(2rem, 4vw, 3.4rem) !important;
+}
+
+.video-list {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+.video-card {
+  border-radius: 22px !important;
+  overflow: hidden !important;
+}
+
+.video-card a {
+  display: grid !important;
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+.video-card img,
+.video-placeholder {
+  height: 165px !important;
+  min-height: 165px !important;
+  max-height: 165px !important;
+  object-fit: cover !important;
+}
+
+.video-content {
+  padding: 15px !important;
+}
+
+.video-content span {
+  font-size: 0.66rem !important;
+}
+
+.video-content h3 {
+  font-size: 1rem !important;
+  line-height: 1.25 !important;
+  margin: 7px 0 !important;
+}
+
+.video-content p {
+  font-size: 0.84rem !important;
+  line-height: 1.4 !important;
+}
+
+/* CONTRIBUIÇÃO */
+.contribution-section {
+  margin-top: 36px !important;
+  padding: 48px 6vw !important;
+}
+
+.contribution-content {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 280px !important;
+  gap: 24px !important;
+}
+
+.contribution-section .section-copy {
+  padding: 30px 34px !important;
+  border-radius: 24px !important;
+}
+
+.contribution-section .section-copy h2 {
+  font-size: clamp(2rem, 4vw, 3.3rem) !important;
+  line-height: 1.02 !important;
+}
+
+.contribution-section .section-copy p {
+  font-size: 0.94rem !important;
+  line-height: 1.52 !important;
+}
+
+.contribution-card {
+  padding: 18px !important;
+  border-radius: 22px !important;
+}
+
+.contribution-card img,
+.contribution-public-placeholder {
+  width: 160px !important;
+  height: 160px !important;
+}
+
+.contribution-card strong {
+  font-size: 0.88rem !important;
+}
+
+.contribution-card button {
+  min-height: 38px !important;
+  font-size: 0.84rem !important;
+}
+
+/* DOCUMENTOS */
+.documents-section {
+  padding: 56px 6vw !important;
+}
+
+.documents-section .section-heading h2 {
+  font-size: clamp(2rem, 4vw, 3.4rem) !important;
+}
+
+.documents-list {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+}
+
+.document-card {
+  padding: 20px !important;
+  border-radius: 22px !important;
+}
+
+.document-card span {
+  font-size: 0.68rem !important;
+}
+
+.document-card h3 {
+  font-size: 1rem !important;
+  line-height: 1.24 !important;
+}
+
+.document-card p {
+  font-size: 0.84rem !important;
+  line-height: 1.4 !important;
+}
+
+/* ORAÇÃO */
+.prayer-form-section {
+  padding: 56px 6vw !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 420px !important;
+  gap: 24px !important;
+}
+
+.prayer-copy {
+  padding: 30px 34px !important;
+  border-radius: 24px !important;
+}
+
+.prayer-copy h2 {
+  font-size: clamp(2rem, 4vw, 3.3rem) !important;
+  line-height: 1.04 !important;
+}
+
+.prayer-copy p {
+  font-size: 0.94rem !important;
+  line-height: 1.52 !important;
+}
+
+.prayer-form {
+  padding: 24px !important;
+  border-radius: 24px !important;
+}
+
+.prayer-form textarea {
+  min-height: 105px !important;
+}
+
+/* RESPONSIVO */
+@media (max-width: 1100px) {
+  .gallery-list,
+  .gallery-album-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .video-list,
+  .documents-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .location-grid,
+  .contribution-content,
+  .prayer-form-section {
+    grid-template-columns: 1fr !important;
+  }
+
+  .contribution-card {
+    max-width: 330px !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .gallery-section,
+  .location-section,
+  .media-section,
+  .contribution-section,
+  .documents-section,
+  .prayer-form-section {
+    padding: 46px 18px !important;
+  }
+
+  .gallery-list,
+  .gallery-album-list,
+  .video-list,
+  .documents-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  .gallery-cover-image,
+  .gallery-card img {
+    height: 165px !important;
+    min-height: 165px !important;
+    max-height: 165px !important;
+  }
+
+  .location-card img,
+  .location-placeholder {
+    height: 230px !important;
+    min-height: 230px !important;
+    max-height: 230px !important;
+  }
+
+  .video-card img,
+  .video-placeholder {
+    height: 170px !important;
+    min-height: 170px !important;
+    max-height: 170px !important;
+  }
+
+  .contribution-section .section-copy,
+  .prayer-copy {
+    padding: 24px !important;
+  }
+
+  .contribution-card {
+    max-width: 100% !important;
+  }
+
+  .contribution-card img,
+  .contribution-public-placeholder {
+    width: 155px !important;
+    height: 155px !important;
+  }
+}
+/* =========================================
+   AJUSTE FINO - CARDS DA GALERIA
+   Corrige desalinhamento e fundo diferente
+========================================= */
+
+.gallery-list,
+.gallery-album-list {
+  align-items: stretch !important;
+}
+
+.gallery-card,
+.gallery-album-card {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+  min-height: 100% !important;
+}
+
+/* área da imagem/capa */
+.gallery-cover-image,
+.gallery-card-image,
+.gallery-card-media,
+.gallery-album-cover {
+  width: 100% !important;
+  height: 180px !important;
+  min-height: 180px !important;
+  max-height: 180px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #ffffff !important; /* remove o fundo diferente */
+  padding: 10px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* imagem da capa */
+.gallery-cover-image img,
+.gallery-card-image img,
+.gallery-card-media img,
+.gallery-album-cover img,
+.gallery-card img,
+.gallery-album-card img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important; /* mostra a foto inteira sem cortar */
+  object-position: center !important;
+  background: #ffffff !important;
+  border-radius: 12px !important;
+}
+
+/* conteúdo do card */
+.gallery-card-content,
+.gallery-album-card-content {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  padding: 14px 16px 16px !important;
+  background: #ffffff !important;
+}
+
+.gallery-card-content h3,
+.gallery-album-card-content h3 {
+  margin: 4px 0 6px 0 !important;
+}
+
+.gallery-card-content p,
+.gallery-album-card-content p {
+  margin: 0 0 10px 0 !important;
+}
+
+.gallery-card-content small,
+.gallery-album-card-content small {
+  margin-top: auto !important;
+}
+
+/* garante mesma aparência para todos os cards */
+.gallery-card *,
+.gallery-album-card * {
+  box-sizing: border-box !important;
+}
+/* =========================================================
+   CORREÇÃO DEFINITIVA - ALINHAMENTO DA GALERIA
+========================================================= */
+
+#galeria.gallery-section {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 64px 6vw !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  transform: none !important;
+}
+
+/* Centraliza o conteúdo da Galeria igual às outras seções */
+#galeria .section-heading,
+#galeria .gallery-list,
+#galeria .gallery-album-list {
+  width: min(1180px, 100%) !important;
+  max-width: 1180px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Remove qualquer deslocamento antigo */
+#galeria .section-heading {
+  padding: 0 !important;
+  transform: none !important;
+}
+
+#galeria .section-heading .section-label {
+  display: block !important;
+  margin-left: 0 !important;
+}
+
+#galeria .section-heading h2 {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  max-width: 100% !important;
+  font-size: clamp(2.4rem, 5vw, 4.8rem) !important;
+  line-height: 1.02 !important;
+}
+
+/* Grid dos cards alinhado ao título */
+#galeria .gallery-list,
+#galeria .gallery-album-list {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+  margin-top: 24px !important;
+  padding: 0 !important;
+}
+
+/* Cards padronizados */
+#galeria .gallery-card,
+#galeria .gallery-album-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  background: #ffffff !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+}
+
+/* Área da capa */
+#galeria .gallery-cover-image {
+  width: 100% !important;
+  height: 160px !important;
+  background: #ffffff !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 10px !important;
+  box-sizing: border-box !important;
+}
+
+#galeria .gallery-cover-image img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  background: #ffffff !important;
+}
+
+/* Conteúdo do card */
+#galeria .gallery-card-content {
+  padding: 14px 16px 16px !important;
+  background: #ffffff !important;
+}
+
+/* Tablet */
+@media (max-width: 1100px) {
+  #galeria .gallery-list,
+  #galeria .gallery-album-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Celular */
+@media (max-width: 720px) {
+  #galeria.gallery-section {
+    padding: 52px 18px !important;
+  }
+
+  #galeria .gallery-list,
+  #galeria .gallery-album-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  #galeria .section-heading h2 {
+    font-size: 2.4rem !important;
+  }
+
+  #galeria .gallery-cover-image {
+    height: 180px !important;
+  }
+}
