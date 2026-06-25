@@ -56,11 +56,11 @@ const [filtroDataFinalOracao, setFiltroDataFinalOracao] = useState('')
   const [documentos, setDocumentos] = useState([])
   const [editandoDocumentoId, setEditandoDocumentoId] = useState(null)
   const [enviandoArquivo, setEnviandoArquivo] = useState(false)
-const [galeria, setGaleria] = useState([])
-const [editandoFotoId, setEditandoFotoId] = useState(null)
-const [enviandoImagemGaleria, setEnviandoImagemGaleria] = useState(false)
-
-const [galeriaForm, setGaleriaForm] = useState({
+  const [galeria, setGaleria] = useState([])
+  const [editandoFotoId, setEditandoFotoId] = useState(null)
+  const [enviandoImagemGaleria, setEnviandoImagemGaleria] = useState(false)
+  const [imagensGaleria, setImagensGaleria] = useState([])
+  const [galeriaForm, setGaleriaForm] = useState({
   titulo: '',
   descricao: '',
   categoria: 'Culto',
@@ -879,90 +879,150 @@ async function carregarGaleria() {
     }
   }
 
-  function limparFormularioGaleria() {
-    setGaleriaForm({
-      titulo: '',
-      descricao: '',
-      categoria: 'Culto',
-      imagem: '',
-      imagemPublicId: '',
-      ativo: true,
-    })
+ function limparFormularioGaleria() {
+  setGaleriaForm({
+    titulo: '',
+    descricao: '',
+    categoria: 'Culto',
+    imagem: '',
+    imagemPublicId: '',
+    ativo: true,
+  })
 
-    setEditandoFotoId(null)
-  }
+  setImagensGaleria([])
+  setEditandoFotoId(null)
+}
 
   async function enviarImagemGaleria(event) {
-    const file = event.target.files?.[0]
+  const files = Array.from(event.target.files || [])
 
-    if (!file) return
+  if (files.length === 0) return
 
-    setEnviandoImagemGaleria(true)
+  setEnviandoImagemGaleria(true)
 
-    try {
-      const arquivo = await uploadArquivoCloudinary(file)
+  try {
+    const imagensEnviadas = await Promise.all(
+      files.map(async (file) => {
+        const arquivo = await uploadArquivoCloudinary(file)
 
-      setGaleriaForm((formAtual) => ({
-        ...formAtual,
-        imagem: arquivo.url,
-        imagemPublicId: arquivo.publicId,
-      }))
+        return {
+          url: arquivo.url,
+          publicId: arquivo.publicId,
+        }
+      }),
+    )
 
-      alert('Imagem enviada com sucesso!')
-    } catch (error) {
-      alert('Erro ao enviar imagem da galeria.')
-      console.error(error)
-    } finally {
-      setEnviandoImagemGaleria(false)
-    }
+    setImagensGaleria((imagensAtuais) => [
+      ...imagensAtuais,
+      ...imagensEnviadas,
+    ])
+
+    setGaleriaForm((formAtual) => ({
+      ...formAtual,
+      imagem: formAtual.imagem || imagensEnviadas[0]?.url || '',
+      imagemPublicId: formAtual.imagemPublicId || imagensEnviadas[0]?.publicId || '',
+    }))
+
+    event.target.value = ''
+
+    alert(
+      imagensEnviadas.length === 1
+        ? 'Imagem adicionada com sucesso!'
+        : `${imagensEnviadas.length} imagens adicionadas com sucesso!`,
+    )
+  } catch (error) {
+    alert('Erro ao enviar imagem da galeria.')
+    console.error(error)
+  } finally {
+    setEnviandoImagemGaleria(false)
   }
+}
 
   async function salvarFotoGaleria(event) {
-    event.preventDefault()
+  event.preventDefault()
 
-    if (!galeriaForm.titulo || !galeriaForm.imagem) {
-      alert('Preencha o título e envie uma imagem.')
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const dadosFoto = {
-        titulo: galeriaForm.titulo,
-        descricao: galeriaForm.descricao,
-        categoria: galeriaForm.categoria,
-        imagem: galeriaForm.imagem,
-        imagemPublicId: galeriaForm.imagemPublicId,
-        ativo: galeriaForm.ativo,
-        atualizadoEm: serverTimestamp(),
-      }
-
-      if (editandoFotoId) {
-        await updateDoc(doc(db, 'galeria', editandoFotoId), dadosFoto)
-        alert('Foto atualizada com sucesso!')
-      } else {
-        await addDoc(collection(db, 'galeria'), {
-          ...dadosFoto,
-          criadoEm: serverTimestamp(),
-        })
-
-        alert('Foto cadastrada com sucesso!')
-      }
-
-      limparFormularioGaleria()
-      await carregarGaleria()
-    } catch (error) {
-      alert('Erro ao salvar foto da galeria.')
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
+  if (!galeriaForm.titulo) {
+    alert('Preencha o título da galeria.')
+    return
   }
 
+  if (editandoFotoId && !galeriaForm.imagem) {
+    alert('Envie uma imagem.')
+    return
+  }
+
+  if (!editandoFotoId && imagensGaleria.length === 0) {
+    alert('Selecione e envie pelo menos uma imagem.')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    const dadosBase = {
+      titulo: galeriaForm.titulo,
+      descricao: galeriaForm.descricao,
+      categoria: galeriaForm.categoria,
+      ativo: galeriaForm.ativo,
+      atualizadoEm: serverTimestamp(),
+    }
+
+    if (editandoFotoId) {
+      const albumAtual = albunsGaleriaAdmin.find((album) =>
+        album.fotos.some((foto) => foto.id === editandoFotoId),
+      )
+
+      if (albumAtual) {
+        const batch = writeBatch(db)
+
+        albumAtual.fotos.forEach((foto) => {
+          batch.update(doc(db, 'galeria', foto.id), dadosBase)
+        })
+
+        await batch.commit()
+
+        alert('Álbum atualizado com sucesso!')
+      } else {
+        await updateDoc(doc(db, 'galeria', editandoFotoId), {
+          ...dadosBase,
+          imagem: galeriaForm.imagem,
+          imagemPublicId: galeriaForm.imagemPublicId,
+        })
+
+        alert('Foto atualizada com sucesso!')
+      }
+    } else {
+      await Promise.all(
+        imagensGaleria.map((imagem) =>
+          addDoc(collection(db, 'galeria'), {
+            ...dadosBase,
+            imagem: imagem.url,
+            imagemPublicId: imagem.publicId,
+            criadoEm: serverTimestamp(),
+          }),
+        ),
+      )
+
+      alert(
+        imagensGaleria.length === 1
+          ? 'Foto cadastrada com sucesso!'
+          : `${imagensGaleria.length} fotos cadastradas com sucesso!`,
+      )
+    }
+
+    limparFormularioGaleria()
+    await carregarGaleria()
+  } catch (error) {
+    alert('Erro ao salvar galeria.')
+    console.error(error)
+  } finally {
+    setLoading(false)
+  }
+}
   function editarFotoGaleria(foto) {
     setAbaAtiva('galeria')
     setEditandoFotoId(foto.id)
+    setImagensGaleria([])
 
     setGaleriaForm({
       titulo: foto.titulo || '',
@@ -1010,7 +1070,68 @@ async function carregarGaleria() {
       console.error(error)
     }
   }
+async function alternarStatusAlbumGaleria(album) {
+  const albumAtivo = album.fotos.some((foto) => foto.ativo !== false)
+  const novoStatus = !albumAtivo
 
+  try {
+    const batch = writeBatch(db)
+
+    album.fotos.forEach((foto) => {
+      batch.update(doc(db, 'galeria', foto.id), {
+        ativo: novoStatus,
+        atualizadoEm: serverTimestamp(),
+      })
+    })
+
+    await batch.commit()
+    await carregarGaleria()
+  } catch (error) {
+    alert('Erro ao alterar status do álbum.')
+    console.error(error)
+  }
+}
+async function excluirFotoIndividualGaleria(foto) {
+  const confirmar = confirm(
+    `Deseja realmente excluir somente esta foto do álbum "${foto.titulo}"?`,
+  )
+
+  if (!confirmar) return
+
+  try {
+    await deleteDoc(doc(db, 'galeria', foto.id))
+
+    if (editandoFotoId === foto.id) {
+      limparFormularioGaleria()
+    }
+
+    await carregarGaleria()
+  } catch (error) {
+    alert('Erro ao excluir foto do álbum.')
+    console.error(error)
+  }
+}
+async function excluirAlbumGaleria(album) {
+  const confirmar = confirm(
+    `Deseja realmente excluir o álbum "${album.titulo}" com ${album.fotos.length} foto(s)?`,
+  )
+
+  if (!confirmar) return
+
+  try {
+    const batch = writeBatch(db)
+
+    album.fotos.forEach((foto) => {
+      batch.delete(doc(db, 'galeria', foto.id))
+    })
+
+    await batch.commit()
+    await carregarGaleria()
+  } catch (error) {
+    alert('Erro ao excluir álbum da galeria.')
+    console.error(error)
+  }
+}
   async function carregarMembros() {
     try {
       const q = query(collection(db, 'membros'), orderBy('nome', 'asc'))
@@ -1567,6 +1688,32 @@ const resumoPedidosOracao = {
   lidos: pedidosOracao.filter((pedido) => pedido.lido === true).length,
   filtrados: pedidosOracaoFiltrados.length,
 }
+const albunsGaleriaAdmin = Object.values(
+  galeria.reduce((albuns, foto) => {
+    const chave = `${foto.titulo || 'Sem título'}-${foto.descricao || ''}-${
+      foto.categoria || 'Galeria'
+    }`
+
+    if (!albuns[chave]) {
+      albuns[chave] = {
+        id: chave,
+        titulo: foto.titulo || 'Sem título',
+        descricao: foto.descricao || '',
+        categoria: foto.categoria || 'Galeria',
+        fotos: [],
+      }
+    }
+
+    albuns[chave].fotos.push(foto)
+
+    return albuns
+  }, {}),
+)
+const albumEditandoGaleria = editandoFotoId
+  ? albunsGaleriaAdmin.find((album) =>
+      album.fotos.some((foto) => foto.id === editandoFotoId),
+    )
+  : null
 const membrosFiltrados = membros.filter((membro) => {
   const textoBusca = buscaMembro.toLowerCase().trim()
 
@@ -2529,10 +2676,10 @@ const membrosFiltrados = membros.filter((membro) => {
     <div className="admin-grid admin-events-grid">
       <form className="admin-card gallery-form-card" onSubmit={salvarFotoGaleria}>
         <span className="admin-section-label">
-          {editandoFotoId ? 'Editando foto' : 'Nova foto'}
+          {editandoFotoId ? 'Editando álbum' : 'Novo álbum'}
         </span>
 
-        <h2>{editandoFotoId ? 'Editar foto' : 'Cadastrar foto'}</h2>
+        <h2>{editandoFotoId ? 'Editar álbum' : 'Cadastrar álbum'}</h2>
 
         <label>
           Título
@@ -2583,20 +2730,55 @@ const membrosFiltrados = membros.filter((membro) => {
         </label>
 
         <label>
-          Imagem
+          Imagens
           <input
+            id="gallery-images-input"
+            className="gallery-hidden-file-input"
             type="file"
             accept="image/*"
+            multiple
             onChange={enviarImagemGaleria}
             disabled={enviandoImagemGaleria}
           />
         </label>
 
+        <div className="gallery-add-more-actions">
+          <label htmlFor="gallery-images-input" className="gallery-add-more-button">
+            <span>+</span>
+            {imagensGaleria.length > 0 ? 'Adicionar mais fotos' : 'Selecionar fotos'}
+          </label>
+
+          {imagensGaleria.length > 0 && (
+            <button
+              type="button"
+              className="gallery-save-extra-button"
+              onClick={adicionarFotosAoEventoGaleria}
+              disabled={loading || enviandoImagemGaleria}
+            >
+              Salvar {imagensGaleria.length} foto
+              {imagensGaleria.length > 1 ? 's' : ''} neste evento
+            </button>
+          )}
+        </div>
+
         {enviandoImagemGaleria && (
           <p className="upload-feedback">Enviando imagem...</p>
         )}
 
-        {galeriaForm.imagem && (
+        {imagensGaleria.length > 0 && (
+          <div className="gallery-multiple-preview">
+            {imagensGaleria.map((imagem) => (
+              <div className="gallery-image-preview" key={imagem.publicId}>
+                <img
+                  src={imagem.url}
+                  alt={galeriaForm.titulo || 'Prévia da foto'}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {galeriaForm.imagem && editandoFotoId && (
           <div className="gallery-image-preview">
             <img
               src={galeriaForm.imagem}
@@ -2604,6 +2786,48 @@ const membrosFiltrados = membros.filter((membro) => {
             />
           </div>
         )}
+{albumEditandoGaleria && (
+  <div className="gallery-album-edit-photos">
+    <div className="gallery-album-edit-header">
+      <span>Fotos do álbum</span>
+      <strong>
+        {albumEditandoGaleria.fotos.length} foto
+        {albumEditandoGaleria.fotos.length > 1 ? 's' : ''}
+      </strong>
+    </div>
+
+    <div className="gallery-album-edit-grid">
+      {albumEditandoGaleria.fotos.map((foto, index) => (
+        <article
+          className={`gallery-album-edit-photo ${
+            foto.id === editandoFotoId ? 'active' : ''
+          }`}
+          key={foto.id}
+        >
+          <button
+            type="button"
+            className="gallery-album-thumb-button"
+            onClick={() => editarFotoGaleria(foto)}
+          >
+            <img src={foto.imagem} alt={`${foto.titulo} ${index + 1}`} />
+
+            <small>
+              {foto.id === editandoFotoId ? 'Selecionada' : `Foto ${index + 1}`}
+            </small>
+          </button>
+
+          <button
+            type="button"
+            className="gallery-delete-single-photo"
+            onClick={() => excluirFotoIndividualGaleria(foto)}
+          >
+            Excluir foto
+          </button>
+        </article>
+      ))}
+    </div>
+  </div>
+)}
 
         <label className="checkbox-label">
           <input
@@ -2616,16 +2840,18 @@ const membrosFiltrados = membros.filter((membro) => {
               })
             }
           />
-          Foto ativa no site
+          Álbum ativo no site
         </label>
 
         <button type="submit" disabled={loading || enviandoImagemGaleria}>
-          {loading
-            ? 'Salvando...'
-            : editandoFotoId
-              ? 'Salvar alterações'
-              : 'Cadastrar foto'}
-        </button>
+  {loading
+    ? 'Salvando...'
+    : editandoFotoId
+      ? 'Salvar alterações do álbum'
+      : imagensGaleria.length > 1
+        ? `Cadastrar ${imagensGaleria.length} fotos`
+        : 'Cadastrar foto'}
+</button>
 
         {editandoFotoId && (
           <button
@@ -2639,72 +2865,78 @@ const membrosFiltrados = membros.filter((membro) => {
       </form>
 
       <section className="admin-card gallery-list-card">
-        <span className="admin-section-label">Fotos cadastradas</span>
+        <span className="admin-section-label">Álbuns cadastrados</span>
 
         <h2>Galeria cadastrada</h2>
 
         <p>
-          Gerencie as fotos que poderão aparecer na galeria pública do site.
+          Gerencie os álbuns que poderão aparecer na galeria pública do site.
         </p>
 
         <div className="gallery-admin-list">
           {galeria.length === 0 && <p>Nenhuma foto cadastrada ainda.</p>}
 
-          {galeria.map((foto) => (
-            <article
-              className={`gallery-admin-item ${
-                foto.ativo === false ? 'inactive-item' : ''
-              }`}
-              key={foto.id}
-            >
-              {foto.imagem && <img src={foto.imagem} alt={foto.titulo} />}
+          {galeria.length > 0 &&
+            albunsGaleriaAdmin.map((album) => {
+              const fotoCapa = album.fotos[0]
+              const albumAtivo = album.fotos.some((foto) => foto.ativo !== false)
 
-              <div>
-                <span>{foto.categoria || 'Sem categoria'}</span>
-
-                <strong>{foto.titulo}</strong>
-
-                {foto.descricao && <p>{foto.descricao}</p>}
-
-                <small>
-                  {foto.ativo === false ? 'Inativa no site' : 'Ativa no site'}
-                </small>
-              </div>
-
-              <div className="admin-actions">
-                <button
-                  type="button"
-                  className="edit-button"
-                  onClick={() => editarFotoGaleria(foto)}
+              return (
+                <article
+                  className={`gallery-admin-item gallery-admin-album-item ${
+                    !albumAtivo ? 'inactive-item' : ''
+                  }`}
+                  key={album.id}
                 >
-                  Editar
-                </button>
+                  {fotoCapa?.imagem && (
+                    <img src={fotoCapa.imagem} alt={album.titulo} />
+                  )}
 
-                <button
-                  type="button"
-                  className={
-                    foto.ativo === false ? 'activate-button' : 'deactivate-button'
-                  }
-                  onClick={() => alternarStatusFotoGaleria(foto)}
-                >
-                  {foto.ativo === false ? 'Ativar' : 'Desativar'}
-                </button>
+                  <div>
+                    <span>{album.categoria || 'Sem categoria'}</span>
 
-                <button
-                  type="button"
-                  onClick={() => excluirFotoGaleria(foto.id)}
-                >
-                  Excluir
-                </button>
-              </div>
-            </article>
-          ))}
+                    <strong>{album.titulo}</strong>
+
+                    {album.descricao && <p>{album.descricao}</p>}
+
+                    <small>
+                      {albumAtivo ? 'Ativo no site' : 'Inativo no site'} ·{' '}
+                      {album.fotos.length} foto{album.fotos.length > 1 ? 's' : ''}
+                    </small>
+                  </div>
+
+                  <div className="admin-actions">
+                    <button
+                      type="button"
+                      className="edit-button"
+                      onClick={() => editarFotoGaleria(fotoCapa)}
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      type="button"
+                      className={albumAtivo ? 'deactivate-button' : 'activate-button'}
+                      onClick={() => alternarStatusAlbumGaleria(album)}
+                    >
+                      {albumAtivo ? 'Desativar' : 'Ativar'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => excluirAlbumGaleria(album)}
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </article>
+              )
+            })}
         </div>
       </section>
     </div>
   </section>
 )}
-
      {abaAtiva === 'membros' && (
   <section className="members-admin-area">
   <div className="member-mode-actions member-mode-actions-four">

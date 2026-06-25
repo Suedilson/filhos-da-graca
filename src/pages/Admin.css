@@ -2877,3 +2877,217 @@ textarea {
     height: 180px;
   }
 }
+/* Prévia de várias imagens na Galeria */
+
+.gallery-multiple-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gallery-multiple-preview .gallery-image-preview {
+  max-height: 150px;
+}
+
+.gallery-multiple-preview .gallery-image-preview img {
+  height: 150px;
+}
+
+@media (max-width: 760px) {
+  .gallery-multiple-preview {
+    grid-template-columns: 1fr;
+  }
+}
+/* Botão para adicionar mais fotos na Galeria */
+
+.gallery-add-more-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.gallery-add-more-button {
+  width: fit-content;
+  display: inline-flex;
+  grid-template-columns: auto;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 10px 15px;
+  border-radius: 14px;
+  background: rgba(111, 189, 42, 0.13);
+  border: 1px solid rgba(111, 189, 42, 0.26);
+  color: #2f7f12;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(23, 16, 95, 0.06);
+}
+
+.gallery-add-more-button span {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #6fbd2a;
+  color: #ffffff;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.gallery-add-more-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(23, 16, 95, 0.1);
+}
+
+.gallery-save-extra-button {
+  min-height: 42px;
+  padding: 10px 15px;
+  border-radius: 14px;
+  background: #17105f;
+  color: #ffffff;
+  font-weight: 900;
+}
+
+@media (max-width: 760px) {
+  .gallery-add-more-actions {
+    display: grid;
+  }
+
+  .gallery-add-more-button,
+  .gallery-save-extra-button {
+    width: 100%;
+  }
+}
+/* Galeria Admin por álbuns */
+
+.gallery-hidden-file-input {
+  display: none;
+}
+
+.gallery-admin-album-item {
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+}
+
+.gallery-admin-album-item small {
+  display: block;
+  margin-top: 6px;
+  color: #7d7890;
+  font-weight: 800;
+}
+
+@media (max-width: 900px) {
+  .gallery-admin-album-item {
+    grid-template-columns: 1fr;
+  }
+
+  .gallery-admin-album-item img {
+    width: 100%;
+    height: 180px;
+  }
+}
+/* Miniaturas das fotos dentro do modo editar álbum */
+
+.gallery-album-edit-photos {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(23, 16, 95, 0.04);
+  border: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.gallery-album-edit-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.gallery-album-edit-header span {
+  color: #6fbd2a;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gallery-album-edit-header strong {
+  color: #17105f;
+  font-size: 0.9rem;
+}
+
+.gallery-album-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gallery-album-edit-photo {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.gallery-album-edit-photo.active {
+  border-color: rgba(111, 189, 42, 0.75);
+  box-shadow: 0 0 0 3px rgba(111, 189, 42, 0.14);
+}
+
+.gallery-album-thumb-button {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #17105f;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.gallery-album-thumb-button:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.gallery-album-thumb-button img {
+  width: 100%;
+  height: 78px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #f8f7ff;
+}
+
+.gallery-album-thumb-button small {
+  color: #17105f;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.gallery-delete-single-photo {
+  min-height: 34px;
+  padding: 7px 8px;
+  border-radius: 11px;
+  background: #fff0ee;
+  color: #9d241a;
+  border: 1px solid rgba(180, 35, 24, 0.16);
+  box-shadow: none;
+  font-size: 0.76rem;
+}
+
+.gallery-delete-single-photo:hover {
+  background: #ffe5e1;
+  box-shadow: none;
+}
+
+@media (max-width: 760px) {
+  .gallery-album-edit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -26,18 +26,24 @@ const quickActions = [
     icon: '✚',
     href: '#oracao',
   },
-  {
+    {
     title: 'Vídeos',
     description: 'Acompanhe mensagens, estudos e transmissões.',
     icon: '▶',
     href: '#midia',
   },
   {
-  title: 'Como chegar',
-  description: 'Encontre o caminho para nos visitar.',
-  icon: '⌖',
-  href: '#localizacao',
-},
+    title: 'Galeria',
+    description: 'Veja fotos de cultos, eventos e momentos especiais.',
+    icon: '▣',
+    href: '#galeria',
+  },
+  {
+    title: 'Como chegar',
+    description: 'Encontre o caminho para nos visitar.',
+    icon: '⌖',
+    href: '#localizacao',
+  },
 ]
 
 const schedules = [
@@ -65,13 +71,15 @@ function App() {
 
   return <Home />
 }
-
 function Home() {
   const [programacaoHome, setProgramacaoHome] = useState([])
   const [eventosHome, setEventosHome] = useState([])
   const [localizacaoHome, setLocalizacaoHome] = useState(null)
   const [videosHome, setVideosHome] = useState([])
   const [documentosHome, setDocumentosHome] = useState([])
+  const [galeriaHome, setGaleriaHome] = useState([])
+  const [albumAberto, setAlbumAberto] = useState(null)
+  const [fotoAtualAlbum, setFotoAtualAlbum] = useState(0)
   const [pedidoForm, setPedidoForm] = useState({
   nome: '',
   telefone: '',
@@ -148,7 +156,7 @@ const [enviandoPedido, setEnviandoPedido] = useState(false)
       }
     }
 
-    async function carregarDocumentosHome() {
+        async function carregarDocumentosHome() {
       try {
         const q = query(collection(db, 'documentos'), orderBy('criadoEm', 'desc'))
         const snapshot = await getDocs(q)
@@ -166,15 +174,80 @@ const [enviandoPedido, setEnviandoPedido] = useState(false)
       }
     }
 
-    carregarProgramacaoHome()
+    async function carregarGaleriaHome() {
+      try {
+        const q = query(collection(db, 'galeria'), orderBy('criadoEm', 'desc'))
+        const snapshot = await getDocs(q)
+
+        const lista = snapshot.docs
+          .map((item) => ({
+            id: item.id,
+            ...item.data(),
+          }))
+          .filter((item) => item.ativo !== false)
+
+        setGaleriaHome(lista)
+      } catch (error) {
+        console.error('Erro ao carregar galeria da home:', error)
+      }
+    }
+
+       carregarProgramacaoHome()
     carregarEventosHome()
     carregarLocalizacaoHome()
     carregarVideosHome()
     carregarDocumentosHome()
+    carregarGaleriaHome()
   }, [])
 
   const programacaoExibida =
     programacaoHome.length > 0 ? programacaoHome : schedules
+const albunsGaleria = Object.values(
+  galeriaHome.reduce((albuns, foto) => {
+    const chave = `${foto.titulo || 'Sem título'}-${foto.descricao || ''}-${
+      foto.categoria || 'Galeria'
+    }`
+
+    if (!albuns[chave]) {
+      albuns[chave] = {
+        id: chave,
+        titulo: foto.titulo || 'Sem título',
+        descricao: foto.descricao || '',
+        categoria: foto.categoria || 'Galeria',
+        fotos: [],
+      }
+    }
+
+    albuns[chave].fotos.push(foto)
+
+    return albuns
+  }, {}),
+)
+function abrirAlbum(album) {
+  setAlbumAberto(album)
+  setFotoAtualAlbum(0)
+}
+
+function fecharAlbum() {
+  setAlbumAberto(null)
+  setFotoAtualAlbum(0)
+}
+
+function avancarFotoAlbum() {
+  if (!albumAberto) return
+
+  setFotoAtualAlbum((indiceAtual) =>
+    indiceAtual === albumAberto.fotos.length - 1 ? 0 : indiceAtual + 1,
+  )
+}
+
+function voltarFotoAlbum() {
+  if (!albumAberto) return
+
+  setFotoAtualAlbum((indiceAtual) =>
+    indiceAtual === 0 ? albumAberto.fotos.length - 1 : indiceAtual - 1,
+  )
+}
 
   function formatarData(data) {
     if (!data) return ''
@@ -289,6 +362,7 @@ function obterThumbnailYoutube(url) {
           <a href="#cultos">Cultos</a>
           <a href="#visitante">Visitantes</a>
           <a href="#eventos">Eventos</a>
+          <a href="#galeria">Galeria</a>
           <a href="#localizacao">Como chegar</a>
           <a href="#midia">Mídia</a>
           <a href="#contato">Contato</a>
@@ -418,9 +492,46 @@ function obterThumbnailYoutube(url) {
             ))}
           </div>
         </section>
-      )}
-       
-       <section className="location-section" id="localizacao">
+           )}
+{albunsGaleria.length > 0 && (
+  <section className="gallery-section" id="galeria">
+    <div className="section-heading">
+      <span className="section-label">Galeria</span>
+      <h2>Momentos da nossa igreja</h2>
+    </div>
+
+    <div className="gallery-list gallery-album-list">
+      {albunsGaleria.map((album) => {
+        const fotoCapa = album.fotos[0]
+
+        return (
+          <button
+            type="button"
+            className="gallery-card gallery-album-card"
+            key={album.id}
+            onClick={() => abrirAlbum(album)}
+          >
+            <div className="gallery-cover-image">
+              <img src={fotoCapa.imagem} alt={album.titulo} />
+            </div>
+
+            <div className="gallery-card-content">
+              <span>{album.categoria}</span>
+              <h3>{album.titulo}</h3>
+
+              {album.descricao && <p>{album.descricao}</p>}
+
+              <small>
+                {album.fotos.length} foto{album.fotos.length > 1 ? 's' : ''}
+              </small>
+            </div>
+          </button>
+        )
+      })}
+    </div>
+  </section>
+)}
+      <section className="location-section" id="localizacao">
   <div className="section-heading">
     <span className="section-label">Como chegar</span>
     <h2>Venha nos visitar</h2>
@@ -609,6 +720,91 @@ function obterThumbnailYoutube(url) {
   </form>
 </section>
 
+             {albumAberto && (
+  <div
+    className="gallery-modal"
+    role="button"
+    tabIndex={0}
+    onClick={fecharAlbum}
+    onKeyDown={(event) => {
+      if (event.key === 'Escape') {
+        fecharAlbum()
+      }
+
+      if (event.key === 'ArrowRight') {
+        avancarFotoAlbum()
+      }
+
+      if (event.key === 'ArrowLeft') {
+        voltarFotoAlbum()
+      }
+    }}
+  >
+    <div
+      className="gallery-modal-content gallery-album-modal-content"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="gallery-modal-close"
+        onClick={fecharAlbum}
+      >
+        ×
+      </button>
+
+      {albumAberto.fotos.length > 1 && (
+        <>
+          <button
+            type="button"
+            className="gallery-arrow gallery-arrow-left"
+            onClick={voltarFotoAlbum}
+          >
+            ‹
+          </button>
+
+          <button
+            type="button"
+            className="gallery-arrow gallery-arrow-right"
+            onClick={avancarFotoAlbum}
+          >
+            ›
+          </button>
+        </>
+      )}
+
+      <img
+        src={albumAberto.fotos[fotoAtualAlbum].imagem}
+        alt={albumAberto.titulo}
+      />
+
+      <div className="gallery-modal-info">
+        <span>{albumAberto.categoria}</span>
+        <h3>{albumAberto.titulo}</h3>
+
+        {albumAberto.descricao && <p>{albumAberto.descricao}</p>}
+
+        <small>
+          Foto {fotoAtualAlbum + 1} de {albumAberto.fotos.length}
+        </small>
+      </div>
+
+      {albumAberto.fotos.length > 1 && (
+        <div className="gallery-thumbnails">
+          {albumAberto.fotos.map((foto, index) => (
+            <button
+              type="button"
+              className={index === fotoAtualAlbum ? 'active' : ''}
+              key={foto.id}
+              onClick={() => setFotoAtualAlbum(index)}
+            >
+              <img src={foto.imagem} alt={`${albumAberto.titulo} ${index + 1}`} />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+)}
       <footer className="footer" id="contato">
         <div>
           <strong>Filhos da Graça</strong>
@@ -618,6 +814,7 @@ function obterThumbnailYoutube(url) {
         <nav>
           <a href="#cultos">Cultos</a>
           <a href="#eventos">Eventos</a>
+          <a href="#galeria">Galeria</a>
           <a href="#oracao">Oração</a>
           <a href="#midia">Mídia</a>
           <a href="/admin">Área do Membro</a>
