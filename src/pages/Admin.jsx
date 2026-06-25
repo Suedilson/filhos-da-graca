@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react'
 import {
   onAuthStateChanged,
@@ -58,6 +57,9 @@ function Admin() {
   const [membros, setMembros] = useState([])
   const [editandoMembroId, setEditandoMembroId] = useState(null)
   const [enviandoFotoMembro, setEnviandoFotoMembro] = useState(false)
+  const [buscaMembro, setBuscaMembro] = useState('')
+  const [filtroStatusMembro, setFiltroStatusMembro] = useState('Todos')
+  const [filtroMinisterioMembro, setFiltroMinisterioMembro] = useState('Todos')
 
   const [eventoForm, setEventoForm] = useState({
     titulo: '',
@@ -1002,7 +1004,41 @@ function calcularIdade(dataNascimento) {
 
   return idade
 }
+const ministeriosDisponiveis = Array.from(
+  new Set(
+    membros
+      .map((membro) => membro.ministerio)
+      .filter(Boolean),
+  ),
+).sort()
 
+const resumoMembros = {
+  total: membros.length,
+  ativos: membros.filter((membro) => membro.status === 'Ativo').length,
+  visitantes: membros.filter((membro) => membro.status === 'Visitante').length,
+  afastados: membros.filter((membro) => membro.status === 'Afastado').length,
+  inativos: membros.filter((membro) => membro.status === 'Inativo').length,
+}
+
+const membrosFiltrados = membros.filter((membro) => {
+  const textoBusca = buscaMembro.toLowerCase().trim()
+
+  const correspondeBusca =
+    !textoBusca ||
+    membro.nome?.toLowerCase().includes(textoBusca) ||
+    membro.telefone?.toLowerCase().includes(textoBusca) ||
+    membro.endereco?.toLowerCase().includes(textoBusca) ||
+    membro.ministerio?.toLowerCase().includes(textoBusca)
+
+  const correspondeStatus =
+    filtroStatusMembro === 'Todos' || membro.status === filtroStatusMembro
+
+  const correspondeMinisterio =
+    filtroMinisterioMembro === 'Todos' ||
+    membro.ministerio === filtroMinisterioMembro
+
+  return correspondeBusca && correspondeStatus && correspondeMinisterio
+})
   function formatarData(data) {
     if (!data) return ''
 
@@ -1823,8 +1859,36 @@ function calcularIdade(dataNascimento) {
         </section>
       )}
 
-      {abaAtiva === 'membros' && (
-        <section className="admin-grid admin-events-grid">
+     {abaAtiva === 'membros' && (
+  <section className="members-admin-area">
+    <div className="members-summary">
+      <article>
+        <span>Total</span>
+        <strong>{resumoMembros.total}</strong>
+      </article>
+
+      <article>
+        <span>Ativos</span>
+        <strong>{resumoMembros.ativos}</strong>
+      </article>
+
+      <article>
+        <span>Visitantes</span>
+        <strong>{resumoMembros.visitantes}</strong>
+      </article>
+
+      <article>
+        <span>Afastados</span>
+        <strong>{resumoMembros.afastados}</strong>
+      </article>
+
+      <article>
+        <span>Inativos</span>
+        <strong>{resumoMembros.inativos}</strong>
+      </article>
+    </div>
+
+    <div className="admin-grid admin-events-grid">
           <form className="admin-card" onSubmit={salvarMembro}>
             <span className="admin-section-label">Membros</span>
 
@@ -1980,14 +2044,63 @@ function calcularIdade(dataNascimento) {
           </form>
 
           <section className="admin-card">
-            <span className="admin-section-label">Lista de membros</span>
-            <h2>Membros cadastrados</h2>
-            <p>Controle interno de membros e visitantes.</p>
+           <span className="admin-section-label">Lista de membros</span>
+<h2>Membros cadastrados</h2>
+<p>Controle interno de membros e visitantes.</p>
 
-            <div className="admin-list">
-              {membros.length === 0 && <p>Nenhum membro cadastrado ainda.</p>}
+<div className="member-filters">
+  <label>
+    Buscar membro
+    <input
+      value={buscaMembro}
+      onChange={(event) => setBuscaMembro(event.target.value)}
+      placeholder="Buscar por nome, telefone, endereço ou ministério"
+    />
+  </label>
 
-              {membros.map((membro) => (
+  <label>
+    Status
+    <select
+      value={filtroStatusMembro}
+      onChange={(event) => setFiltroStatusMembro(event.target.value)}
+    >
+      <option value="Todos">Todos</option>
+      <option value="Ativo">Ativo</option>
+      <option value="Visitante">Visitante</option>
+      <option value="Afastado">Afastado</option>
+      <option value="Inativo">Inativo</option>
+    </select>
+  </label>
+
+  <label>
+    Ministério
+    <select
+      value={filtroMinisterioMembro}
+      onChange={(event) => setFiltroMinisterioMembro(event.target.value)}
+    >
+      <option value="Todos">Todos</option>
+
+      {ministeriosDisponiveis.map((ministerio) => (
+        <option value={ministerio} key={ministerio}>
+          {ministerio}
+        </option>
+      ))}
+    </select>
+  </label>
+</div>
+
+<div className="member-results-count">
+  Exibindo {membrosFiltrados.length} de {membros.length} membros
+</div>
+
+<div className="admin-list">
+            {membros.length === 0 && <p>Nenhum membro cadastrado ainda.</p>}
+
+            {membros.length > 0 && membrosFiltrados.length === 0 && (
+            <p>Nenhum membro encontrado com os filtros selecionados.</p>
+            )}
+
+            {membrosFiltrados.map((membro) => (
                 <article
                   className={`admin-list-item member-list-item ${
                     membro.status === 'Inativo' ? 'inactive-item' : ''
@@ -2076,13 +2189,14 @@ function calcularIdade(dataNascimento) {
                     </button>
                   </div>
                 </article>
-              ))}
+                           ))}
             </div>
           </section>
-        </section>
-      )}
+        </div>
+      </section>
+    )}
 
-      {abaAtiva === 'localizacao' && (
+    {abaAtiva === 'localizacao' && (
         <section className="admin-grid admin-events-grid">
           <form className="admin-card" onSubmit={salvarLocalizacao}>
             <span className="admin-section-label">Localização</span>
