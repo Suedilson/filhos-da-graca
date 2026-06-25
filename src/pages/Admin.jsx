@@ -60,6 +60,9 @@ function Admin() {
   const [buscaMembro, setBuscaMembro] = useState('')
   const [filtroStatusMembro, setFiltroStatusMembro] = useState('Todos')
   const [filtroMinisterioMembro, setFiltroMinisterioMembro] = useState('Todos')
+  const [mesAniversariantes, setMesAniversariantes] = useState(
+  String(new Date().getMonth() + 1),
+)
 
   const [eventoForm, setEventoForm] = useState({
     titulo: '',
@@ -1004,6 +1007,200 @@ function calcularIdade(dataNascimento) {
 
   return idade
 }
+function obterMesNascimento(dataNascimento) {
+  if (!dataNascimento) return ''
+
+  const partes = dataNascimento.split('-')
+
+  return String(Number(partes[1]))
+}
+
+function obterDiaNascimento(dataNascimento) {
+  if (!dataNascimento) return ''
+
+  const partes = dataNascimento.split('-')
+
+  return Number(partes[2])
+}
+
+function calcularNovaIdade(dataNascimento) {
+  if (!dataNascimento) return ''
+
+  return calcularIdade(dataNascimento) + 1
+}
+
+function ehAniversarianteHoje(dataNascimento) {
+  if (!dataNascimento) return false
+
+  const hoje = new Date()
+  const mesAtual = hoje.getMonth() + 1
+  const diaAtual = hoje.getDate()
+
+  return (
+    Number(obterMesNascimento(dataNascimento)) === mesAtual &&
+    obterDiaNascimento(dataNascimento) === diaAtual
+  )
+}
+function obterNomeMes(numeroMes) {
+  const meses = {
+    1: 'Janeiro',
+    2: 'Fevereiro',
+    3: 'Março',
+    4: 'Abril',
+    5: 'Maio',
+    6: 'Junho',
+    7: 'Julho',
+    8: 'Agosto',
+    9: 'Setembro',
+    10: 'Outubro',
+    11: 'Novembro',
+    12: 'Dezembro',
+  }
+
+  return meses[Number(numeroMes)] || ''
+}
+
+function gerarRelatorioAniversariantes() {
+  const nomeMes = obterNomeMes(mesAniversariantes)
+
+  const linhas = aniversariantesDoMes
+    .map(
+      (membro) => `
+        <tr>
+          <td>${obterDiaNascimento(membro.nascimento)}</td>
+          <td>${membro.nome || ''}</td>
+          <td>${membro.telefone || ''}</td>
+          <td>${calcularIdade(membro.nascimento)} anos</td>
+          <td>${calcularNovaIdade(membro.nascimento)} anos</td>
+          <td>${membro.ministerio || ''}</td>
+        </tr>
+      `,
+    )
+    .join('')
+
+  const janela = window.open('', '_blank')
+
+  janela.document.write(`
+    <html>
+      <head>
+        <title>Aniversariantes de ${nomeMes}</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            padding: 32px;
+            color: #17105f;
+          }
+
+          h1 {
+            margin-bottom: 4px;
+          }
+
+          p {
+            color: #60708a;
+            margin-top: 0;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+          }
+
+          th,
+          td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            font-size: 14px;
+          }
+
+          th {
+            background: #17105f;
+            color: white;
+          }
+        </style>
+      </head>
+
+      <body>
+        <h1>Aniversariantes de ${nomeMes}</h1>
+        <p>Total de aniversariantes: ${aniversariantesDoMes.length}</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Dia</th>
+              <th>Nome</th>
+              <th>Telefone</th>
+              <th>Idade atual</th>
+              <th>Nova idade</th>
+              <th>Ministério</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${
+              linhas ||
+              '<tr><td colspan="6">Nenhum aniversariante neste mês.</td></tr>'
+            }
+          </tbody>
+        </table>
+
+        <script>
+          window.print()
+        </script>
+      </body>
+    </html>
+  `)
+
+  janela.document.close()
+}
+
+function exportarAniversariantesExcel() {
+  const nomeMes = obterNomeMes(mesAniversariantes)
+
+  const cabecalho = [
+    'Dia',
+    'Nome',
+    'Telefone',
+    'Data de nascimento',
+    'Idade atual',
+    'Nova idade',
+    'Ministério',
+    'Status',
+  ]
+
+  const linhas = aniversariantesDoMes.map((membro) => [
+    obterDiaNascimento(membro.nascimento),
+    membro.nome || '',
+    membro.telefone || '',
+    formatarData(membro.nascimento),
+    calcularIdade(membro.nascimento),
+    calcularNovaIdade(membro.nascimento),
+    membro.ministerio || '',
+    membro.status || '',
+  ])
+
+  const conteudo = [cabecalho, ...linhas]
+    .map((linha) =>
+      linha
+        .map((campo) => `"${String(campo).replaceAll('"', '""')}"`)
+        .join(';'),
+    )
+    .join('\n')
+
+  const blob = new Blob(['\uFEFF' + conteudo], {
+    type: 'text/csv;charset=utf-8;',
+  })
+
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = url
+  link.download = `aniversariantes-${nomeMes.toLowerCase()}.csv`
+  link.click()
+
+  URL.revokeObjectURL(url)
+}
 const ministeriosDisponiveis = Array.from(
   new Set(
     membros
@@ -1019,7 +1216,13 @@ const resumoMembros = {
   afastados: membros.filter((membro) => membro.status === 'Afastado').length,
   inativos: membros.filter((membro) => membro.status === 'Inativo').length,
 }
+const aniversariantesDoMes = membros
+  .filter((membro) => obterMesNascimento(membro.nascimento) === mesAniversariantes)
+  .sort((a, b) => obterDiaNascimento(a.nascimento) - obterDiaNascimento(b.nascimento))
 
+const aniversariantesHoje = aniversariantesDoMes.filter((membro) =>
+  ehAniversarianteHoje(membro.nascimento),
+)
 const membrosFiltrados = membros.filter((membro) => {
   const textoBusca = buscaMembro.toLowerCase().trim()
 
@@ -1887,6 +2090,107 @@ const membrosFiltrados = membros.filter((membro) => {
         <strong>{resumoMembros.inativos}</strong>
       </article>
     </div>
+<div className="birthday-panel">
+  <div className="birthday-heading">
+    <span className="admin-section-label">Aniversariantes</span>
+    <h2>Aniversariantes do mês</h2>
+    <p>
+      Acompanhe os membros que fazem aniversário no mês selecionado.
+    </p>
+  </div>
+
+  <div className="birthday-controls">
+    <label>
+      Mês
+      <select
+        value={mesAniversariantes}
+        onChange={(event) => setMesAniversariantes(event.target.value)}
+      >
+      <option value="1">Janeiro</option>
+      <option value="2">Fevereiro</option>
+      <option value="3">Março</option>
+      <option value="4">Abril</option>
+      <option value="5">Maio</option>
+      <option value="6">Junho</option>
+      <option value="7">Julho</option>
+      <option value="8">Agosto</option>
+      <option value="9">Setembro</option>
+      <option value="10">Outubro</option>
+      <option value="11">Novembro</option>
+              <option value="12">Dezembro</option>
+      </select>
+    </label>
+
+    <div className="birthday-buttons">
+      <button
+        type="button"
+        className="report-button"
+        onClick={gerarRelatorioAniversariantes}
+      >
+        Relatório
+      </button>
+
+      <button
+        type="button"
+        className="excel-button"
+        onClick={exportarAniversariantesExcel}
+      >
+        Exportar Excel
+      </button>
+    </div>
+  </div>
+
+  <div className="birthday-stats">
+    <article>
+      <span>No mês</span>
+      <strong>{aniversariantesDoMes.length}</strong>
+    </article>
+
+    <article>
+      <span>Hoje</span>
+      <strong>{aniversariantesHoje.length}</strong>
+    </article>
+  </div>
+
+  <div className="birthday-list">
+    {aniversariantesDoMes.length === 0 && (
+      <p>Nenhum aniversariante neste mês.</p>
+    )}
+
+    {aniversariantesDoMes.map((membro) => (
+      <article
+        className={
+          'birthday-item ' +
+          (ehAniversarianteHoje(membro.nascimento) ? 'birthday-today' : '')
+        }
+        key={membro.id}
+      >
+        {membro.foto ? (
+          <img src={membro.foto} alt={membro.nome} />
+        ) : (
+          <div>{membro.nome?.charAt(0) || '?'}</div>
+        )}
+
+        <section>
+          <span>
+            Dia {obterDiaNascimento(membro.nascimento)}
+            {ehAniversarianteHoje(membro.nascimento) ? ' - hoje' : ''}
+          </span>
+
+          <strong>{membro.nome}</strong>
+
+          <small>
+            Idade atual: {calcularIdade(membro.nascimento)} anos
+          </small>
+
+          <small>
+            Nova idade: {calcularNovaIdade(membro.nascimento)} anos
+          </small>
+        </section>
+      </article>
+    ))}
+  </div>
+</div>
 
     <div className="admin-grid admin-events-grid">
           <form className="admin-card" onSubmit={salvarMembro}>
