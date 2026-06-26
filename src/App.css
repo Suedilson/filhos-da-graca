@@ -3162,3 +3162,272 @@ a {
     height: 180px !important;
   }
 }
+/* =========================================================
+   Controle de usuários e permissões
+========================================================= */
+
+.users-permission-area {
+  display: grid;
+  gap: 18px;
+}
+
+.users-permission-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.users-permission-form {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.users-permission-form > .admin-section-label,
+.users-permission-form > h2,
+.users-permission-form > p,
+.users-permission-form > .users-permission-options,
+.users-permission-form > .finance-modal-actions {
+  grid-column: 1 / -1;
+}
+
+.users-permission-form > label {
+  grid-column: span 4;
+}
+
+.users-permission-form > label:nth-of-type(1),
+.users-permission-form > label:nth-of-type(2) {
+  grid-column: span 6;
+}
+
+.users-permission-form select,
+.users-permission-form input {
+  color: #17105f;
+  background: #ffffff;
+  border: 1px solid rgba(23, 16, 95, 0.16);
+  border-radius: 14px;
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.users-permission-form input:disabled {
+  color: #60708a;
+  background: #f4f6fb;
+}
+
+.users-permission-form .finance-toggle-label {
+  grid-column: span 4;
+  align-self: end;
+  min-height: 44px;
+  border: 1px solid rgba(23, 16, 95, 0.1);
+  border-radius: 14px;
+  background: rgba(23, 16, 95, 0.04);
+  padding: 10px 12px;
+}
+
+.users-permission-form .finance-toggle-label input {
+  min-height: auto;
+  padding: 0;
+}
+
+.users-permission-options {
+  background: linear-gradient(135deg, rgba(23, 16, 95, 0.05), rgba(111, 189, 42, 0.08));
+  border: 1px solid rgba(23, 16, 95, 0.08);
+  border-radius: 20px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.users-permission-options > strong {
+  color: #17105f;
+  font-size: 0.95rem;
+  font-weight: 950;
+}
+
+.users-permission-options > div {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.users-permission-options label {
+  color: #17105f;
+  background: #ffffff;
+  border: 1px solid rgba(23, 16, 95, 0.1);
+  border-radius: 14px;
+  padding: 10px 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  line-height: 1.15;
+  font-weight: 900;
+}
+
+.users-permission-options input {
+  width: auto;
+  min-height: auto;
+  padding: 0;
+}
+
+.users-permission-list-card {
+  min-width: 0;
+}
+
+.users-permission-list {
+  display: grid;
+  gap: 12px;
+}
+
+.users-permission-item {
+  background: #ffffff;
+  border: 1px solid rgba(23, 16, 95, 0.08);
+  border-radius: 20px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  box-shadow: 0 10px 24px rgba(23, 16, 95, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.users-permission-item::before {
+  content: '';
+  width: 6px;
+  height: 100%;
+  background: #6fbd2a;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.users-permission-item > div:first-child {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 6px 16px;
+  align-items: center;
+}
+
+.users-permission-item span {
+  color: #6fbd2a;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+}
+
+.users-permission-item strong {
+  color: #17105f;
+  display: block;
+  font-size: 1.02rem;
+  font-weight: 950;
+}
+
+.users-permission-item p {
+  color: #60708a;
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 750;
+}
+
+.users-permission-item small {
+  color: #60708a;
+  line-height: 1.35;
+  display: block;
+  font-size: 0.76rem;
+  word-break: break-word;
+}
+
+.users-permission-item small:first-of-type {
+  font-family: monospace;
+  color: #17105f;
+  background: rgba(23, 16, 95, 0.05);
+  border-radius: 10px;
+  padding: 5px 8px;
+}
+
+.users-status {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 950;
+  display: inline-flex;
+  justify-self: start;
+}
+
+.users-status.active {
+  color: #2f7f12;
+  background: rgba(111, 189, 42, 0.14);
+}
+
+.users-status.inactive {
+  color: #9d241a;
+  background: #fff0ee;
+}
+
+.users-permission-item .admin-actions {
+  justify-content: flex-end;
+  min-width: 180px;
+}
+
+@media (max-width: 1180px) {
+  .users-permission-form > label,
+  .users-permission-form > label:nth-of-type(1),
+  .users-permission-form > label:nth-of-type(2),
+  .users-permission-form .finance-toggle-label {
+    grid-column: span 6;
+  }
+
+  .users-permission-options > div {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .users-permission-item,
+  .users-permission-item > div:first-child {
+    grid-template-columns: 1fr;
+  }
+
+  .users-permission-item .admin-actions {
+    min-width: 0;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .users-permission-form {
+    grid-template-columns: 1fr;
+  }
+
+  .users-permission-form > label,
+  .users-permission-form > label:nth-of-type(1),
+  .users-permission-form > label:nth-of-type(2),
+  .users-permission-form .finance-toggle-label {
+    grid-column: 1 / -1;
+  }
+
+  .users-permission-options > div {
+    grid-template-columns: 1fr;
+  }
+
+  .users-permission-item {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 980px) {
+  .users-permission-grid,
+  .users-permission-item {
+    grid-template-columns: 1fr;
+  }
+
+  .users-permission-options > div {
+    grid-template-columns: 1fr;
+  }
+}

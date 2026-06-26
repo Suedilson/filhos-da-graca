@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  createUserWithEmailAndPassword,
+  getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
 } from 'firebase/auth'
+import { deleteApp, initializeApp } from 'firebase/app'
 import {
   addDoc,
   collection,
@@ -18,20 +21,81 @@ import {
   updateDoc,
   writeBatch,
 } from 'firebase/firestore'
-import { auth, db } from '../services/firebase'
+import { auth, db, firebaseConfig } from '../services/firebase'
 import { uploadArquivoCloudinary } from '../services/cloudinary'
 import './Admin.css'
 
 const ADMIN_EMAILS = ['suedilsonfilho@gmail.com']
 
+const PERFIS_USUARIOS = {
+  admin: 'Administrador geral',
+  presidente: 'Presidente',
+  tesoureiro: 'Tesoureiro',
+  secretaria: 'Secretaria',
+  midia: 'Mídia',
+  membro: 'Membro',
+}
+
+const PERMISSOES_POR_PERFIL = {
+  admin: [
+    'programacao',
+    'eventos',
+    'oracao',
+    'midia',
+    'documentos',
+    'contribuicao',
+    'financeiro',
+    'galeria',
+    'membros',
+    'localizacao',
+    'usuarios',
+  ],
+  presidente: [
+    'programacao',
+    'eventos',
+    'oracao',
+    'midia',
+    'documentos',
+    'contribuicao',
+    'financeiro',
+    'galeria',
+    'membros',
+    'localizacao',
+    'usuarios',
+  ],
+  tesoureiro: ['financeiro', 'contribuicao'],
+  secretaria: ['programacao', 'eventos', 'oracao', 'membros'],
+  midia: ['midia', 'documentos', 'galeria'],
+  membro: ['meusDados'],
+}
+
 function Admin() {
   const [user, setUser] = useState(null)
-  const [checkingAuth, setCheckingAuth] = useState(true)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [abaAtiva, setAbaAtiva] = useState('programacao')
+const [checkingAuth, setCheckingAuth] = useState(true)
+const [email, setEmail] = useState('')
+const [password, setPassword] = useState('')
+const [loading, setLoading] = useState(false)
+const [abaAtiva, setAbaAtiva] = useState('programacao')
 
+const [permissaoUsuario, setPermissaoUsuario] = useState(null)
+const [carregandoPermissoes, setCarregandoPermissoes] = useState(false)
+
+const [usuariosPermissoes, setUsuariosPermissoes] = useState([])
+const [editandoUsuarioPermissaoId, setEditandoUsuarioPermissaoId] =
+  useState(null)
+const [criandoUsuarioAuth, setCriandoUsuarioAuth] = useState(false)
+
+const [usuarioPermissaoForm, setUsuarioPermissaoForm] = useState({
+  uid: '',
+  nome: '',
+  email: '',
+  senha: '',
+  usuarioExistente: false,
+  perfil: 'membro',
+  membroId: '',
+  ativo: true,
+  permissoes: PERMISSOES_POR_PERFIL.membro,
+})
   const [programacao, setProgramacao] = useState([])
   const [editandoId, setEditandoId] = useState(null)
 
@@ -153,16 +217,95 @@ const [contribuicaoForm, setContribuicaoForm] = useState({
 const [enviandoQrCodePix, setEnviandoQrCodePix] = useState(false)
 
   const eventoFormRef = useRef(null)
-  const isAdmin = user && ADMIN_EMAILS.includes(user.email)
+  const isSuperAdmin = user && ADMIN_EMAILS.includes(user.email)
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser)
+const perfilUsuario = isSuperAdmin
+  ? 'admin'
+  : permissaoUsuario?.perfil || ''
+
+const permissoesUsuario = isSuperAdmin
+  ? PERMISSOES_POR_PERFIL.admin
+  : permissaoUsuario?.permissoes || PERMISSOES_POR_PERFIL[perfilUsuario] || []
+
+const isAdmin = Boolean(
+  user &&
+    (
+      isSuperAdmin ||
+      permissaoUsuario?.ativo === true
+    ),
+)
+
+function usuarioPodeAcessar(permissao) {
+  if (isSuperAdmin) return true
+
+  return permissoesUsuario.includes(permissao)
+}
+function obterPrimeiraAbaPermitida() {
+  const ordemAbas = [
+    'programacao',
+    'eventos',
+    'oracao',
+    'midia',
+    'documentos',
+    'contribuicao',
+    'financeiro',
+    'galeria',
+    'membros',
+    'localizacao',
+    'usuarios',
+  ]
+
+  return ordemAbas.find((aba) => usuarioPodeAcessar(aba)) || 'programacao'
+}
+ useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    setUser(currentUser)
+
+    if (!currentUser) {
+      setPermissaoUsuario(null)
       setCheckingAuth(false)
-    })
+      return
+    }
 
-    return () => unsubscribe()
-  }, [])
+    if (ADMIN_EMAILS.includes(currentUser.email)) {
+      setPermissaoUsuario({
+        uid: currentUser.uid,
+        email: currentUser.email,
+        nome: 'Administrador geral',
+        perfil: 'admin',
+        permissoes: PERMISSOES_POR_PERFIL.admin,
+        ativo: true,
+      })
+
+      setCheckingAuth(false)
+      return
+    }
+
+    setCarregandoPermissoes(true)
+
+    try {
+      const refPermissao = doc(db, 'usuariosPermissoes', currentUser.uid)
+      const snapshotPermissao = await getDoc(refPermissao)
+
+      if (snapshotPermissao.exists()) {
+        setPermissaoUsuario({
+          id: snapshotPermissao.id,
+          ...snapshotPermissao.data(),
+        })
+      } else {
+        setPermissaoUsuario(null)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar permissões do usuário.', error)
+      setPermissaoUsuario(null)
+    } finally {
+      setCarregandoPermissoes(false)
+      setCheckingAuth(false)
+    }
+  })
+
+  return () => unsubscribe()
+}, [])
 const [modoFinanceiro, setModoFinanceiro] = useState('dashboard')
 const [contasBancarias, setContasBancarias] = useState([])
 const [editandoContaBancariaId, setEditandoContaBancariaId] = useState(null)
@@ -304,24 +447,63 @@ const categoriasAprovisionamento = [
 ]
 
 const statusAprovisionamento = ['Reservado', 'Utilizado', 'Cancelado']
-
 useEffect(() => {
-  if (isAdmin) {
+  if (!isAdmin) return
+
+  if (!usuarioPodeAcessar(abaAtiva)) {
+    setAbaAtiva(obterPrimeiraAbaPermitida())
+  }
+}, [isAdmin, permissaoUsuario, abaAtiva])
+useEffect(() => {
+  if (!isAdmin) return
+
+  if (usuarioPodeAcessar('programacao')) {
     carregarProgramacao()
+  }
+
+  if (usuarioPodeAcessar('eventos')) {
     carregarEventos()
+  }
+
+  if (usuarioPodeAcessar('localizacao')) {
     carregarLocalizacao()
+  }
+
+  if (usuarioPodeAcessar('contribuicao')) {
     carregarContribuicao()
+  }
+
+  if (usuarioPodeAcessar('financeiro')) {
     carregarContasBancarias()
     carregarArrecadacoes()
     carregarContasPagar()
     carregarAprovisionamentos()
+  }
+
+  if (usuarioPodeAcessar('oracao')) {
     carregarPedidosOracao()
+  }
+
+  if (usuarioPodeAcessar('midia')) {
     carregarVideos()
+  }
+
+  if (usuarioPodeAcessar('documentos')) {
     carregarDocumentos()
+  }
+
+  if (usuarioPodeAcessar('galeria')) {
     carregarGaleria()
+  }
+
+  if (usuarioPodeAcessar('membros') || usuarioPodeAcessar('meusDados')) {
     carregarMembros()
   }
-}, [isAdmin])
+
+  if (usuarioPodeAcessar('usuarios')) {
+    carregarUsuariosPermissoes()
+  }
+}, [isAdmin, permissaoUsuario])
 const mesAtualFinanceiro = String(new Date().getMonth() + 1)
 const anoAtualFinanceiro = String(new Date().getFullYear())
 
@@ -348,6 +530,207 @@ const [anoFiltroFinanceiro, setAnoFiltroFinanceiro] = useState(
 )
 const [statusFiltroContaPagar, setStatusFiltroContaPagar] = useState('Todas')
 const [fornecedorFiltroContaPagar, setFornecedorFiltroContaPagar] = useState('')
+async function carregarUsuariosPermissoes() {
+  const usuariosSnapshot = await getDocs(collection(db, 'usuariosPermissoes'))
+
+  const listaUsuarios = usuariosSnapshot.docs.map((documento) => ({
+    id: documento.id,
+    ...documento.data(),
+  }))
+
+  setUsuariosPermissoes(
+    listaUsuarios.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')),
+  )
+}
+
+function atualizarPerfilUsuarioPermissao(perfil) {
+  setUsuarioPermissaoForm((formAtual) => ({
+    ...formAtual,
+    perfil,
+    permissoes: PERMISSOES_POR_PERFIL[perfil] || [],
+  }))
+}
+
+function alternarPermissaoUsuario(permissao) {
+  setUsuarioPermissaoForm((formAtual) => {
+    const permissoesAtuais = formAtual.permissoes || []
+
+    if (permissoesAtuais.includes(permissao)) {
+      return {
+        ...formAtual,
+        permissoes: permissoesAtuais.filter((item) => item !== permissao),
+      }
+    }
+
+    return {
+      ...formAtual,
+      permissoes: [...permissoesAtuais, permissao],
+    }
+  })
+}
+
+function limparFormularioUsuarioPermissao() {
+  setEditandoUsuarioPermissaoId(null)
+
+  setUsuarioPermissaoForm({
+    uid: '',
+    nome: '',
+    email: '',
+    senha: '',
+    usuarioExistente: false,
+    perfil: 'membro',
+    membroId: '',
+    ativo: true,
+    permissoes: PERMISSOES_POR_PERFIL.membro,
+  })
+}
+async function criarUsuarioNoAuthentication(emailUsuario, senhaUsuario) {
+  const nomeAppSecundario = `admin-criacao-usuario-${Date.now()}`
+  const appSecundario = initializeApp(firebaseConfig, nomeAppSecundario)
+  const authSecundario = getAuth(appSecundario)
+
+  try {
+    const credencial = await createUserWithEmailAndPassword(
+      authSecundario,
+      emailUsuario,
+      senhaUsuario,
+    )
+
+    return credencial.user.uid
+  } finally {
+    await deleteApp(appSecundario)
+  }
+}
+
+async function salvarUsuarioPermissao(event) {
+  event.preventDefault()
+
+  if (!usuarioPermissaoForm.nome.trim()) {
+    alert('Informe o nome do usuário.')
+    return
+  }
+
+  if (!usuarioPermissaoForm.email.trim()) {
+    alert('Informe o e-mail do usuário.')
+    return
+  }
+
+  if (
+  !editandoUsuarioPermissaoId &&
+  !usuarioPermissaoForm.usuarioExistente &&
+  !usuarioPermissaoForm.senha.trim()
+) {
+  alert('Informe uma senha inicial para o novo usuário.')
+  return
+}
+
+if (
+  !editandoUsuarioPermissaoId &&
+  usuarioPermissaoForm.usuarioExistente &&
+  !usuarioPermissaoForm.uid.trim()
+) {
+  alert('Informe o UID do usuário já existente no Firebase Authentication.')
+  return
+}
+
+  if (
+    usuarioPermissaoForm.perfil === 'membro' &&
+    !usuarioPermissaoForm.membroId.trim()
+  ) {
+    alert('Para perfil de membro, vincule o cadastro de membro.')
+    return
+  }
+
+  setCriandoUsuarioAuth(true)
+
+  try {
+    let uidUsuario = usuarioPermissaoForm.uid.trim()
+
+if (!editandoUsuarioPermissaoId && !usuarioPermissaoForm.usuarioExistente) {
+  uidUsuario = await criarUsuarioNoAuthentication(
+    usuarioPermissaoForm.email.trim().toLowerCase(),
+    usuarioPermissaoForm.senha.trim(),
+  )
+}
+
+    const dadosUsuario = {
+      uid: uidUsuario,
+      nome: usuarioPermissaoForm.nome.trim(),
+      email: usuarioPermissaoForm.email.trim().toLowerCase(),
+      perfil: usuarioPermissaoForm.perfil,
+      membroId: usuarioPermissaoForm.membroId || '',
+      ativo: usuarioPermissaoForm.ativo,
+      permissoes: usuarioPermissaoForm.permissoes || [],
+      atualizadoEm: serverTimestamp(),
+    }
+
+    if (!editandoUsuarioPermissaoId) {
+      dadosUsuario.criadoEm = serverTimestamp()
+    }
+
+    await setDoc(doc(db, 'usuariosPermissoes', uidUsuario), dadosUsuario, {
+      merge: true,
+    })
+
+    await carregarUsuariosPermissoes()
+    limparFormularioUsuarioPermissao()
+
+    alert('Usuário e permissões salvos com sucesso.')
+  } catch (error) {
+    console.error('Erro ao salvar usuário.', error)
+
+    if (error.code === 'auth/email-already-in-use') {
+      alert(
+        'Este e-mail já existe no Firebase Authentication. Use outro e-mail ou edite as permissões já existentes.',
+      )
+      return
+    }
+
+    if (error.code === 'auth/weak-password') {
+      alert('A senha precisa ter pelo menos 6 caracteres.')
+      return
+    }
+
+    alert('Erro ao salvar usuário. Verifique os dados e tente novamente.')
+  } finally {
+    setCriandoUsuarioAuth(false)
+  }
+}
+
+function editarUsuarioPermissao(usuarioPermissao) {
+  setEditandoUsuarioPermissaoId(usuarioPermissao.id)
+
+  setUsuarioPermissaoForm({
+  uid: usuarioPermissao.uid || usuarioPermissao.id,
+  nome: usuarioPermissao.nome || '',
+  email: usuarioPermissao.email || '',
+  senha: '',
+  usuarioExistente: true,
+  perfil: usuarioPermissao.perfil || 'membro',
+  membroId: usuarioPermissao.membroId || '',
+  ativo: usuarioPermissao.ativo !== false,
+  permissoes:
+    usuarioPermissao.permissoes ||
+    PERMISSOES_POR_PERFIL[usuarioPermissao.perfil] ||
+    [],
+})
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
+
+async function alternarStatusUsuarioPermissao(usuarioPermissao) {
+  const novoStatus = usuarioPermissao.ativo === false
+
+  await updateDoc(doc(db, 'usuariosPermissoes', usuarioPermissao.id), {
+    ativo: novoStatus,
+    atualizadoEm: serverTimestamp(),
+  })
+
+  await carregarUsuariosPermissoes()
+}
 async function login(event) {
    event.preventDefault()
     setLoading(true)
@@ -3601,7 +3984,319 @@ const membrosFiltrados = membros.filter((membro) => {
 
   return ''
 }
+function renderizarUsuariosPermissoes() {
+  const todasPermissoes = [
+    { id: 'programacao', nome: 'Programação' },
+    { id: 'eventos', nome: 'Eventos' },
+    { id: 'oracao', nome: 'Pedidos de oração' },
+    { id: 'midia', nome: 'Vídeos / Mídia' },
+    { id: 'documentos', nome: 'Documentos' },
+    { id: 'contribuicao', nome: 'Contribuição' },
+    { id: 'financeiro', nome: 'Financeiro' },
+    { id: 'galeria', nome: 'Galeria' },
+    { id: 'membros', nome: 'Membros' },
+    { id: 'localizacao', nome: 'Localização' },
+    { id: 'usuarios', nome: 'Usuários' },
+    { id: 'meusDados', nome: 'Meus dados' },
+  ]
 
+  return (
+    <section className="users-permission-area">
+      <div className="finance-table-toolbar finance-report-toolbar">
+        <div>
+          <span className="admin-section-label">Controle de acesso</span>
+
+          <h2>Usuários e permissões</h2>
+
+          <p>
+            Crie o login do usuário e defina quais módulos ele poderá acessar no
+            painel administrativo.
+          </p>
+        </div>
+      </div>
+
+      <div className="users-permission-grid">
+        <form
+          className="admin-card users-permission-form"
+          onSubmit={salvarUsuarioPermissao}
+        >
+          <span className="admin-section-label">
+            {editandoUsuarioPermissaoId ? 'Editar usuário' : 'Novo usuário'}
+          </span>
+
+          <h2>
+            {editandoUsuarioPermissaoId
+              ? 'Editar permissões'
+              : 'Criar usuário e permissão'}
+          </h2>
+
+          <p>
+            O usuário será criado no Firebase Authentication e também salvo na
+            coleção de permissões.
+          </p>
+
+          <label>
+            Nome
+            <input
+              value={usuarioPermissaoForm.nome}
+              onChange={(event) =>
+                setUsuarioPermissaoForm((formAtual) => ({
+                  ...formAtual,
+                  nome: event.target.value,
+                }))
+              }
+              placeholder="Nome completo"
+            />
+          </label>
+
+          <label>
+            E-mail
+            <input
+              type="email"
+              value={usuarioPermissaoForm.email}
+              disabled={Boolean(editandoUsuarioPermissaoId)}
+              onChange={(event) =>
+                setUsuarioPermissaoForm((formAtual) => ({
+                  ...formAtual,
+                  email: event.target.value,
+                }))
+              }
+              placeholder="email@exemplo.com"
+            />
+          </label>
+
+         {!editandoUsuarioPermissaoId && (
+  <label className="finance-toggle-label">
+    <input
+      type="checkbox"
+      checked={usuarioPermissaoForm.usuarioExistente}
+      onChange={(event) =>
+        setUsuarioPermissaoForm((formAtual) => ({
+          ...formAtual,
+          usuarioExistente: event.target.checked,
+          senha: event.target.checked ? '' : formAtual.senha,
+        }))
+      }
+    />
+    <span>Usuário já existe no Firebase Authentication</span>
+  </label>
+)}
+
+{!editandoUsuarioPermissaoId && usuarioPermissaoForm.usuarioExistente && (
+  <label>
+    UID do usuário existente
+    <input
+      value={usuarioPermissaoForm.uid}
+      onChange={(event) =>
+        setUsuarioPermissaoForm((formAtual) => ({
+          ...formAtual,
+          uid: event.target.value,
+        }))
+      }
+      placeholder="Cole aqui o UID do Firebase Authentication"
+    />
+  </label>
+)}
+
+{!editandoUsuarioPermissaoId && !usuarioPermissaoForm.usuarioExistente && (
+  <label>
+    Senha inicial
+    <input
+      type="password"
+      value={usuarioPermissaoForm.senha}
+      onChange={(event) =>
+        setUsuarioPermissaoForm((formAtual) => ({
+          ...formAtual,
+          senha: event.target.value,
+        }))
+      }
+      placeholder="Mínimo 6 caracteres"
+    />
+  </label>
+)}
+
+{editandoUsuarioPermissaoId && (
+  <label>
+    UID
+    <input value={usuarioPermissaoForm.uid} disabled />
+  </label>
+)}
+
+          <label>
+            Perfil
+            <select
+              value={usuarioPermissaoForm.perfil}
+              onChange={(event) =>
+                atualizarPerfilUsuarioPermissao(event.target.value)
+              }
+            >
+              {Object.entries(PERFIS_USUARIOS).map(([valor, nome]) => (
+                <option value={valor} key={valor}>
+                  {nome}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Membro vinculado
+            <select
+              value={usuarioPermissaoForm.membroId}
+              onChange={(event) =>
+                setUsuarioPermissaoForm((formAtual) => ({
+                  ...formAtual,
+                  membroId: event.target.value,
+                }))
+              }
+            >
+              <option value="">Nenhum membro vinculado</option>
+
+              {membros.map((membro) => (
+                <option value={membro.id} key={membro.id}>
+                  {membro.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="finance-toggle-label">
+            <input
+              type="checkbox"
+              checked={usuarioPermissaoForm.ativo}
+              onChange={(event) =>
+                setUsuarioPermissaoForm((formAtual) => ({
+                  ...formAtual,
+                  ativo: event.target.checked,
+                }))
+              }
+            />
+            <span>Usuário ativo</span>
+          </label>
+
+          <div className="users-permission-options">
+            <strong>Permissões liberadas</strong>
+
+            <div>
+              {todasPermissoes.map((permissao) => (
+                <label key={permissao.id}>
+                  <input
+                    type="checkbox"
+                    checked={usuarioPermissaoForm.permissoes.includes(
+                      permissao.id,
+                    )}
+                    onChange={() => alternarPermissaoUsuario(permissao.id)}
+                  />
+                  <span>{permissao.nome}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="finance-modal-actions">
+            <button type="submit" disabled={criandoUsuarioAuth}>
+              {criandoUsuarioAuth
+                ? 'Salvando...'
+                : editandoUsuarioPermissaoId
+                  ? 'Salvar permissões'
+                  : 'Criar usuário'}
+            </button>
+
+            {editandoUsuarioPermissaoId && (
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={limparFormularioUsuarioPermissao}
+              >
+                Cancelar edição
+              </button>
+            )}
+          </div>
+        </form>
+
+        <section className="admin-card users-permission-list-card">
+          <span className="admin-section-label">Usuários cadastrados</span>
+
+          <h2>Lista de acessos</h2>
+
+          <p>
+            Usuários ativos conseguem acessar somente os módulos liberados.
+          </p>
+
+          <div className="users-permission-list">
+            {usuariosPermissoes.length === 0 && (
+              <div className="finance-empty-state">
+                <strong>Nenhum usuário cadastrado.</strong>
+                <p>Crie o primeiro acesso pelo formulário ao lado.</p>
+              </div>
+            )}
+
+            {usuariosPermissoes.map((usuarioPermissao) => (
+              <article
+                className="users-permission-item"
+                key={usuarioPermissao.id}
+              >
+                <div>
+                  <span>
+                    {PERFIS_USUARIOS[usuarioPermissao.perfil] ||
+                      usuarioPermissao.perfil}
+                  </span>
+
+                  <strong>{usuarioPermissao.nome}</strong>
+
+                  <p>{usuarioPermissao.email}</p>
+
+                  <small>
+                    UID: {usuarioPermissao.uid || usuarioPermissao.id}
+                  </small>
+
+                  <small>
+                    Permissões:{' '}
+                    {(usuarioPermissao.permissoes || []).join(', ') ||
+                      'Nenhuma'}
+                  </small>
+
+                  <em
+                    className={
+                      usuarioPermissao.ativo === false
+                        ? 'users-status inactive'
+                        : 'users-status active'
+                    }
+                  >
+                    {usuarioPermissao.ativo === false ? 'Inativo' : 'Ativo'}
+                  </em>
+                </div>
+
+                <div className="admin-actions">
+                  <button
+                    type="button"
+                    className="edit-button"
+                    onClick={() => editarUsuarioPermissao(usuarioPermissao)}
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    type="button"
+                    className={
+                      usuarioPermissao.ativo === false
+                        ? 'activate-button'
+                        : 'deactivate-button'
+                    }
+                    onClick={() =>
+                      alternarStatusUsuarioPermissao(usuarioPermissao)
+                    }
+                  >
+                    {usuarioPermissao.ativo === false ? 'Ativar' : 'Inativar'}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      </div>
+    </section>
+  )
+}
   if (checkingAuth) {
     return (
       <main className="admin-page">
@@ -3708,86 +4403,119 @@ function formatarMoeda(valor) {
   <button onClick={sair}>Sair</button>
 </header>
 
-      <nav className="admin-tabs">
-        <button
-          type="button"
-          className={abaAtiva === 'programacao' ? 'active' : ''}
-          onClick={() => setAbaAtiva('programacao')}
-        >
-          Programação
-        </button>
+     <nav className="admin-tabs">
+  {usuarioPodeAcessar('programacao') && (
+    <button
+      type="button"
+      className={abaAtiva === 'programacao' ? 'active' : ''}
+      onClick={() => setAbaAtiva('programacao')}
+    >
+      Programação
+    </button>
+  )}
 
-        <button
-          type="button"
-          className={abaAtiva === 'eventos' ? 'active' : ''}
-          onClick={() => setAbaAtiva('eventos')}
-        >
-          Eventos
-        </button>
+  {usuarioPodeAcessar('eventos') && (
+    <button
+      type="button"
+      className={abaAtiva === 'eventos' ? 'active' : ''}
+      onClick={() => setAbaAtiva('eventos')}
+    >
+      Eventos
+    </button>
+  )}
 
-        <button
-          type="button"
-          className={abaAtiva === 'oracao' ? 'active' : ''}
-          onClick={() => setAbaAtiva('oracao')}
-        >
-          Oração
-        </button>
+  {usuarioPodeAcessar('oracao') && (
+    <button
+      type="button"
+      className={abaAtiva === 'oracao' ? 'active' : ''}
+      onClick={() => setAbaAtiva('oracao')}
+    >
+      Oração
+    </button>
+  )}
 
-        <button
-          type="button"
-          className={abaAtiva === 'midia' ? 'active' : ''}
-          onClick={() => setAbaAtiva('midia')}
-        >
-          Mídia
-        </button>
+  {usuarioPodeAcessar('midia') && (
+    <button
+      type="button"
+      className={abaAtiva === 'midia' ? 'active' : ''}
+      onClick={() => setAbaAtiva('midia')}
+    >
+      Mídia
+    </button>
+  )}
 
-        <button
-          type="button"
-          className={abaAtiva === 'documentos' ? 'active' : ''}
-          onClick={() => setAbaAtiva('documentos')}
-        >
-          Documentos
-        </button>
-<button
-  type="button"
-  className={abaAtiva === 'contribuicao' ? 'active' : ''}
-  onClick={() => setAbaAtiva('contribuicao')}
->
-  Contribuição
-</button>
-<button
-  type="button"
-  className={abaAtiva === 'financeiro' ? 'active' : ''}
-  onClick={() => setAbaAtiva('financeiro')}
->
-  Financeiro
-</button>
-        <button
-        type="button"
-        className={abaAtiva === 'galeria' ? 'active' : ''}
-        onClick={() => setAbaAtiva('galeria')}
-        >
-         Galeria
-         </button>
+  {usuarioPodeAcessar('documentos') && (
+    <button
+      type="button"
+      className={abaAtiva === 'documentos' ? 'active' : ''}
+      onClick={() => setAbaAtiva('documentos')}
+    >
+      Documentos
+    </button>
+  )}
 
-        <button
-          type="button"
-          className={abaAtiva === 'membros' ? 'active' : ''}
-          onClick={() => setAbaAtiva('membros')}
-        >
-          Membros
-        </button>
+  {usuarioPodeAcessar('contribuicao') && (
+    <button
+      type="button"
+      className={abaAtiva === 'contribuicao' ? 'active' : ''}
+      onClick={() => setAbaAtiva('contribuicao')}
+    >
+      Contribuição
+    </button>
+  )}
 
-        <button
-          type="button"
-          className={abaAtiva === 'localizacao' ? 'active' : ''}
-          onClick={() => setAbaAtiva('localizacao')}
-        >
-          Localização
-        </button>
-      </nav>
+  {usuarioPodeAcessar('financeiro') && (
+    <button
+      type="button"
+      className={abaAtiva === 'financeiro' ? 'active' : ''}
+      onClick={() => setAbaAtiva('financeiro')}
+    >
+      Financeiro
+    </button>
+  )}
 
-      {abaAtiva === 'programacao' && (
+  {usuarioPodeAcessar('galeria') && (
+    <button
+      type="button"
+      className={abaAtiva === 'galeria' ? 'active' : ''}
+      onClick={() => setAbaAtiva('galeria')}
+    >
+      Galeria
+    </button>
+  )}
+
+  {usuarioPodeAcessar('membros') && (
+    <button
+      type="button"
+      className={abaAtiva === 'membros' ? 'active' : ''}
+      onClick={() => setAbaAtiva('membros')}
+    >
+      Membros
+    </button>
+  )}
+
+  {usuarioPodeAcessar('localizacao') && (
+    <button
+      type="button"
+      className={abaAtiva === 'localizacao' ? 'active' : ''}
+      onClick={() => setAbaAtiva('localizacao')}
+    >
+      Localização
+    </button>
+  )}
+
+  {usuarioPodeAcessar('usuarios') && (
+    <button
+      type="button"
+      className={abaAtiva === 'usuarios' ? 'active' : ''}
+      onClick={() => setAbaAtiva('usuarios')}
+    >
+      Usuários
+    </button>
+  )}
+</nav>
+
+      {abaAtiva === 'programacao' && usuarioPodeAcessar('programacao') && (
         <section className="admin-grid">
           <form className="admin-card" onSubmit={cadastrarCulto}>
             <span className="admin-section-label">Programação</span>
@@ -3938,7 +4666,7 @@ function formatarMoeda(valor) {
         </section>
       )}
 
-      {abaAtiva === 'eventos' && (
+      {abaAtiva === 'eventos' && usuarioPodeAcessar('eventos') && (
         <section className="admin-grid admin-events-grid">
           <form
             ref={eventoFormRef}
@@ -4109,7 +4837,7 @@ function formatarMoeda(valor) {
         </section>
       )}
 
-    {abaAtiva === 'oracao' && (
+{abaAtiva === 'oracao' && usuarioPodeAcessar('oracao') && (
   <section className="admin-card admin-full-card prayer-admin-card">
     <div className="prayer-card-header">
       <div>
@@ -4240,7 +4968,7 @@ function formatarMoeda(valor) {
   </section>
 )}
 
-      {abaAtiva === 'midia' && (
+      {abaAtiva === 'midia' && usuarioPodeAcessar('midia') && (
         <section className="admin-grid admin-events-grid">
           <form className="admin-card" onSubmit={salvarVideo}>
             <span className="admin-section-label">Mídia</span>
@@ -4367,7 +5095,7 @@ function formatarMoeda(valor) {
         </section>
       )}
 
-      {abaAtiva === 'documentos' && (
+      {abaAtiva === 'documentos' && usuarioPodeAcessar('documentos') && (
         <section className="admin-grid admin-events-grid">
           <form className="admin-card" onSubmit={salvarDocumento}>
             <span className="admin-section-label">Documentos</span>
@@ -4542,7 +5270,7 @@ function formatarMoeda(valor) {
           </section>
         </section>
       )}
-{abaAtiva === 'contribuicao' && (
+{abaAtiva === 'contribuicao' && usuarioPodeAcessar('contribuicao') && (
   <section className="admin-grid admin-events-grid contribution-admin-area">
     <form className="admin-card contribution-form-card" onSubmit={salvarContribuicao}>
       <span className="admin-section-label">Contribuição</span>
@@ -4696,7 +5424,7 @@ function formatarMoeda(valor) {
     </section>
   </section>
 )}
-{abaAtiva === 'financeiro' && (
+{abaAtiva === 'financeiro' && usuarioPodeAcessar('financeiro') && (
   <section className="finance-admin-area">
     <div className="finance-header-card">
       <div>
@@ -6972,7 +7700,7 @@ function formatarMoeda(valor) {
 )}
   </section>
 )}
-{abaAtiva === 'galeria' && (
+{abaAtiva === 'galeria' && usuarioPodeAcessar('galeria') && (
   <section className="admin-card admin-full-card gallery-admin-card">
     <div className="gallery-card-header">
       <div>
@@ -7250,7 +7978,7 @@ function formatarMoeda(valor) {
     </div>
   </section>
 )}
-     {abaAtiva === 'membros' && (
+    {abaAtiva === 'membros' && usuarioPodeAcessar('membros') && (
   <section className="members-admin-area">
   <div className="member-mode-actions member-mode-actions-four">
   <button
@@ -7895,8 +8623,10 @@ function formatarMoeda(valor) {
         </div>
       </section>
     )}
-
-    {abaAtiva === 'localizacao' && (
+      {abaAtiva === 'usuarios' &&
+        usuarioPodeAcessar('usuarios') &&
+        renderizarUsuariosPermissoes()}
+    {abaAtiva === 'localizacao' && usuarioPodeAcessar('localizacao') && (
         <section className="admin-grid admin-events-grid">
           <form className="admin-card" onSubmit={salvarLocalizacao}>
             <span className="admin-section-label">Localização</span>
