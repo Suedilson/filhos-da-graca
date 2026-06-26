@@ -1273,6 +1273,153 @@ function obterDescricaoMesesFinanceiro() {
 
   return `${anoFiltroFinanceiro}-${descricaoMeses}`
 }
+function exportarRelatorioFinanceiroExcel() {
+  const cabecalho = ['Indicador', 'Valor']
+
+  const linhasResumo = [
+    ['Saldo disponível', formatarMoeda(resumoFinanceiro.saldoDisponivel)],
+    ['Saldo financeiro', formatarMoeda(resumoFinanceiro.saldoFinanceiro)],
+    ['Total arrecadado', formatarMoeda(resumoFinanceiro.totalArrecadacoes)],
+    ['Contas pagas', formatarMoeda(resumoFinanceiro.totalContasPagas)],
+    ['Contas em aberto', formatarMoeda(resumoFinanceiro.totalContasAbertas)],
+    ['Aprovisionado', formatarMoeda(resumoFinanceiro.totalAprovisionado)],
+    ['Despesas vencidas', resumoFinanceiro.contasPagarVencidas],
+    ['Vencem hoje', resumoFinanceiro.contasPagarVencemHoje],
+    ['Próximos 7 dias', resumoFinanceiro.contasPagarProximos7Dias],
+    ['Contas bancárias', resumoFinanceiro.contas],
+  ]
+
+  const cabecalhoEntradasPorTipo = ['Tipo', 'Quantidade', 'Total']
+
+  const linhasEntradasPorTipo = arrecadacoesPorTipo.map((item) => [
+    item.categoria,
+    item.quantidade,
+    formatarMoeda(item.total),
+  ])
+
+  const cabecalhoDespesasPorCategoria = [
+    'Categoria',
+    'Quantidade',
+    'Total pago',
+    'Total em aberto',
+    'Total geral',
+  ]
+
+  const linhasDespesasPorCategoria = despesasPorCategoria.map((item) => [
+    item.categoria,
+    item.quantidade,
+    formatarMoeda(item.totalPago),
+    formatarMoeda(item.totalAberto),
+    formatarMoeda(item.total),
+  ])
+
+  const cabecalhoAprovisionamentosPorCategoria = [
+    'Categoria',
+    'Quantidade',
+    'Total',
+  ]
+
+  const linhasAprovisionamentosPorCategoria =
+    aprovisionamentosPorCategoria.map((item) => [
+      item.categoria,
+      item.quantidade,
+      formatarMoeda(item.total),
+    ])
+
+  const cabecalhoArrecadacoes = [
+    'Data',
+    'Tipo',
+    'Descrição',
+    'Forma de pagamento',
+    'Conta',
+    'Responsável',
+    'Status',
+    'Valor',
+  ]
+
+  const linhasArrecadacoes = arrecadacoesFiltradasFinanceiro.map((item) => [
+    formatarData(item.data),
+    item.tipo || '',
+    item.descricao || '',
+    item.formaPagamento || '',
+    item.contaBancariaNome || '',
+    item.responsavel || '',
+    item.ativo === false ? 'Cancelada' : 'Ativa',
+    formatarMoeda(item.valor),
+  ])
+
+  const cabecalhoDespesas = [
+    'Vencimento',
+    'Pagamento',
+    'Fornecedor',
+    'Categoria',
+    'Descrição',
+    'Forma de pagamento',
+    'Conta',
+    'Status',
+    'Valor',
+  ]
+
+  const linhasDespesas = contasPagarFiltradasFinanceiro.map((item) => [
+    formatarData(item.vencimento),
+    item.dataPagamento ? formatarData(item.dataPagamento) : '',
+    item.fornecedor || '',
+    item.categoria || '',
+    item.descricao || '',
+    item.formaPagamento || '',
+    item.contaBancariaNome || '',
+    obterStatusVisualContaPagar(item),
+    formatarMoeda(item.valor),
+  ])
+
+  const conteudo = [
+    ['RELATÓRIO FINANCEIRO'],
+    ['Período', obterDescricaoMesesFinanceiro()],
+    [],
+    ['RESUMO'],
+    cabecalho,
+    ...linhasResumo,
+    [],
+    ['ENTRADAS POR TIPO'],
+    cabecalhoEntradasPorTipo,
+    ...linhasEntradasPorTipo,
+    [],
+    ['DESPESAS POR CATEGORIA'],
+    cabecalhoDespesasPorCategoria,
+    ...linhasDespesasPorCategoria,
+    [],
+    ['APROVISIONAMENTOS POR CATEGORIA'],
+    cabecalhoAprovisionamentosPorCategoria,
+    ...linhasAprovisionamentosPorCategoria,
+    [],
+    ['ARRECADAÇÕES DETALHADAS'],
+    cabecalhoArrecadacoes,
+    ...linhasArrecadacoes,
+    [],
+    ['CONTAS A PAGAR DETALHADAS'],
+    cabecalhoDespesas,
+    ...linhasDespesas,
+  ]
+    .map((linha) =>
+      linha
+        .map((campo) => `"${String(campo).replaceAll('"', '""')}"`)
+        .join(';'),
+    )
+    .join('\n')
+
+  const blob = new Blob(['\uFEFF' + conteudo], {
+    type: 'text/csv;charset=utf-8;',
+  })
+
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = url
+  link.download = `relatorio-financeiro-${obterDescricaoMesesFinanceiro()}.csv`
+  link.click()
+
+  URL.revokeObjectURL(url)
+}
 function itemDentroDosMesesFinanceiro(data) {
   const mesData = obterMesDaData(data)
   const anoData = obterAnoDaData(data)
@@ -3247,7 +3394,72 @@ const saldoTotalPorContas = saldosContasBancarias.reduce(
   (total, conta) => total + Number(conta.saldoAtual || 0),
   0,
 )
+const arrecadacoesPorTipo = tiposArrecadacao
+  .map((tipo) => {
+    const itens = arrecadacoesAtivas.filter((item) => item.tipo === tipo)
 
+    const total = itens.reduce(
+      (soma, item) => soma + Number(item.valor || 0),
+      0,
+    )
+
+    return {
+      categoria: tipo,
+      quantidade: itens.length,
+      total,
+    }
+  })
+  .filter((item) => item.quantidade > 0 || item.total > 0)
+
+const despesasPorCategoria = categoriasContaPagar
+  .map((categoria) => {
+    const itens = contasPagarAtivas.filter((item) => item.categoria === categoria)
+    const pagas = itens.filter((item) => item.status === 'Paga')
+    const abertas = itens.filter((item) => item.status !== 'Paga')
+
+    const total = itens.reduce(
+      (soma, item) => soma + Number(item.valor || 0),
+      0,
+    )
+
+    const totalPago = pagas.reduce(
+      (soma, item) => soma + Number(item.valor || 0),
+      0,
+    )
+
+    const totalAberto = abertas.reduce(
+      (soma, item) => soma + Number(item.valor || 0),
+      0,
+    )
+
+    return {
+      categoria,
+      quantidade: itens.length,
+      total,
+      totalPago,
+      totalAberto,
+    }
+  })
+  .filter((item) => item.quantidade > 0 || item.total > 0)
+
+const aprovisionamentosPorCategoria = categoriasAprovisionamento
+  .map((categoria) => {
+    const itens = aprovisionamentosAtivos.filter(
+      (item) => item.categoria === categoria,
+    )
+
+    const total = itens.reduce(
+      (soma, item) => soma + Number(item.valor || 0),
+      0,
+    )
+
+    return {
+      categoria,
+      quantidade: itens.length,
+      total,
+    }
+  })
+  .filter((item) => item.quantidade > 0 || item.total > 0)
 const resumoFinanceiro = {
   contas: contasBancarias.length,
   contasAtivas: contasBancarias.filter((conta) => conta.ativo !== false).length,
@@ -4913,7 +5125,6 @@ function formatarMoeda(valor) {
         </strong>
       </article>
     </div>
-
     <section className="finance-spreadsheet-card">
       <div className="finance-spreadsheet-topbar">
         <strong>Relação de arrecadações</strong>
@@ -5357,7 +5568,6 @@ function formatarMoeda(valor) {
         <strong>{resumoFinanceiro.contasPagarVencemHoje}</strong>
       </article>
     </div>
-
     <section className="finance-spreadsheet-card">
       <div className="finance-spreadsheet-topbar">
         <strong>Relação de contas a pagar</strong>
@@ -6297,15 +6507,325 @@ function formatarMoeda(valor) {
 )}
 
     {modoFinanceiro === 'relatorios' && (
-      <section className="admin-card finance-coming-card">
-        <span className="admin-section-label">Relatórios</span>
-        <h2>Relatórios financeiros</h2>
-        <p>
-          Em breve teremos relatórios mensais, por categoria, por conta bancária
-          e exportação para Excel.
-        </p>
-      </section>
-    )}
+  <section className="finance-table-module finance-report-area">
+    <div className="finance-table-toolbar finance-report-toolbar">
+  <div>
+    <span className="admin-section-label">Relatórios</span>
+
+    <h2>Relatórios financeiros</h2>
+
+    <p>
+      Consulte o resumo financeiro por ano e mês, com entradas, saídas,
+      contas em aberto e valores aprovisionados.
+    </p>
+  </div>
+
+  <button
+    type="button"
+    className="finance-primary-action"
+    onClick={exportarRelatorioFinanceiroExcel}
+  >
+    📊 Exportar Excel
+  </button>
+</div>
+
+    <div className="finance-premium-filters">
+      <div className="finance-filter-header">
+        {renderizarFiltroAnoFinanceiro()}
+      </div>
+
+      <div className="finance-month-filter">
+        <button
+          type="button"
+          className={
+            mesesFiltroFinanceiro.length === mesesFinanceiro.length
+              ? 'active'
+              : ''
+          }
+          onClick={selecionarTodosMesesFinanceiro}
+        >
+          Todos os meses
+        </button>
+
+        {mesesFinanceiro.map((mes) => (
+          <button
+            type="button"
+            className={mesesFiltroFinanceiro.includes(mes.valor) ? 'active' : ''}
+            onClick={() => alternarMesFiltroFinanceiro(mes.valor)}
+            key={mes.valor}
+          >
+            {mes.nome}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <div className="finance-summary-grid finance-report-summary-grid">
+      <article>
+        <span>Saldo disponível</span>
+        <strong>{formatarMoeda(resumoFinanceiro.saldoDisponivel)}</strong>
+      </article>
+
+      <article>
+        <span>Saldo financeiro</span>
+        <strong>{formatarMoeda(resumoFinanceiro.saldoFinanceiro)}</strong>
+      </article>
+
+      <article>
+        <span>Total arrecadado</span>
+        <strong>{formatarMoeda(resumoFinanceiro.totalArrecadacoes)}</strong>
+      </article>
+
+      <article>
+        <span>Contas pagas</span>
+        <strong>{formatarMoeda(resumoFinanceiro.totalContasPagas)}</strong>
+      </article>
+
+      <article>
+        <span>Contas em aberto</span>
+        <strong>{formatarMoeda(resumoFinanceiro.totalContasAbertas)}</strong>
+      </article>
+
+      <article>
+        <span>Aprovisionado</span>
+        <strong>{formatarMoeda(resumoFinanceiro.totalAprovisionado)}</strong>
+      </article>
+
+      <article>
+        <span>Despesas vencidas</span>
+        <strong>{resumoFinanceiro.contasPagarVencidas}</strong>
+      </article>
+
+      <article>
+        <span>Vencem hoje</span>
+        <strong>{resumoFinanceiro.contasPagarVencemHoje}</strong>
+      </article>
+
+      <article>
+        <span>Próximos 7 dias</span>
+        <strong>{resumoFinanceiro.contasPagarProximos7Dias}</strong>
+      </article>
+
+      <article>
+        <span>Contas bancárias</span>
+        <strong>{resumoFinanceiro.contas}</strong>
+      </article>
+    </div>
+
+    <section className="finance-report-grid">
+      <article className="finance-report-card">
+        <span>Entradas no período</span>
+        <strong>{arrecadacoesFiltradasFinanceiro.length}</strong>
+        <p>{formatarMoeda(resumoFinanceiro.totalArrecadacoes)}</p>
+      </article>
+
+      <article className="finance-report-card">
+        <span>Despesas pagas</span>
+        <strong>{resumoFinanceiro.contasPagarPagas}</strong>
+        <p>{formatarMoeda(resumoFinanceiro.totalContasPagas)}</p>
+      </article>
+
+      <article className="finance-report-card">
+        <span>Despesas abertas</span>
+        <strong>{resumoFinanceiro.contasPagarAbertas}</strong>
+        <p>{formatarMoeda(resumoFinanceiro.totalContasAbertas)}</p>
+      </article>
+
+      <article className="finance-report-card">
+        <span>Reservas ativas</span>
+        <strong>{resumoFinanceiro.aprovisionamentosAtivos}</strong>
+        <p>{formatarMoeda(resumoFinanceiro.totalAprovisionado)}</p>
+      </article>
+    </section>
+<section className="finance-category-report-grid">
+  <article className="finance-category-report-card">
+    <div className="finance-category-report-header">
+      <strong>Entradas por tipo</strong>
+      <small>Arrecadações ativas do período</small>
+    </div>
+
+    <div className="finance-table-scroll">
+      <table className="finance-spreadsheet-table finance-category-table">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Qtd.</th>
+            <th className="finance-money-column">Total</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {arrecadacoesPorTipo.length === 0 && (
+            <tr>
+              <td colSpan="3" className="finance-empty-table">
+                Nenhuma entrada no período.
+              </td>
+            </tr>
+          )}
+
+          {arrecadacoesPorTipo.map((item) => (
+            <tr key={item.categoria}>
+              <td>{item.categoria}</td>
+              <td>{item.quantidade}</td>
+              <td className="finance-money-column">
+                {formatarMoeda(item.total)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article className="finance-category-report-card">
+    <div className="finance-category-report-header">
+      <strong>Despesas por categoria</strong>
+      <small>Contas a pagar do período</small>
+    </div>
+
+    <div className="finance-table-scroll">
+      <table className="finance-spreadsheet-table finance-category-table">
+        <thead>
+          <tr>
+            <th>Categoria</th>
+            <th>Qtd.</th>
+            <th className="finance-money-column">Pago</th>
+            <th className="finance-money-column">Aberto</th>
+            <th className="finance-money-column">Total</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {despesasPorCategoria.length === 0 && (
+            <tr>
+              <td colSpan="5" className="finance-empty-table">
+                Nenhuma despesa no período.
+              </td>
+            </tr>
+          )}
+
+          {despesasPorCategoria.map((item) => (
+            <tr key={item.categoria}>
+              <td>{item.categoria}</td>
+              <td>{item.quantidade}</td>
+              <td className="finance-money-column">
+                {formatarMoeda(item.totalPago)}
+              </td>
+              <td className="finance-money-column">
+                {formatarMoeda(item.totalAberto)}
+              </td>
+              <td className="finance-money-column">
+                {formatarMoeda(item.total)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article className="finance-category-report-card">
+    <div className="finance-category-report-header">
+      <strong>Aprovisionamentos por categoria</strong>
+      <small>Reservas ativas</small>
+    </div>
+
+    <div className="finance-table-scroll">
+      <table className="finance-spreadsheet-table finance-category-table">
+        <thead>
+          <tr>
+            <th>Categoria</th>
+            <th>Qtd.</th>
+            <th className="finance-money-column">Total</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {aprovisionamentosPorCategoria.length === 0 && (
+            <tr>
+              <td colSpan="3" className="finance-empty-table">
+                Nenhuma reserva ativa.
+              </td>
+            </tr>
+          )}
+
+          {aprovisionamentosPorCategoria.map((item) => (
+            <tr key={item.categoria}>
+              <td>{item.categoria}</td>
+              <td>{item.quantidade}</td>
+              <td className="finance-money-column">
+                {formatarMoeda(item.total)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+    <section className="finance-spreadsheet-card">
+      <div className="finance-spreadsheet-topbar">
+        <strong>Resumo do relatório</strong>
+        <small>Baseado no ano e mês selecionados acima</small>
+      </div>
+
+      <div className="finance-table-scroll">
+        <table className="finance-spreadsheet-table finance-report-table">
+          <thead>
+            <tr>
+              <th>Indicador</th>
+              <th className="finance-money-column">Valor</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>Saldo disponível</td>
+              <td className="finance-money-column">
+                {formatarMoeda(resumoFinanceiro.saldoDisponivel)}
+              </td>
+            </tr>
+
+            <tr>
+              <td>Saldo financeiro</td>
+              <td className="finance-money-column">
+                {formatarMoeda(resumoFinanceiro.saldoFinanceiro)}
+              </td>
+            </tr>
+
+            <tr>
+              <td>Total arrecadado</td>
+              <td className="finance-money-column">
+                {formatarMoeda(resumoFinanceiro.totalArrecadacoes)}
+              </td>
+            </tr>
+
+            <tr>
+              <td>Contas pagas</td>
+              <td className="finance-money-column">
+                {formatarMoeda(resumoFinanceiro.totalContasPagas)}
+              </td>
+            </tr>
+
+            <tr>
+              <td>Contas em aberto</td>
+              <td className="finance-money-column">
+                {formatarMoeda(resumoFinanceiro.totalContasAbertas)}
+              </td>
+            </tr>
+
+            <tr>
+              <td>Aprovisionado</td>
+              <td className="finance-money-column">
+                {formatarMoeda(resumoFinanceiro.totalAprovisionado)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+)}
   </section>
 )}
 {abaAtiva === 'galeria' && (
