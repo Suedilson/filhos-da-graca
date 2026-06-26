@@ -4561,34 +4561,38 @@ textarea {
 }
 
 .finance-report-card {
-  padding: 14px 16px;
-  border-radius: 18px;
+  min-height: 74px;
+  padding: 10px 14px;
+  border-radius: 16px;
   background: #ffffff;
   border: 1px solid rgba(23, 16, 95, 0.08);
-  box-shadow: 0 12px 28px rgba(23, 16, 95, 0.06);
+  box-shadow: 0 8px 20px rgba(23, 16, 95, 0.05);
 }
 
 .finance-report-card span {
   display: block;
   color: #60708a;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
+  line-height: 1.1;
   font-weight: 900;
 }
 
 .finance-report-card strong {
   display: block;
-  margin-top: 5px;
+  margin-top: 4px;
   color: #17105f;
-  font-size: 1.35rem;
+  font-size: 1.08rem;
+  line-height: 1.05;
   font-weight: 950;
 }
 
 .finance-report-card p {
   margin: 4px 0 0;
   color: #2f7f12;
+  font-size: 0.9rem;
+  line-height: 1.05;
   font-weight: 950;
 }
-
 .finance-report-table {
   min-width: 620px !important;
 }
