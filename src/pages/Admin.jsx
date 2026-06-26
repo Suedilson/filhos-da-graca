@@ -163,22 +163,193 @@ const [enviandoQrCodePix, setEnviandoQrCodePix] = useState(false)
 
     return () => unsubscribe()
   }, [])
+const [modoFinanceiro, setModoFinanceiro] = useState('dashboard')
+const [contasBancarias, setContasBancarias] = useState([])
+const [editandoContaBancariaId, setEditandoContaBancariaId] = useState(null)
 
-  useEffect(() => {
+const [contaBancariaForm, setContaBancariaForm] = useState({
+  nome: '',
+  banco: '',
+  agencia: '',
+  conta: '',
+  tipo: 'Conta corrente',
+  saldoInicial: '',
+  observacoes: '',
+  ativo: true,
+})
+
+const tiposContaBancaria = [
+  'Conta corrente',
+  'Poupança',
+  'Caixa interno',
+  'Pix',
+  'Investimento',
+  'Outros',
+]
+const [arrecadacoes, setArrecadacoes] = useState([])
+const [editandoArrecadacaoId, setEditandoArrecadacaoId] = useState(null)
+const [formArrecadacaoAberto, setFormArrecadacaoAberto] = useState(false)
+const [enviandoComprovanteArrecadacao, setEnviandoComprovanteArrecadacao] =
+  useState(false)
+const [arrecadacaoForm, setArrecadacaoForm] = useState({
+  data: '',
+  tipo: 'Dízimo',
+  descricao: '',
+  valor: '',
+  formaPagamento: 'Pix',
+  contaBancariaId: '',
+  responsavel: '',
+  comprovante: '',
+  comprovantePublicId: '',
+  observacoes: '',
+  ativo: true,
+})
+
+const tiposArrecadacao = [
+  'Dízimo',
+  'Oferta',
+  'Campanha',
+  'Evento',
+  'Doação',
+  'Projeto social',
+  'Outros',
+]
+
+const formasPagamentoFinanceiro = [
+  'Pix',
+  'Dinheiro',
+  'Cartão de débito',
+  'Cartão de crédito',
+  'Transferência',
+  'Boleto',
+  'Outros',
+]
+const [contasPagar, setContasPagar] = useState([])
+const [editandoContaPagarId, setEditandoContaPagarId] = useState(null)
+const [formContaPagarAberto, setFormContaPagarAberto] = useState(false)
+const [enviandoComprovanteContaPagar, setEnviandoComprovanteContaPagar] =
+  useState(false)
+
+const [contaPagarForm, setContaPagarForm] = useState({
+  vencimento: '',
+  dataPagamento: '',
+  fornecedor: '',
+  categoria: 'Despesas fixas',
+  descricao: '',
+  valor: '',
+  formaPagamento: 'Pix',
+  contaBancariaId: '',
+  comprovante: '',
+  comprovantePublicId: '',
+  observacoes: '',
+  status: 'Aberta',
+  ativo: true,
+  recorrente: false,
+  parcelada: false,
+  numeroParcelas: '2',
+})
+
+const categoriasContaPagar = [
+  'Despesas fixas',
+  'Aluguel',
+  'Energia',
+  'Água',
+  'Internet',
+  'Telefone',
+  'Material de consumo',
+  'Material de limpeza',
+  'Ajuda social',
+  'Evento',
+  'Obra / manutenção',
+  'Equipamentos',
+  'Ministério infantil',
+  'Louvor',
+  'Missões',
+  'Impostos / taxas',
+  'Outros',
+]
+
+const statusContaPagar = ['Aberta', 'Paga', 'Cancelada']
+const [aprovisionamentos, setAprovisionamentos] = useState([])
+const [editandoAprovisionamentoId, setEditandoAprovisionamentoId] = useState(null)
+const [formAprovisionamentoAberto, setFormAprovisionamentoAberto] =
+  useState(false)
+
+const [aprovisionamentoForm, setAprovisionamentoForm] = useState({
+  data: '',
+  previsaoUso: '',
+  categoria: 'Reserva geral',
+  descricao: '',
+  valor: '',
+  contaBancariaId: '',
+  responsavel: '',
+  observacoes: '',
+  status: 'Reservado',
+  ativo: true,
+})
+
+const categoriasAprovisionamento = [
+  'Reserva geral',
+  'Aluguel',
+  'Energia',
+  'Água',
+  'Evento',
+  'Obra / manutenção',
+  'Ajuda social',
+  'Projeto social',
+  'Missões',
+  'Equipamentos',
+  'Emergência',
+  'Outros',
+]
+
+const statusAprovisionamento = ['Reservado', 'Utilizado', 'Cancelado']
+
+useEffect(() => {
   if (isAdmin) {
-  carregarProgramacao()
-  carregarEventos()
-  carregarLocalizacao()
-  carregarContribuicao()
-  carregarPedidosOracao()
-  carregarVideos()
-  carregarDocumentos()
-  carregarGaleria()
-  carregarMembros()
-}
+    carregarProgramacao()
+    carregarEventos()
+    carregarLocalizacao()
+    carregarContribuicao()
+    carregarContasBancarias()
+    carregarArrecadacoes()
+    carregarContasPagar()
+    carregarAprovisionamentos()
+    carregarPedidosOracao()
+    carregarVideos()
+    carregarDocumentos()
+    carregarGaleria()
+    carregarMembros()
+  }
 }, [isAdmin])
-  async function login(event) {
-    event.preventDefault()
+const mesAtualFinanceiro = String(new Date().getMonth() + 1)
+const anoAtualFinanceiro = String(new Date().getFullYear())
+
+const mesesFinanceiro = [
+  { valor: '1', nome: 'Jan' },
+  { valor: '2', nome: 'Fev' },
+  { valor: '3', nome: 'Mar' },
+  { valor: '4', nome: 'Abr' },
+  { valor: '5', nome: 'Mai' },
+  { valor: '6', nome: 'Jun' },
+  { valor: '7', nome: 'Jul' },
+  { valor: '8', nome: 'Ago' },
+  { valor: '9', nome: 'Set' },
+  { valor: '10', nome: 'Out' },
+  { valor: '11', nome: 'Nov' },
+  { valor: '12', nome: 'Dez' },
+]
+
+const [mesesFiltroFinanceiro, setMesesFiltroFinanceiro] = useState([
+  mesAtualFinanceiro,
+])
+const [anoFiltroFinanceiro, setAnoFiltroFinanceiro] = useState(
+  anoAtualFinanceiro,
+)
+const [statusFiltroContaPagar, setStatusFiltroContaPagar] = useState('Todas')
+const [fornecedorFiltroContaPagar, setFornecedorFiltroContaPagar] = useState('')
+async function login(event) {
+   event.preventDefault()
     setLoading(true)
 
     try {
@@ -623,6 +794,1075 @@ async function salvarContribuicao(event) {
     console.error(error)
   } finally {
     setLoading(false)
+  }
+}
+async function carregarContasBancarias() {
+  try {
+    const q = query(collection(db, 'contasBancarias'), orderBy('criadoEm', 'desc'))
+    const snapshot = await getDocs(q)
+
+    const lista = snapshot.docs.map((item) => ({
+      id: item.id,
+      ...item.data(),
+    }))
+
+    setContasBancarias(lista)
+  } catch (error) {
+    alert('Erro ao carregar contas bancárias.')
+    console.error(error)
+  }
+}
+
+function limparFormularioContaBancaria() {
+  setContaBancariaForm({
+    nome: '',
+    banco: '',
+    agencia: '',
+    conta: '',
+    tipo: 'Conta corrente',
+    saldoInicial: '',
+    observacoes: '',
+    ativo: true,
+  })
+
+  setEditandoContaBancariaId(null)
+}
+
+async function salvarContaBancaria(event) {
+  event.preventDefault()
+
+  if (!contaBancariaForm.nome) {
+    alert('Preencha o nome da conta.')
+    return
+  }
+
+  const saldoInicial = Number(
+    String(contaBancariaForm.saldoInicial || '0').replace(',', '.'),
+  )
+
+  setLoading(true)
+
+  try {
+    const dadosConta = {
+      nome: contaBancariaForm.nome,
+      banco: contaBancariaForm.banco,
+      agencia: contaBancariaForm.agencia,
+      conta: contaBancariaForm.conta,
+      tipo: contaBancariaForm.tipo,
+      saldoInicial,
+      observacoes: contaBancariaForm.observacoes,
+      ativo: contaBancariaForm.ativo,
+      atualizadoEm: serverTimestamp(),
+    }
+
+    if (editandoContaBancariaId) {
+      await updateDoc(doc(db, 'contasBancarias', editandoContaBancariaId), dadosConta)
+      alert('Conta bancária atualizada com sucesso!')
+    } else {
+      await addDoc(collection(db, 'contasBancarias'), {
+        ...dadosConta,
+        criadoEm: serverTimestamp(),
+      })
+
+      alert('Conta bancária cadastrada com sucesso!')
+    }
+
+    limparFormularioContaBancaria()
+    await carregarContasBancarias()
+  } catch (error) {
+    alert('Erro ao salvar conta bancária.')
+    console.error(error)
+  } finally {
+    setLoading(false)
+  }
+}
+
+function editarContaBancaria(conta) {
+  setAbaAtiva('financeiro')
+  setModoFinanceiro('contas')
+  setEditandoContaBancariaId(conta.id)
+
+  setContaBancariaForm({
+    nome: conta.nome || '',
+    banco: conta.banco || '',
+    agencia: conta.agencia || '',
+    conta: conta.conta || '',
+    tipo: conta.tipo || 'Conta corrente',
+    saldoInicial:
+      conta.saldoInicial || conta.saldoInicial === 0
+        ? String(conta.saldoInicial).replace('.', ',')
+        : '',
+    observacoes: conta.observacoes || '',
+    ativo: conta.ativo !== false,
+  })
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
+
+function cancelarEdicaoContaBancaria() {
+  limparFormularioContaBancaria()
+}
+
+async function alternarStatusContaBancaria(conta) {
+  try {
+    await updateDoc(doc(db, 'contasBancarias', conta.id), {
+      ativo: conta.ativo === false ? true : false,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await carregarContasBancarias()
+  } catch (error) {
+    alert('Erro ao alterar status da conta bancária.')
+    console.error(error)
+  }
+}
+
+async function excluirContaBancaria(id) {
+  const confirmar = confirm('Deseja realmente excluir esta conta bancária?')
+
+  if (!confirmar) return
+
+  try {
+    await deleteDoc(doc(db, 'contasBancarias', id))
+    await carregarContasBancarias()
+  } catch (error) {
+    alert('Erro ao excluir conta bancária.')
+    console.error(error)
+  }
+}
+async function carregarArrecadacoes() {
+  try {
+    const q = query(collection(db, 'arrecadacoes'), orderBy('data', 'desc'))
+    const snapshot = await getDocs(q)
+
+    const lista = snapshot.docs.map((item) => ({
+      id: item.id,
+      ...item.data(),
+    }))
+
+    setArrecadacoes(lista)
+  } catch (error) {
+    alert('Erro ao carregar arrecadações.')
+    console.error(error)
+  }
+}
+
+function limparFormularioArrecadacao() {
+  setArrecadacaoForm({
+    data: '',
+    tipo: 'Dízimo',
+    descricao: '',
+    valor: '',
+    formaPagamento: 'Pix',
+    contaBancariaId: '',
+    responsavel: '',
+    comprovante: '',
+    comprovantePublicId: '',
+    observacoes: '',
+    ativo: true,
+  })
+
+  setEditandoArrecadacaoId(null)
+}
+function abrirNovaArrecadacao() {
+  limparFormularioArrecadacao()
+  setFormArrecadacaoAberto(true)
+}
+
+function fecharFormularioArrecadacao() {
+  limparFormularioArrecadacao()
+  setFormArrecadacaoAberto(false)
+}
+async function enviarComprovanteArrecadacao(event) {
+  const file = event.target.files?.[0]
+
+  if (!file) return
+
+  setEnviandoComprovanteArrecadacao(true)
+
+  try {
+    const arquivo = await uploadArquivoCloudinary(file)
+
+    setArrecadacaoForm((formAtual) => ({
+      ...formAtual,
+      comprovante: arquivo.url,
+      comprovantePublicId: arquivo.publicId,
+    }))
+
+    event.target.value = ''
+
+    alert('Comprovante enviado com sucesso!')
+  } catch (error) {
+    alert('Erro ao enviar comprovante.')
+    console.error(error)
+  } finally {
+    setEnviandoComprovanteArrecadacao(false)
+  }
+}
+
+async function salvarArrecadacao(event) {
+  event.preventDefault()
+
+  if (!arrecadacaoForm.data) {
+    alert('Preencha a data da arrecadação.')
+    return
+  }
+
+  if (!arrecadacaoForm.descricao) {
+    alert('Preencha a descrição da arrecadação.')
+    return
+  }
+
+  if (!arrecadacaoForm.valor) {
+    alert('Preencha o valor da arrecadação.')
+    return
+  }
+
+  
+    if (!arrecadacaoForm.valor) {
+    alert('Preencha o valor da arrecadação.')
+    return
+  }
+
+  const valor = Number(String(arrecadacaoForm.valor).replace(',', '.'))
+
+  if (!valor || valor <= 0) {
+    alert('Informe um valor válido.')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    const contaSelecionada = contasBancarias.find(
+      (conta) => conta.id === arrecadacaoForm.contaBancariaId,
+    )
+
+    const dadosArrecadacao = {
+      data: arrecadacaoForm.data,
+      tipo: arrecadacaoForm.tipo,
+      descricao: arrecadacaoForm.descricao,
+      valor,
+      formaPagamento: arrecadacaoForm.formaPagamento,
+      contaBancariaId: arrecadacaoForm.contaBancariaId,
+      contaBancariaNome: contaSelecionada?.nome || '',
+      responsavel: arrecadacaoForm.responsavel,
+      comprovante: arrecadacaoForm.comprovante,
+      comprovantePublicId: arrecadacaoForm.comprovantePublicId,
+      observacoes: arrecadacaoForm.observacoes,
+      ativo: arrecadacaoForm.ativo,
+      atualizadoEm: serverTimestamp(),
+    }
+
+    if (editandoArrecadacaoId) {
+      await updateDoc(
+        doc(db, 'arrecadacoes', editandoArrecadacaoId),
+        dadosArrecadacao,
+      )
+
+      alert('Arrecadação atualizada com sucesso!')
+    } else {
+      await addDoc(collection(db, 'arrecadacoes'), {
+        ...dadosArrecadacao,
+        criadoEm: serverTimestamp(),
+      })
+
+      alert('Arrecadação cadastrada com sucesso!')
+    }
+
+    limparFormularioArrecadacao()
+    setFormArrecadacaoAberto(false)
+    await carregarArrecadacoes()
+  } catch (error) {
+    alert('Erro ao salvar arrecadação.')
+    console.error(error)
+  } finally {
+    setLoading(false)
+  }
+}
+
+function editarArrecadacao(arrecadacao) {
+  setAbaAtiva('financeiro')
+  setModoFinanceiro('arrecadacoes')
+  setEditandoArrecadacaoId(arrecadacao.id)
+  setFormArrecadacaoAberto(true)
+
+  setArrecadacaoForm({
+    data: arrecadacao.data || '',
+    tipo: arrecadacao.tipo || 'Dízimo',
+    descricao: arrecadacao.descricao || '',
+    valor:
+      arrecadacao.valor || arrecadacao.valor === 0
+        ? String(arrecadacao.valor).replace('.', ',')
+        : '',
+    formaPagamento: arrecadacao.formaPagamento || 'Pix',
+    contaBancariaId: arrecadacao.contaBancariaId || '',
+    responsavel: arrecadacao.responsavel || '',
+    comprovante: arrecadacao.comprovante || '',
+    comprovantePublicId: arrecadacao.comprovantePublicId || '',
+    observacoes: arrecadacao.observacoes || '',
+    ativo: arrecadacao.ativo !== false,
+  })
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
+function cancelarEdicaoArrecadacao() {
+  fecharFormularioArrecadacao()
+}
+
+async function alternarStatusArrecadacao(arrecadacao) {
+  try {
+    await updateDoc(doc(db, 'arrecadacoes', arrecadacao.id), {
+      ativo: arrecadacao.ativo === false ? true : false,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await carregarArrecadacoes()
+  } catch (error) {
+    alert('Erro ao alterar status da arrecadação.')
+    console.error(error)
+  }
+}
+
+async function excluirArrecadacao(id) {
+  const confirmar = confirm('Deseja realmente excluir esta arrecadação?')
+
+  if (!confirmar) return
+
+  try {
+    await deleteDoc(doc(db, 'arrecadacoes', id))
+    await carregarArrecadacoes()
+  } catch (error) {
+    alert('Erro ao excluir arrecadação.')
+    console.error(error)
+  }
+}
+async function carregarContasPagar() {
+  try {
+    const q = query(collection(db, 'contasPagar'), orderBy('vencimento', 'asc'))
+    const snapshot = await getDocs(q)
+
+    const lista = snapshot.docs.map((item) => ({
+      id: item.id,
+      ...item.data(),
+    }))
+
+    setContasPagar(lista)
+  } catch (error) {
+    alert('Erro ao carregar contas a pagar.')
+    console.error(error)
+  }
+}
+
+function limparFormularioContaPagar() {
+  setContaPagarForm({
+    vencimento: '',
+    dataPagamento: '',
+    fornecedor: '',
+    categoria: 'Despesas fixas',
+    descricao: '',
+    valor: '',
+    formaPagamento: 'Pix',
+    contaBancariaId: '',
+    comprovante: '',
+    comprovantePublicId: '',
+    observacoes: '',
+    status: 'Aberta',
+    ativo: true,
+    recorrente: false,
+    parcelada: false,
+    numeroParcelas: '2',
+  })
+
+  setEditandoContaPagarId(null)
+}
+
+function abrirNovaContaPagar() {
+  limparFormularioContaPagar()
+  setFormContaPagarAberto(true)
+}
+
+function fecharFormularioContaPagar() {
+  limparFormularioContaPagar()
+  setFormContaPagarAberto(false)
+}
+function obterMesDaData(data) {
+  if (!data) return ''
+
+  if (typeof data === 'string') {
+    const partes = data.split('-')
+
+    if (partes.length < 2) return ''
+
+    return String(Number(partes[1]))
+  }
+
+  if (data?.toDate) {
+    return String(data.toDate().getMonth() + 1)
+  }
+
+  if (data instanceof Date) {
+    return String(data.getMonth() + 1)
+  }
+
+  return ''
+}
+
+function obterAnoDaData(data) {
+  if (!data) return ''
+
+  if (typeof data === 'string') {
+    const partes = data.split('-')
+
+    if (!partes[0]) return ''
+
+    return String(partes[0])
+  }
+
+  if (data?.toDate) {
+    return String(data.toDate().getFullYear())
+  }
+
+  if (data instanceof Date) {
+    return String(data.getFullYear())
+  }
+
+  return ''
+}
+
+function alternarMesFiltroFinanceiro(mes) {
+  setMesesFiltroFinanceiro((mesesAtuais) => {
+    if (mesesAtuais.includes(mes)) {
+      const novosMeses = mesesAtuais.filter((item) => item !== mes)
+
+      return novosMeses.length > 0 ? novosMeses : [mesAtualFinanceiro]
+    }
+
+    return [...mesesAtuais, mes]
+  })
+}
+
+function selecionarTodosMesesFinanceiro() {
+  if (mesesFiltroFinanceiro.length === mesesFinanceiro.length) {
+    setMesesFiltroFinanceiro([mesAtualFinanceiro])
+    return
+  }
+
+  setMesesFiltroFinanceiro(mesesFinanceiro.map((mes) => mes.valor))
+}
+
+function obterNomeMesFinanceiro(valorMes) {
+  const mesEncontrado = mesesFinanceiro.find((mes) => mes.valor === valorMes)
+
+  return mesEncontrado?.nome || valorMes
+}
+
+function obterDescricaoMesesFinanceiro() {
+  const descricaoMeses =
+    mesesFiltroFinanceiro.length === mesesFinanceiro.length
+      ? 'todos-os-meses'
+      : mesesFiltroFinanceiro
+          .map((mes) => obterNomeMesFinanceiro(mes).toLowerCase())
+          .join('-')
+
+  return `${anoFiltroFinanceiro}-${descricaoMeses}`
+}
+function itemDentroDosMesesFinanceiro(data) {
+  const mesData = obterMesDaData(data)
+  const anoData = obterAnoDaData(data)
+
+  const correspondeMes = mesesFiltroFinanceiro.includes(mesData)
+  const correspondeAno =
+    !anoFiltroFinanceiro || anoData === anoFiltroFinanceiro
+
+  return correspondeMes && correspondeAno
+}
+function contaPagarCorrespondeStatus(conta) {
+  const statusVisual = obterStatusVisualContaPagar(conta)
+
+  if (statusFiltroContaPagar === 'Todas') return true
+
+  if (statusFiltroContaPagar === 'Paga') {
+    return conta.status === 'Paga'
+  }
+
+  if (statusFiltroContaPagar === 'A pagar') {
+    return conta.status !== 'Paga' && statusVisual !== 'Cancelada'
+  }
+
+  return true
+}
+
+function contaPagarCorrespondeFornecedor(conta) {
+  const textoBusca = fornecedorFiltroContaPagar.toLowerCase().trim()
+
+  if (!textoBusca) return true
+
+  return conta.fornecedor?.toLowerCase().includes(textoBusca)
+}
+function obterHojeISO() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function adicionarMesesData(dataBase, quantidadeMeses) {
+  if (!dataBase) return ''
+
+  const [ano, mes, dia] = dataBase.split('-').map(Number)
+  const data = new Date(ano, mes - 1, dia)
+
+  data.setMonth(data.getMonth() + quantidadeMeses)
+
+  const novoAno = data.getFullYear()
+  const novoMes = String(data.getMonth() + 1).padStart(2, '0')
+  const novoDia = String(data.getDate()).padStart(2, '0')
+
+  return `${novoAno}-${novoMes}-${novoDia}`
+}
+
+function obterStatusVisualContaPagar(conta) {
+  if (conta.status === 'Paga') return 'Paga'
+  if (conta.status === 'Cancelada' || conta.ativo === false) return 'Cancelada'
+
+  const hoje = obterHojeISO()
+
+  if (conta.vencimento && conta.vencimento < hoje) {
+    return 'Vencida'
+  }
+
+  if (conta.vencimento === hoje) {
+    return 'Vence hoje'
+  }
+
+  return 'Aberta'
+}
+
+function calcularDiasParaVencimento(vencimento) {
+  if (!vencimento) return null
+
+  const hoje = new Date(`${obterHojeISO()}T00:00:00`)
+  const dataVencimento = new Date(`${vencimento}T00:00:00`)
+  const diferenca = dataVencimento - hoje
+
+  return Math.round(diferenca / (1000 * 60 * 60 * 24))
+}
+
+async function enviarComprovanteContaPagar(event) {
+  const file = event.target.files?.[0]
+
+  if (!file) return
+
+  setEnviandoComprovanteContaPagar(true)
+
+  try {
+    const arquivo = await uploadArquivoCloudinary(file)
+
+    setContaPagarForm((formAtual) => ({
+      ...formAtual,
+      comprovante: arquivo.url,
+      comprovantePublicId: arquivo.publicId,
+    }))
+
+    event.target.value = ''
+
+    alert('Comprovante enviado com sucesso!')
+  } catch (error) {
+    alert('Erro ao enviar comprovante.')
+    console.error(error)
+  } finally {
+    setEnviandoComprovanteContaPagar(false)
+  }
+}
+
+async function salvarContaPagar(event) {
+  event.preventDefault()
+
+  if (!contaPagarForm.vencimento) {
+    alert('Preencha a data de vencimento.')
+    return
+  }
+
+  if (!contaPagarForm.descricao) {
+    alert('Preencha a descrição da despesa.')
+    return
+  }
+
+  if (!contaPagarForm.valor) {
+    alert('Preencha o valor da despesa.')
+    return
+  }
+
+  const valor = Number(String(contaPagarForm.valor).replace(',', '.'))
+
+  if (!valor || valor <= 0) {
+    alert('Informe um valor válido.')
+    return
+  }
+
+  const numeroParcelas = Number(contaPagarForm.numeroParcelas || 1)
+
+  if (contaPagarForm.parcelada && (!numeroParcelas || numeroParcelas < 2)) {
+    alert('Informe pelo menos 2 parcelas.')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    const contaSelecionada = contasBancarias.find(
+      (conta) => conta.id === contaPagarForm.contaBancariaId,
+    )
+
+    const dadosBase = {
+      fornecedor: contaPagarForm.fornecedor,
+      categoria: contaPagarForm.categoria,
+      descricao: contaPagarForm.descricao,
+      valor,
+      formaPagamento: contaPagarForm.formaPagamento,
+      contaBancariaId: contaPagarForm.contaBancariaId,
+      contaBancariaNome: contaSelecionada?.nome || '',
+      comprovante: contaPagarForm.comprovante,
+      comprovantePublicId: contaPagarForm.comprovantePublicId,
+      observacoes: contaPagarForm.observacoes,
+      status: contaPagarForm.status,
+      ativo: contaPagarForm.ativo,
+      recorrente: contaPagarForm.recorrente,
+      parcelada: contaPagarForm.parcelada,
+      numeroParcelas: contaPagarForm.parcelada ? numeroParcelas : 1,
+      atualizadoEm: serverTimestamp(),
+    }
+
+    if (editandoContaPagarId) {
+      await updateDoc(doc(db, 'contasPagar', editandoContaPagarId), {
+        ...dadosBase,
+        vencimento: contaPagarForm.vencimento,
+        dataPagamento: contaPagarForm.status === 'Paga'
+          ? contaPagarForm.dataPagamento || obterHojeISO()
+          : contaPagarForm.dataPagamento,
+      })
+
+      alert('Despesa atualizada com sucesso!')
+    } else if (contaPagarForm.parcelada) {
+      const grupoParcelamentoId = crypto.randomUUID()
+      const batch = writeBatch(db)
+
+      for (let parcela = 1; parcela <= numeroParcelas; parcela += 1) {
+        const vencimentoParcela = adicionarMesesData(
+          contaPagarForm.vencimento,
+          parcela - 1,
+        )
+
+        const ref = doc(collection(db, 'contasPagar'))
+
+        batch.set(ref, {
+          ...dadosBase,
+          vencimento: vencimentoParcela,
+          dataPagamento:
+            contaPagarForm.status === 'Paga' && parcela === 1
+              ? contaPagarForm.dataPagamento || obterHojeISO()
+              : '',
+          status:
+            contaPagarForm.status === 'Paga' && parcela === 1
+              ? 'Paga'
+              : 'Aberta',
+          parcelaAtual: parcela,
+          numeroParcelas,
+          grupoParcelamentoId,
+          descricao: `${contaPagarForm.descricao} - Parcela ${parcela}/${numeroParcelas}`,
+          criadoEm: serverTimestamp(),
+        })
+      }
+
+      await batch.commit()
+
+      alert(`${numeroParcelas} parcelas cadastradas com sucesso!`)
+    } else if (contaPagarForm.recorrente) {
+      const grupoRecorrenciaId = crypto.randomUUID()
+      const batch = writeBatch(db)
+      const quantidadeMeses = 12
+
+      for (let mes = 0; mes < quantidadeMeses; mes += 1) {
+        const vencimentoRecorrente = adicionarMesesData(
+          contaPagarForm.vencimento,
+          mes,
+        )
+
+        const ref = doc(collection(db, 'contasPagar'))
+
+        batch.set(ref, {
+          ...dadosBase,
+          vencimento: vencimentoRecorrente,
+          dataPagamento:
+            contaPagarForm.status === 'Paga' && mes === 0
+              ? contaPagarForm.dataPagamento || obterHojeISO()
+              : '',
+          status:
+            contaPagarForm.status === 'Paga' && mes === 0
+              ? 'Paga'
+              : 'Aberta',
+          grupoRecorrenciaId,
+          recorrenciaMes: mes + 1,
+          criadoEm: serverTimestamp(),
+        })
+      }
+
+      await batch.commit()
+
+      alert('Despesa recorrente cadastrada para os próximos 12 meses!')
+    } else {
+      await addDoc(collection(db, 'contasPagar'), {
+        ...dadosBase,
+        vencimento: contaPagarForm.vencimento,
+        dataPagamento:
+          contaPagarForm.status === 'Paga'
+            ? contaPagarForm.dataPagamento || obterHojeISO()
+            : '',
+        criadoEm: serverTimestamp(),
+      })
+
+      alert('Despesa cadastrada com sucesso!')
+    }
+
+    limparFormularioContaPagar()
+    setFormContaPagarAberto(false)
+    await carregarContasPagar()
+  } catch (error) {
+    alert('Erro ao salvar despesa.')
+    console.error(error)
+  } finally {
+    setLoading(false)
+  }
+}
+
+function editarContaPagar(conta) {
+  setAbaAtiva('financeiro')
+  setModoFinanceiro('pagar')
+  setEditandoContaPagarId(conta.id)
+  setFormContaPagarAberto(true)
+
+  setContaPagarForm({
+    vencimento: conta.vencimento || '',
+    dataPagamento: conta.dataPagamento || '',
+    fornecedor: conta.fornecedor || '',
+    categoria: conta.categoria || 'Despesas fixas',
+    descricao: conta.descricao || '',
+    valor:
+      conta.valor || conta.valor === 0 ? String(conta.valor).replace('.', ',') : '',
+    formaPagamento: conta.formaPagamento || 'Pix',
+    contaBancariaId: conta.contaBancariaId || '',
+    comprovante: conta.comprovante || '',
+    comprovantePublicId: conta.comprovantePublicId || '',
+    observacoes: conta.observacoes || '',
+    status: conta.status || 'Aberta',
+    ativo: conta.ativo !== false,
+    recorrente: conta.recorrente === true,
+    parcelada: conta.parcelada === true,
+    numeroParcelas: conta.numeroParcelas ? String(conta.numeroParcelas) : '2',
+  })
+}
+
+function cancelarEdicaoContaPagar() {
+  fecharFormularioContaPagar()
+}
+
+async function marcarContaPagarComoPaga(conta) {
+  const confirmar = confirm(
+    `Deseja marcar "${conta.descricao}" como paga? A data de pagamento será registrada como hoje.`,
+  )
+
+  if (!confirmar) return
+
+  try {
+    await updateDoc(doc(db, 'contasPagar', conta.id), {
+      status: 'Paga',
+      dataPagamento: obterHojeISO(),
+      ativo: true,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await carregarContasPagar()
+  } catch (error) {
+    alert('Erro ao marcar despesa como paga.')
+    console.error(error)
+  }
+}
+
+async function reabrirContaPagar(conta) {
+  const confirmar = confirm(`Deseja reabrir a despesa "${conta.descricao}"?`)
+
+  if (!confirmar) return
+
+  try {
+    await updateDoc(doc(db, 'contasPagar', conta.id), {
+      status: 'Aberta',
+      dataPagamento: '',
+      ativo: true,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await carregarContasPagar()
+  } catch (error) {
+    alert('Erro ao reabrir despesa.')
+    console.error(error)
+  }
+}
+
+async function cancelarContaPagar(conta) {
+  const confirmar = confirm(`Deseja cancelar a despesa "${conta.descricao}"?`)
+
+  if (!confirmar) return
+
+  try {
+    await updateDoc(doc(db, 'contasPagar', conta.id), {
+      status: 'Cancelada',
+      ativo: false,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await carregarContasPagar()
+  } catch (error) {
+    alert('Erro ao cancelar despesa.')
+    console.error(error)
+  }
+}
+
+async function excluirContaPagar(id) {
+  const confirmar = confirm('Deseja realmente excluir esta despesa?')
+
+  if (!confirmar) return
+
+  try {
+    await deleteDoc(doc(db, 'contasPagar', id))
+    await carregarContasPagar()
+  } catch (error) {
+    alert('Erro ao excluir despesa.')
+    console.error(error)
+  }
+}
+async function carregarAprovisionamentos() {
+  try {
+    const q = query(collection(db, 'aprovisionamentos'), orderBy('data', 'desc'))
+    const snapshot = await getDocs(q)
+
+    const lista = snapshot.docs.map((item) => ({
+      id: item.id,
+      ...item.data(),
+    }))
+
+    setAprovisionamentos(lista)
+  } catch (error) {
+    alert('Erro ao carregar aprovisionamentos.')
+    console.error(error)
+  }
+}
+
+function limparFormularioAprovisionamento() {
+  setAprovisionamentoForm({
+    data: '',
+    previsaoUso: '',
+    categoria: 'Reserva geral',
+    descricao: '',
+    valor: '',
+    contaBancariaId: '',
+    responsavel: '',
+    observacoes: '',
+    status: 'Reservado',
+    ativo: true,
+  })
+
+  setEditandoAprovisionamentoId(null)
+}
+
+function abrirNovoAprovisionamento() {
+  limparFormularioAprovisionamento()
+  setFormAprovisionamentoAberto(true)
+}
+
+function fecharFormularioAprovisionamento() {
+  limparFormularioAprovisionamento()
+  setFormAprovisionamentoAberto(false)
+}
+
+async function salvarAprovisionamento(event) {
+  event.preventDefault()
+
+  if (!aprovisionamentoForm.data) {
+    alert('Preencha a data da reserva.')
+    return
+  }
+
+  if (!aprovisionamentoForm.descricao) {
+    alert('Preencha a descrição da reserva.')
+    return
+  }
+
+  if (!aprovisionamentoForm.valor) {
+    alert('Preencha o valor reservado.')
+    return
+  }
+
+  const valor = Number(String(aprovisionamentoForm.valor).replace(',', '.'))
+
+  if (!valor || valor <= 0) {
+    alert('Informe um valor válido.')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    const contaSelecionada = contasBancarias.find(
+      (conta) => conta.id === aprovisionamentoForm.contaBancariaId,
+    )
+
+    const dadosAprovisionamento = {
+      data: aprovisionamentoForm.data,
+      previsaoUso: aprovisionamentoForm.previsaoUso,
+      categoria: aprovisionamentoForm.categoria,
+      descricao: aprovisionamentoForm.descricao,
+      valor,
+      contaBancariaId: aprovisionamentoForm.contaBancariaId,
+      contaBancariaNome: contaSelecionada?.nome || '',
+      responsavel: aprovisionamentoForm.responsavel,
+      observacoes: aprovisionamentoForm.observacoes,
+      status: aprovisionamentoForm.status,
+      ativo:
+        aprovisionamentoForm.status === 'Cancelado'
+          ? false
+          : aprovisionamentoForm.ativo,
+      atualizadoEm: serverTimestamp(),
+    }
+
+    if (editandoAprovisionamentoId) {
+      await updateDoc(
+        doc(db, 'aprovisionamentos', editandoAprovisionamentoId),
+        dadosAprovisionamento,
+      )
+
+      alert('Aprovisionamento atualizado com sucesso!')
+    } else {
+      await addDoc(collection(db, 'aprovisionamentos'), {
+        ...dadosAprovisionamento,
+        criadoEm: serverTimestamp(),
+      })
+
+      alert('Aprovisionamento cadastrado com sucesso!')
+    }
+
+    limparFormularioAprovisionamento()
+    setFormAprovisionamentoAberto(false)
+    await carregarAprovisionamentos()
+  } catch (error) {
+    alert('Erro ao salvar aprovisionamento.')
+    console.error(error)
+  } finally {
+    setLoading(false)
+  }
+}
+
+function editarAprovisionamento(item) {
+  setAbaAtiva('financeiro')
+  setModoFinanceiro('aprovisionamentos')
+  setEditandoAprovisionamentoId(item.id)
+  setFormAprovisionamentoAberto(true)
+
+  setAprovisionamentoForm({
+    data: item.data || '',
+    previsaoUso: item.previsaoUso || '',
+    categoria: item.categoria || 'Reserva geral',
+    descricao: item.descricao || '',
+    valor: item.valor || item.valor === 0 ? String(item.valor).replace('.', ',') : '',
+    contaBancariaId: item.contaBancariaId || '',
+    responsavel: item.responsavel || '',
+    observacoes: item.observacoes || '',
+    status: item.status || 'Reservado',
+    ativo: item.ativo !== false,
+  })
+}
+
+function cancelarEdicaoAprovisionamento() {
+  fecharFormularioAprovisionamento()
+}
+
+async function marcarAprovisionamentoUtilizado(item) {
+  const confirmar = confirm(
+    `Deseja marcar "${item.descricao}" como utilizado?`,
+  )
+
+  if (!confirmar) return
+
+  try {
+    await updateDoc(doc(db, 'aprovisionamentos', item.id), {
+      status: 'Utilizado',
+      ativo: false,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await carregarAprovisionamentos()
+  } catch (error) {
+    alert('Erro ao marcar aprovisionamento como utilizado.')
+    console.error(error)
+  }
+}
+
+async function cancelarAprovisionamento(item) {
+  const confirmar = confirm(
+    `Deseja cancelar o aprovisionamento "${item.descricao}"?`,
+  )
+
+  if (!confirmar) return
+
+  try {
+    await updateDoc(doc(db, 'aprovisionamentos', item.id), {
+      status: 'Cancelado',
+      ativo: false,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await carregarAprovisionamentos()
+  } catch (error) {
+    alert('Erro ao cancelar aprovisionamento.')
+    console.error(error)
+  }
+}
+
+async function reativarAprovisionamento(item) {
+  const confirmar = confirm(
+    `Deseja reativar o aprovisionamento "${item.descricao}"?`,
+  )
+
+  if (!confirmar) return
+
+  try {
+    await updateDoc(doc(db, 'aprovisionamentos', item.id), {
+      status: 'Reservado',
+      ativo: true,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await carregarAprovisionamentos()
+  } catch (error) {
+    alert('Erro ao reativar aprovisionamento.')
+    console.error(error)
+  }
+}
+
+async function excluirAprovisionamento(id) {
+  const confirmar = confirm('Deseja realmente excluir este aprovisionamento?')
+
+  if (!confirmar) return
+
+  try {
+    await deleteDoc(doc(db, 'aprovisionamentos', id))
+    await carregarAprovisionamentos()
+  } catch (error) {
+    alert('Erro ao excluir aprovisionamento.')
+    console.error(error)
   }
 }
   async function carregarPedidosOracao() {
@@ -1121,6 +2361,54 @@ async function carregarGaleria() {
     await carregarGaleria()
   } catch (error) {
     alert('Erro ao salvar galeria.')
+    console.error(error)
+  } finally {
+    setLoading(false)
+  }
+}
+async function adicionarFotosAoEventoGaleria() {
+  if (!galeriaForm.titulo) {
+    alert('Preencha o título do álbum antes de salvar novas fotos.')
+    return
+  }
+
+  if (imagensGaleria.length === 0) {
+    alert('Selecione pelo menos uma foto para adicionar.')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    const dadosBase = {
+      titulo: galeriaForm.titulo,
+      descricao: galeriaForm.descricao,
+      categoria: galeriaForm.categoria,
+      ativo: galeriaForm.ativo,
+      atualizadoEm: serverTimestamp(),
+    }
+
+    await Promise.all(
+      imagensGaleria.map((imagem) =>
+        addDoc(collection(db, 'galeria'), {
+          ...dadosBase,
+          imagem: imagem.url,
+          imagemPublicId: imagem.publicId,
+          criadoEm: serverTimestamp(),
+        }),
+      ),
+    )
+
+    alert(
+      imagensGaleria.length === 1
+        ? 'Foto adicionada ao álbum com sucesso!'
+        : `${imagensGaleria.length} fotos adicionadas ao álbum com sucesso!`,
+    )
+
+    setImagensGaleria([])
+    await carregarGaleria()
+  } catch (error) {
+    alert('Erro ao adicionar fotos ao álbum.')
     console.error(error)
   } finally {
     setLoading(false)
@@ -1821,6 +3109,171 @@ const albumEditandoGaleria = editandoFotoId
       album.fotos.some((foto) => foto.id === editandoFotoId),
     )
   : null
+const anosFinanceiro = Array.from(
+  new Set([
+    anoAtualFinanceiro,
+    ...arrecadacoes.map((item) => obterAnoDaData(item.data)),
+    ...contasPagar.map((item) => obterAnoDaData(item.vencimento)),
+    ...contasPagar.map((item) => obterAnoDaData(item.dataPagamento)),
+    ...aprovisionamentos.map((item) => obterAnoDaData(item.data)),
+    ...aprovisionamentos.map((item) => obterAnoDaData(item.previsaoUso)),
+  ].filter(Boolean)),
+).sort((a, b) => Number(b) - Number(a))
+
+function renderizarFiltroAnoFinanceiro() {
+  return (
+    <label className="finance-year-filter">
+      Ano
+      <select
+        value={anoFiltroFinanceiro}
+        onChange={(event) => setAnoFiltroFinanceiro(event.target.value)}
+      >
+        {anosFinanceiro.map((ano) => (
+          <option value={ano} key={ano}>
+            {ano}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+const arrecadacoesFiltradasFinanceiro = arrecadacoes.filter((arrecadacao) =>
+  itemDentroDosMesesFinanceiro(arrecadacao.data),
+)
+
+const contasPagarFiltradasFinanceiro = contasPagar.filter(
+  (conta) =>
+    itemDentroDosMesesFinanceiro(conta.vencimento) &&
+    contaPagarCorrespondeStatus(conta) &&
+    contaPagarCorrespondeFornecedor(conta),
+)
+
+const arrecadacoesAtivas = arrecadacoesFiltradasFinanceiro.filter(
+  (arrecadacao) => arrecadacao.ativo !== false,
+)
+
+const totalArrecadacoes = arrecadacoesAtivas.reduce(
+  (total, arrecadacao) => total + Number(arrecadacao.valor || 0),
+  0,
+)
+
+const contasPagarAtivas = contasPagarFiltradasFinanceiro.filter(
+  (conta) => conta.status !== 'Cancelada' && conta.ativo !== false,
+)
+
+const contasPagarPagas = contasPagarAtivas.filter(
+  (conta) => conta.status === 'Paga',
+)
+
+const contasPagarAbertas = contasPagarAtivas.filter(
+  (conta) => conta.status !== 'Paga',
+)
+
+const contasPagarVencidas = contasPagarAbertas.filter(
+  (conta) => conta.vencimento && conta.vencimento < obterHojeISO(),
+)
+
+const contasPagarVencemHoje = contasPagarAbertas.filter(
+  (conta) => conta.vencimento === obterHojeISO(),
+)
+
+const contasPagarProximos7Dias = contasPagarAbertas.filter((conta) => {
+  const dias = calcularDiasParaVencimento(conta.vencimento)
+
+  return dias !== null && dias > 0 && dias <= 7
+})
+
+const totalContasPagas = contasPagarPagas.reduce(
+  (total, conta) => total + Number(conta.valor || 0),
+  0,
+)
+
+const totalContasAbertas = contasPagarAbertas.reduce(
+  (total, conta) => total + Number(conta.valor || 0),
+  0,
+)
+
+
+const aprovisionamentosAtivos = aprovisionamentos.filter(
+  (item) => item.ativo !== false && item.status === 'Reservado',
+)
+
+const totalAprovisionado = aprovisionamentosAtivos.reduce(
+  (total, item) => total + Number(item.valor || 0),
+  0,
+)
+
+const saldoFinanceiro =
+  contasBancarias.reduce(
+    (total, conta) => total + Number(conta.saldoInicial || 0),
+    0,
+  ) +
+  totalArrecadacoes -
+  totalContasPagas
+
+const saldoDisponivel = saldoFinanceiro - totalAprovisionado
+
+const saldosContasBancarias = contasBancarias.map((conta) => {
+  const entradasConta = arrecadacoes
+    .filter(
+      (arrecadacao) =>
+        arrecadacao.ativo !== false &&
+        arrecadacao.contaBancariaId === conta.id,
+    )
+    .reduce((total, arrecadacao) => total + Number(arrecadacao.valor || 0), 0)
+
+  const saidasConta = contasPagar
+    .filter(
+      (despesa) =>
+        despesa.status === 'Paga' &&
+        despesa.ativo !== false &&
+        despesa.contaBancariaId === conta.id,
+    )
+    .reduce((total, despesa) => total + Number(despesa.valor || 0), 0)
+
+  const saldoInicial = Number(conta.saldoInicial || 0)
+  const saldoAtual = saldoInicial + entradasConta - saidasConta
+
+  return {
+    ...conta,
+    saldoInicial,
+    entradasConta,
+    saidasConta,
+    saldoAtual,
+  }
+})
+
+const saldoTotalPorContas = saldosContasBancarias.reduce(
+  (total, conta) => total + Number(conta.saldoAtual || 0),
+  0,
+)
+
+const resumoFinanceiro = {
+  contas: contasBancarias.length,
+  contasAtivas: contasBancarias.filter((conta) => conta.ativo !== false).length,
+  contasInativas: contasBancarias.filter((conta) => conta.ativo === false).length,
+  saldoInicialTotal: contasBancarias.reduce(
+    (total, conta) => total + Number(conta.saldoInicial || 0),
+    0,
+  ),
+  arrecadacoes: arrecadacoesFiltradasFinanceiro.length,
+  arrecadacoesAtivas: arrecadacoesAtivas.length,
+  totalArrecadacoes,
+  totalContasPagas,
+  totalContasAbertas,
+  saldoFinanceiro,
+  totalAprovisionado,
+  saldoDisponivel,
+  aprovisionamentos: aprovisionamentos.length,
+  aprovisionamentosAtivos: aprovisionamentosAtivos.length,
+  saldoTotalPorContas,
+  contasPagar: contasPagarFiltradasFinanceiro.length,
+  contasPagarAbertas: contasPagarAbertas.length,
+  contasPagarPagas: contasPagarPagas.length,
+  contasPagarVencidas: contasPagarVencidas.length,
+  contasPagarVencemHoje: contasPagarVencemHoje.length,
+  contasPagarProximos7Dias: contasPagarProximos7Dias.length,
+}
 const membrosFiltrados = membros.filter((membro) => {
   const textoBusca = buscaMembro.toLowerCase().trim()
 
@@ -1841,12 +3294,26 @@ const membrosFiltrados = membros.filter((membro) => {
   return correspondeBusca && correspondeStatus && correspondeMinisterio
 })
   function formatarData(data) {
-    if (!data) return ''
+  if (!data) return ''
 
+  if (typeof data === 'string') {
     const [ano, mes, dia] = data.split('-')
+
+    if (!ano || !mes || !dia) return data
 
     return `${dia}/${mes}/${ano}`
   }
+
+  if (data?.toDate) {
+    return data.toDate().toLocaleDateString('pt-BR')
+  }
+
+  if (data instanceof Date) {
+    return data.toLocaleDateString('pt-BR')
+  }
+
+  return ''
+}
 
   if (checkingAuth) {
     return (
@@ -1855,6 +3322,14 @@ const membrosFiltrados = membros.filter((membro) => {
       </main>
     )
   }
+function formatarMoeda(valor) {
+  const numero = Number(valor || 0)
+
+  return numero.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  })
+}
 
   if (!user) {
     return (
@@ -1992,6 +3467,13 @@ const membrosFiltrados = membros.filter((membro) => {
   onClick={() => setAbaAtiva('contribuicao')}
 >
   Contribuição
+</button>
+<button
+  type="button"
+  className={abaAtiva === 'financeiro' ? 'active' : ''}
+  onClick={() => setAbaAtiva('financeiro')}
+>
+  Financeiro
 </button>
         <button
         type="button"
@@ -2925,6 +4407,1905 @@ const membrosFiltrados = membros.filter((membro) => {
         )}
       </div>
     </section>
+  </section>
+)}
+{abaAtiva === 'financeiro' && (
+  <section className="finance-admin-area">
+    <div className="finance-header-card">
+      <div>
+        <span className="admin-section-label">Financeiro</span>
+
+        <h2>Gestão financeira da igreja</h2>
+
+        <p>
+          Controle contas bancárias, arrecadações, contas a pagar,
+          aprovisionamentos e relatórios financeiros.
+        </p>
+      </div>
+    </div>
+
+    <div className="finance-mode-actions">
+      <button
+        type="button"
+        className={modoFinanceiro === 'dashboard' ? 'active' : ''}
+        onClick={() => setModoFinanceiro('dashboard')}
+      >
+        <span>📊</span>
+        Dashboard
+      </button>
+
+      <button
+        type="button"
+        className={modoFinanceiro === 'contas' ? 'active' : ''}
+        onClick={() => setModoFinanceiro('contas')}
+      >
+        <span>🏦</span>
+        Contas bancárias
+      </button>
+
+      <button
+        type="button"
+        className={modoFinanceiro === 'arrecadacoes' ? 'active' : ''}
+        onClick={() => setModoFinanceiro('arrecadacoes')}
+      >
+        <span>💚</span>
+        Arrecadações
+      </button>
+
+      <button
+        type="button"
+        className={modoFinanceiro === 'pagar' ? 'active' : ''}
+        onClick={() => setModoFinanceiro('pagar')}
+      >
+        <span>📄</span>
+        Contas a pagar
+      </button>
+
+      <button
+        type="button"
+        className={modoFinanceiro === 'aprovisionamentos' ? 'active' : ''}
+        onClick={() => setModoFinanceiro('aprovisionamentos')}
+      >
+        <span>🗂</span>
+        Aprovisionamentos
+      </button>
+
+      <button
+        type="button"
+        className={modoFinanceiro === 'relatorios' ? 'active' : ''}
+        onClick={() => setModoFinanceiro('relatorios')}
+      >
+        <span>📑</span>
+        Relatórios
+      </button>
+    </div>
+
+    {modoFinanceiro === 'dashboard' && (
+      <section className="finance-dashboard">
+       <div className="finance-summary-grid">
+    <article>
+    <span>Saldo disponível</span>
+    <strong>{formatarMoeda(resumoFinanceiro.saldoDisponivel)}</strong>
+  </article>
+
+  <article>
+    <span>Saldo financeiro</span>
+    <strong>{formatarMoeda(resumoFinanceiro.saldoFinanceiro)}</strong>
+  </article>
+
+  <article>
+    <span>Total arrecadado</span>
+    <strong>{formatarMoeda(resumoFinanceiro.totalArrecadacoes)}</strong>
+  </article>
+
+  <article>
+    <span>Contas pagas</span>
+    <strong>{formatarMoeda(resumoFinanceiro.totalContasPagas)}</strong>
+  </article>
+
+  <article>
+    <span>Contas em aberto</span>
+    <strong>{formatarMoeda(resumoFinanceiro.totalContasAbertas)}</strong>
+  </article>
+  <article>
+    <span>Aprovisionado</span>
+    <strong>{formatarMoeda(resumoFinanceiro.totalAprovisionado)}</strong>
+  </article>
+
+  <article>
+    <span>Vencidas</span>
+    <strong>{resumoFinanceiro.contasPagarVencidas}</strong>
+  </article>
+
+  <article>
+    <span>Vencem hoje</span>
+    <strong>{resumoFinanceiro.contasPagarVencemHoje}</strong>
+  </article>
+
+  <article>
+    <span>Próximos 7 dias</span>
+    <strong>{resumoFinanceiro.contasPagarProximos7Dias}</strong>
+  </article>
+
+  <article>
+    <span>Contas bancárias</span>
+    <strong>{resumoFinanceiro.contas}</strong>
+  </article>
+</div>
+
+        <div className="finance-dashboard-grid">
+          <section className="admin-card">
+            <span className="admin-section-label">Resumo</span>
+
+            <h2>Visão geral</h2>
+
+            <p>
+              Este painel será ampliado nas próximas etapas com entradas,
+              saídas, contas vencidas, contas pagas e aprovisionamentos.
+            </p>
+
+            <div className="finance-empty-state">
+              <strong>Próximo passo</strong>
+              <p>
+                Depois das contas bancárias, vamos cadastrar arrecadações,
+                contas a pagar e reservas financeiras.
+              </p>
+            </div>
+          </section>
+
+                   <section className="admin-card finance-account-balance-card">
+            <span className="admin-section-label">Contas</span>
+
+            <div className="finance-account-balance-header">
+              <div>
+                <h2>Saldo por conta</h2>
+                <p>Saldo inicial + arrecadações - despesas pagas.</p>
+              </div>
+
+              <strong
+                className={
+                  saldoTotalPorContas < 0
+                    ? 'finance-balance-total negative'
+                    : 'finance-balance-total'
+                }
+              >
+                {formatarMoeda(saldoTotalPorContas)}
+              </strong>
+            </div>
+
+            <div className="finance-account-mini-list finance-account-balance-list">
+              {saldosContasBancarias.length === 0 && (
+                <p>Nenhuma conta bancária cadastrada ainda.</p>
+              )}
+
+              {saldosContasBancarias.map((conta) => (
+                <article
+                  className={`finance-account-balance-item ${
+                    conta.ativo === false ? 'inactive-item' : ''
+                  } ${conta.saldoAtual < 0 ? 'negative' : ''}`}
+                  key={conta.id}
+                >
+                  <div>
+                    <strong>{conta.nome}</strong>
+                    <small>{conta.banco || conta.tipo}</small>
+
+                    <div className="finance-account-flow">
+                      <span>Inicial: {formatarMoeda(conta.saldoInicial)}</span>
+                      <span>Entradas: {formatarMoeda(conta.entradasConta)}</span>
+                      <span>Saídas: {formatarMoeda(conta.saidasConta)}</span>
+                    </div>
+                  </div>
+
+                  <section>
+                    <small>Saldo atual</small>
+                    <strong>{formatarMoeda(conta.saldoAtual)}</strong>
+                  </section>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+      </section>
+    )}
+
+    {modoFinanceiro === 'contas' && (
+      <section className="admin-grid admin-events-grid finance-bank-area">
+        <form className="admin-card finance-bank-form" onSubmit={salvarContaBancaria}>
+          <span className="admin-section-label">Contas bancárias</span>
+
+          <h2>
+            {editandoContaBancariaId
+              ? 'Editar conta bancária'
+              : 'Cadastrar conta bancária'}
+          </h2>
+
+          <p>
+            Cadastre as contas usadas pela igreja, incluindo conta corrente,
+            Pix, caixa interno ou poupança.
+          </p>
+
+          <label>
+            Nome da conta
+            <input
+              value={contaBancariaForm.nome}
+              onChange={(event) =>
+                setContaBancariaForm({
+                  ...contaBancariaForm,
+                  nome: event.target.value,
+                })
+              }
+              placeholder="Ex: Conta principal, Caixa da igreja, Pix oficial"
+            />
+          </label>
+
+          <label>
+            Banco
+            <input
+              value={contaBancariaForm.banco}
+              onChange={(event) =>
+                setContaBancariaForm({
+                  ...contaBancariaForm,
+                  banco: event.target.value,
+                })
+              }
+              placeholder="Ex: Bradesco, Caixa, Nubank"
+            />
+          </label>
+
+          <label>
+            Agência
+            <input
+              value={contaBancariaForm.agencia}
+              onChange={(event) =>
+                setContaBancariaForm({
+                  ...contaBancariaForm,
+                  agencia: event.target.value,
+                })
+              }
+              placeholder="Ex: 0001"
+            />
+          </label>
+
+          <label>
+            Conta
+            <input
+              value={contaBancariaForm.conta}
+              onChange={(event) =>
+                setContaBancariaForm({
+                  ...contaBancariaForm,
+                  conta: event.target.value,
+                })
+              }
+              placeholder="Ex: 12345-6"
+            />
+          </label>
+
+          <label>
+            Tipo
+            <select
+              value={contaBancariaForm.tipo}
+              onChange={(event) =>
+                setContaBancariaForm({
+                  ...contaBancariaForm,
+                  tipo: event.target.value,
+                })
+              }
+            >
+              {tiposContaBancaria.map((tipo) => (
+                <option value={tipo} key={tipo}>
+                  {tipo}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Saldo inicial
+            <input
+              value={contaBancariaForm.saldoInicial}
+              onChange={(event) =>
+                setContaBancariaForm({
+                  ...contaBancariaForm,
+                  saldoInicial: event.target.value,
+                })
+              }
+              placeholder="Ex: 1500,00"
+            />
+          </label>
+
+          <label>
+            Observações
+            <textarea
+              value={contaBancariaForm.observacoes}
+              onChange={(event) =>
+                setContaBancariaForm({
+                  ...contaBancariaForm,
+                  observacoes: event.target.value,
+                })
+              }
+              placeholder="Observações internas sobre esta conta"
+            />
+          </label>
+
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={contaBancariaForm.ativo}
+              onChange={(event) =>
+                setContaBancariaForm({
+                  ...contaBancariaForm,
+                  ativo: event.target.checked,
+                })
+              }
+            />
+            Conta ativa
+          </label>
+
+          <button type="submit" disabled={loading}>
+            {loading
+              ? 'Salvando...'
+              : editandoContaBancariaId
+                ? 'Salvar alterações'
+                : 'Salvar conta bancária'}
+          </button>
+
+          {editandoContaBancariaId && (
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={cancelarEdicaoContaBancaria}
+            >
+              Cancelar edição
+            </button>
+          )}
+        </form>
+
+        <section className="admin-card finance-bank-list-card">
+          <span className="admin-section-label">Contas cadastradas</span>
+
+          <h2>Contas bancárias</h2>
+
+          <p>
+            Lista de contas usadas na gestão financeira da igreja.
+          </p>
+
+          <div className="finance-bank-list">
+            {contasBancarias.length === 0 && (
+              <p>Nenhuma conta bancária cadastrada ainda.</p>
+            )}
+
+            {contasBancarias.map((conta) => (
+              <article
+                className={`finance-bank-item ${
+                  conta.ativo === false ? 'inactive-item' : ''
+                }`}
+                key={conta.id}
+              >
+                <div className="finance-bank-icon">🏦</div>
+
+                <div>
+                  <span>{conta.tipo}</span>
+                  <strong>{conta.nome}</strong>
+
+                  {conta.banco && <p>{conta.banco}</p>}
+
+                  <small>
+                    {conta.agencia && <>Agência: {conta.agencia} · </>}
+                    {conta.conta && <>Conta: {conta.conta}</>}
+                  </small>
+
+                  <em>{conta.ativo === false ? 'Inativa' : 'Ativa'}</em>
+                </div>
+
+                <div className="finance-bank-balance">
+                  <small>Saldo inicial</small>
+                  <strong>{formatarMoeda(conta.saldoInicial)}</strong>
+                </div>
+
+                <div className="admin-actions">
+                  <button
+                    type="button"
+                    className="edit-button"
+                    onClick={() => editarContaBancaria(conta)}
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    type="button"
+                    className={
+                      conta.ativo === false ? 'activate-button' : 'deactivate-button'
+                    }
+                    onClick={() => alternarStatusContaBancaria(conta)}
+                  >
+                    {conta.ativo === false ? 'Ativar' : 'Inativar'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => excluirContaBancaria(conta.id)}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      </section>
+    )}
+
+  {modoFinanceiro === 'arrecadacoes' && (
+  <section className="finance-table-module">
+    <div className="finance-table-toolbar finance-payments-toolbar">
+      <div>
+        <span className="admin-section-label">Arrecadações</span>
+
+        <h2>Entradas financeiras</h2>
+
+        <p>
+          Controle dízimos, ofertas, campanhas, doações, eventos e demais entradas.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        className="finance-primary-action"
+        onClick={abrirNovaArrecadacao}
+      >
+        + Nova arrecadação
+      </button>
+    </div>
+   <div className="finance-premium-filters">
+  <div className="finance-filter-header">
+    {renderizarFiltroAnoFinanceiro()}
+  </div>
+
+  <div className="finance-month-filter">
+        <button
+          type="button"
+          className={
+            mesesFiltroFinanceiro.length === mesesFinanceiro.length
+              ? 'active'
+              : ''
+          }
+          onClick={selecionarTodosMesesFinanceiro}
+        >
+          Todos os meses
+        </button>
+
+        {mesesFinanceiro.map((mes) => (
+          <button
+            type="button"
+            className={mesesFiltroFinanceiro.includes(mes.valor) ? 'active' : ''}
+            onClick={() => alternarMesFiltroFinanceiro(mes.valor)}
+            key={mes.valor}
+          >
+            {mes.nome}
+          </button>
+        ))}
+      </div>
+    </div>
+    <div className="finance-table-summary">
+      <article>
+        <span>Total ativo</span>
+        <strong>{formatarMoeda(resumoFinanceiro.totalArrecadacoes)}</strong>
+      </article>
+
+      <article>
+        <span>Lançamentos</span>
+        <strong>{arrecadacoesFiltradasFinanceiro.length}</strong>
+      </article>
+
+      <article>
+        <span>Ativos</span>
+        <strong>{resumoFinanceiro.arrecadacoesAtivas}</strong>
+      </article>
+
+      <article>
+        <span>Cancelados</span>
+        <strong>
+                    {
+            arrecadacoesFiltradasFinanceiro.filter(
+              (arrecadacao) => arrecadacao.ativo === false,
+            ).length
+          }
+        </strong>
+      </article>
+    </div>
+
+    <section className="finance-spreadsheet-card">
+      <div className="finance-spreadsheet-topbar">
+        <strong>Relação de arrecadações</strong>
+
+        <small>Clique em uma linha para editar</small>
+      </div>
+
+      <div className="finance-table-scroll">
+        <table className="finance-spreadsheet-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tipo</th>
+              <th>Descrição</th>
+              <th>Forma</th>
+              <th>Conta</th>
+              <th>Responsável</th>
+              <th>Status</th>
+              <th className="finance-money-column">Valor</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+
+          <tbody>
+           {arrecadacoesFiltradasFinanceiro.length === 0 && (
+              <tr>
+                <td colSpan="9" className="finance-empty-table">
+                  Nenhuma arrecadação cadastrada ainda.
+                </td>
+              </tr>
+            )}
+
+            {arrecadacoesFiltradasFinanceiro.map((arrecadacao) => (
+              <tr
+                key={arrecadacao.id}
+                className={arrecadacao.ativo === false ? 'finance-row-canceled' : ''}
+                onClick={() => editarArrecadacao(arrecadacao)}
+              >
+                <td>{formatarData(arrecadacao.data)}</td>
+                <td>{arrecadacao.tipo}</td>
+                <td>
+                  <strong>{arrecadacao.descricao}</strong>
+
+                  {arrecadacao.observacoes && (
+                    <small>{arrecadacao.observacoes}</small>
+                  )}
+
+                  {arrecadacao.comprovante && (
+                    <small>
+                      <a
+                        href={arrecadacao.comprovante}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        Abrir comprovante
+                      </a>
+                    </small>
+                  )}
+                </td>
+                <td>{arrecadacao.formaPagamento}</td>
+                <td>{arrecadacao.contaBancariaNome || '-'}</td>
+                <td>{arrecadacao.responsavel || '-'}</td>
+                <td>
+                  <span
+                    className={
+                      arrecadacao.ativo === false
+                        ? 'finance-status canceled'
+                        : 'finance-status active'
+                    }
+                  >
+                    {arrecadacao.ativo === false ? 'Cancelada' : 'Ativa'}
+                  </span>
+                </td>
+                <td className="finance-money-column">
+                  {formatarMoeda(arrecadacao.valor)}
+                </td>
+                <td>
+                  <div className="finance-table-actions">
+                    <button
+                      type="button"
+                      className="edit-button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        editarArrecadacao(arrecadacao)
+                      }}
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      type="button"
+                      className={
+                        arrecadacao.ativo === false
+                          ? 'activate-button'
+                          : 'deactivate-button'
+                      }
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        alternarStatusArrecadacao(arrecadacao)
+                      }}
+                    >
+                      {arrecadacao.ativo === false ? 'Reativar' : 'Cancelar'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        excluirArrecadacao(arrecadacao.id)
+                      }}
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {formArrecadacaoAberto && (
+      <div className="finance-modal-backdrop">
+        <section className="finance-modal-card">
+          <div className="finance-modal-header">
+            <div>
+              <span className="admin-section-label">Arrecadações</span>
+
+              <h2>
+                {editandoArrecadacaoId
+                  ? 'Editar arrecadação'
+                  : 'Nova arrecadação'}
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              className="finance-modal-close"
+              onClick={fecharFormularioArrecadacao}
+            >
+              ×
+            </button>
+          </div>
+
+          <form className="finance-modal-form" onSubmit={salvarArrecadacao}>
+            <div className="finance-form-grid">
+              <label>
+                Data
+                <input
+                  type="date"
+                  value={arrecadacaoForm.data}
+                  onChange={(event) =>
+                    setArrecadacaoForm({
+                      ...arrecadacaoForm,
+                      data: event.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                Tipo
+                <select
+                  value={arrecadacaoForm.tipo}
+                  onChange={(event) =>
+                    setArrecadacaoForm({
+                      ...arrecadacaoForm,
+                      tipo: event.target.value,
+                    })
+                  }
+                >
+                  {tiposArrecadacao.map((tipo) => (
+                    <option value={tipo} key={tipo}>
+                      {tipo}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Valor
+                <input
+                  value={arrecadacaoForm.valor}
+                  onChange={(event) =>
+                    setArrecadacaoForm({
+                      ...arrecadacaoForm,
+                      valor: event.target.value,
+                    })
+                  }
+                  placeholder="Ex: 250,00"
+                />
+              </label>
+
+              <label>
+                Forma de pagamento
+                <select
+                  value={arrecadacaoForm.formaPagamento}
+                  onChange={(event) =>
+                    setArrecadacaoForm({
+                      ...arrecadacaoForm,
+                      formaPagamento: event.target.value,
+                    })
+                  }
+                >
+                  {formasPagamentoFinanceiro.map((forma) => (
+                    <option value={forma} key={forma}>
+                      {forma}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <label>
+              Descrição
+              <input
+                value={arrecadacaoForm.descricao}
+                onChange={(event) =>
+                  setArrecadacaoForm({
+                    ...arrecadacaoForm,
+                    descricao: event.target.value,
+                  })
+                }
+                placeholder="Ex: Dízimo culto domingo, oferta missionária"
+              />
+            </label>
+
+            <div className="finance-form-grid">
+                           <label>
+                Conta bancária destino
+                <select
+                  value={arrecadacaoForm.contaBancariaId}
+                  onChange={(event) =>
+                    setArrecadacaoForm({
+                      ...arrecadacaoForm,
+                      contaBancariaId: event.target.value,
+                    })
+                  }
+                >
+                  <option value="">Não informar</option>
+
+                  {contasBancarias
+                    .filter((conta) => conta.ativo !== false)
+                    .map((conta) => (
+                      <option value={conta.id} key={conta.id}>
+                        {conta.nome} {conta.banco ? `- ${conta.banco}` : ''}
+                      </option>
+                    ))}
+                </select>
+              </label>
+
+              <label>
+                Responsável
+                <input
+                  value={arrecadacaoForm.responsavel}
+                  onChange={(event) =>
+                    setArrecadacaoForm({
+                      ...arrecadacaoForm,
+                      responsavel: event.target.value,
+                    })
+                  }
+                  placeholder="Quem lançou"
+                />
+              </label>
+            </div>
+
+            <label>
+              Comprovante
+              <input
+                type="file"
+                onChange={enviarComprovanteArrecadacao}
+                disabled={enviandoComprovanteArrecadacao}
+              />
+            </label>
+
+            {enviandoComprovanteArrecadacao && <p>Enviando comprovante...</p>}
+
+            {arrecadacaoForm.comprovante && (
+              <a
+                className="admin-file-link"
+                href={arrecadacaoForm.comprovante}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Abrir comprovante enviado
+              </a>
+            )}
+
+            <label>
+              Observações
+              <textarea
+                value={arrecadacaoForm.observacoes}
+                onChange={(event) =>
+                  setArrecadacaoForm({
+                    ...arrecadacaoForm,
+                    observacoes: event.target.value,
+                  })
+                }
+                placeholder="Observações internas"
+              />
+            </label>
+
+                      <div className="finance-toggle-row">
+              <label className="finance-toggle-label">
+                <input
+                  type="checkbox"
+                  checked={arrecadacaoForm.ativo}
+                  onChange={(event) =>
+                    setArrecadacaoForm({
+                      ...arrecadacaoForm,
+                      ativo: event.target.checked,
+                    })
+                  }
+                />
+                <span>Lançamento ativo</span>
+              </label>
+            </div>
+
+            <div className="finance-modal-actions">
+              <button
+                type="submit"
+                disabled={loading || enviandoComprovanteArrecadacao}
+              >
+                {loading
+                  ? 'Salvando...'
+                  : editandoArrecadacaoId
+                    ? 'Salvar alterações'
+                    : 'Salvar arrecadação'}
+              </button>
+
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={cancelarEdicaoArrecadacao}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+    )}
+  </section>
+)}
+
+    {modoFinanceiro === 'pagar' && (
+  <section className="finance-table-module">
+    <div className="finance-table-toolbar">
+      <div>
+        <span className="admin-section-label">Contas a pagar</span>
+
+        <h2>Despesas e pagamentos</h2>
+
+        <p>
+          Controle despesas, vencimentos, recorrências, parcelamentos e pagamentos.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        className="finance-primary-action"
+        onClick={abrirNovaContaPagar}
+      >
+        + Nova despesa
+      </button>
+    </div>
+
+    <div className="finance-premium-filters finance-payments-filters">
+  <div className="finance-filter-header">
+    {renderizarFiltroAnoFinanceiro()}
+  </div>
+
+  <div className="finance-month-filter">
+        <button
+          type="button"
+          className={
+            mesesFiltroFinanceiro.length === mesesFinanceiro.length
+              ? 'active'
+              : ''
+          }
+          onClick={selecionarTodosMesesFinanceiro}
+        >
+          Todos os meses
+        </button>
+
+        {mesesFinanceiro.map((mes) => (
+          <button
+            type="button"
+            className={mesesFiltroFinanceiro.includes(mes.valor) ? 'active' : ''}
+            onClick={() => alternarMesFiltroFinanceiro(mes.valor)}
+            key={mes.valor}
+          >
+            {mes.nome}
+          </button>
+        ))}
+      </div>
+
+      <div className="finance-extra-filters">
+        <label>
+          Status
+          <select
+            value={statusFiltroContaPagar}
+            onChange={(event) => setStatusFiltroContaPagar(event.target.value)}
+          >
+            <option value="Todas">Todas</option>
+            <option value="Paga">Paga</option>
+            <option value="A pagar">A pagar</option>
+          </select>
+        </label>
+
+        <label>
+          Fornecedor
+          <input
+            value={fornecedorFiltroContaPagar}
+            onChange={(event) => setFornecedorFiltroContaPagar(event.target.value)}
+            placeholder="Buscar fornecedor"
+          />
+        </label>
+      </div>
+    </div>
+    <div className="finance-table-summary finance-alert-summary">
+      <article>
+        <span>Em aberto</span>
+        <strong>{formatarMoeda(resumoFinanceiro.totalContasAbertas)}</strong>
+      </article>
+
+      <article>
+        <span>Pagas</span>
+        <strong>{formatarMoeda(resumoFinanceiro.totalContasPagas)}</strong>
+      </article>
+
+      <article className={resumoFinanceiro.contasPagarVencidas > 0 ? 'danger' : ''}>
+        <span>Vencidas</span>
+        <strong>{resumoFinanceiro.contasPagarVencidas}</strong>
+      </article>
+
+      <article className={resumoFinanceiro.contasPagarVencemHoje > 0 ? 'warning' : ''}>
+        <span>Vencem hoje</span>
+        <strong>{resumoFinanceiro.contasPagarVencemHoje}</strong>
+      </article>
+    </div>
+
+    <section className="finance-spreadsheet-card">
+      <div className="finance-spreadsheet-topbar">
+        <strong>Relação de contas a pagar</strong>
+        <small>Clique em uma linha para editar</small>
+      </div>
+
+      <div className="finance-table-scroll">
+        <table className="finance-spreadsheet-table">
+          <thead>
+            <tr>
+              <th>Vencimento</th>
+              <th>Pagamento</th>
+              <th>Fornecedor</th>
+              <th>Categoria</th>
+              <th>Descrição</th>
+              <th>Forma</th>
+              <th>Conta</th>
+              <th>Status</th>
+              <th className="finance-money-column">Valor</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+
+          <tbody>
+             {contasPagarFiltradasFinanceiro.length === 0 && (
+              <tr>
+                <td colSpan="10" className="finance-empty-table">
+                  Nenhuma despesa cadastrada ainda.
+                </td>
+              </tr>
+            )}
+
+             {contasPagarFiltradasFinanceiro.map((conta) => {
+              const statusVisual = obterStatusVisualContaPagar(conta)
+              const diasVencimento = calcularDiasParaVencimento(conta.vencimento)
+
+              return (
+                <tr
+                  key={conta.id}
+                  className={
+                    statusVisual === 'Vencida'
+                      ? 'finance-row-overdue'
+                      : statusVisual === 'Paga'
+                        ? 'finance-row-paid'
+                        : statusVisual === 'Cancelada'
+                          ? 'finance-row-canceled'
+                          : ''
+                  }
+                  onClick={() => editarContaPagar(conta)}
+                >
+                  <td>
+                    {formatarData(conta.vencimento)}
+
+                    {statusVisual === 'Vencida' && (
+                      <small className="finance-alert-text">Vencida</small>
+                    )}
+
+                    {statusVisual === 'Vence hoje' && (
+                      <small className="finance-warning-text">Vence hoje</small>
+                    )}
+
+                    {diasVencimento !== null &&
+                      diasVencimento > 0 &&
+                      diasVencimento <= 7 && (
+                        <small className="finance-warning-text">
+                          Vence em {diasVencimento} dia
+                          {diasVencimento > 1 ? 's' : ''}
+                        </small>
+                      )}
+                  </td>
+
+                  <td>
+                    {conta.dataPagamento ? formatarData(conta.dataPagamento) : '-'}
+                  </td>
+
+                  <td>{conta.fornecedor || '-'}</td>
+                  <td>{conta.categoria}</td>
+
+                  <td>
+                    <strong>{conta.descricao}</strong>
+
+                    {conta.parcelada && (
+                      <small>
+                        Parcela {conta.parcelaAtual || 1}/{conta.numeroParcelas}
+                      </small>
+                    )}
+
+                    {conta.recorrente && !conta.parcelada && (
+                      <small>Despesa recorrente mensal</small>
+                    )}
+
+                    {conta.observacoes && <small>{conta.observacoes}</small>}
+
+                    {conta.comprovante && (
+                      <small>
+                        <a
+                          href={conta.comprovante}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          Abrir comprovante
+                        </a>
+                      </small>
+                    )}
+                  </td>
+
+                  <td>{conta.formaPagamento}</td>
+                  <td>{conta.contaBancariaNome || '-'}</td>
+
+                  <td>
+                    <span
+                      className={
+                        statusVisual === 'Paga'
+                          ? 'finance-status paid'
+                          : statusVisual === 'Vencida'
+                            ? 'finance-status overdue'
+                            : statusVisual === 'Cancelada'
+                              ? 'finance-status canceled'
+                              : statusVisual === 'Vence hoje'
+                                ? 'finance-status warning'
+                                : 'finance-status open'
+                      }
+                    >
+                      {statusVisual}
+                    </span>
+                  </td>
+
+                  <td className="finance-money-column">
+                    {formatarMoeda(conta.valor)}
+                  </td>
+
+                  <td>
+                    <div className="finance-table-actions">
+                      {conta.status !== 'Paga' && conta.status !== 'Cancelada' && (
+                        <button
+                          type="button"
+                          className="activate-button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            marcarContaPagarComoPaga(conta)
+                          }}
+                        >
+                          Pagar
+                        </button>
+                      )}
+
+                      {conta.status === 'Paga' && (
+                        <button
+                          type="button"
+                          className="deactivate-button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            reabrirContaPagar(conta)
+                          }}
+                        >
+                          Reabrir
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className="edit-button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          editarContaPagar(conta)
+                        }}
+                      >
+                        Editar
+                      </button>
+
+                      {conta.status !== 'Cancelada' && (
+                        <button
+                          type="button"
+                          className="deactivate-button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            cancelarContaPagar(conta)
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          excluirContaPagar(conta.id)
+                        }}
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {formContaPagarAberto && (
+      <div className="finance-modal-backdrop">
+        <section className="finance-modal-card">
+          <div className="finance-modal-header">
+            <div>
+              <span className="admin-section-label">Contas a pagar</span>
+
+              <h2>
+                {editandoContaPagarId ? 'Editar despesa' : 'Nova despesa'}
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              className="finance-modal-close"
+              onClick={fecharFormularioContaPagar}
+            >
+              ×
+            </button>
+          </div>
+
+          <form className="finance-modal-form" onSubmit={salvarContaPagar}>
+            <div className="finance-form-grid">
+              <label>
+                Vencimento
+                <input
+                  type="date"
+                  value={contaPagarForm.vencimento}
+                  onChange={(event) =>
+                    setContaPagarForm({
+                      ...contaPagarForm,
+                      vencimento: event.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                Valor
+                <input
+                  value={contaPagarForm.valor}
+                  onChange={(event) =>
+                    setContaPagarForm({
+                      ...contaPagarForm,
+                      valor: event.target.value,
+                    })
+                  }
+                  placeholder="Ex: 250,00"
+                />
+              </label>
+
+              <label>
+                Categoria
+                <select
+                  value={contaPagarForm.categoria}
+                  onChange={(event) =>
+                    setContaPagarForm({
+                      ...contaPagarForm,
+                      categoria: event.target.value,
+                    })
+                  }
+                >
+                  {categoriasContaPagar.map((categoria) => (
+                    <option value={categoria} key={categoria}>
+                      {categoria}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Forma de pagamento
+                <select
+                  value={contaPagarForm.formaPagamento}
+                  onChange={(event) =>
+                    setContaPagarForm({
+                      ...contaPagarForm,
+                      formaPagamento: event.target.value,
+                    })
+                  }
+                >
+                  {formasPagamentoFinanceiro.map((forma) => (
+                    <option value={forma} key={forma}>
+                      {forma}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <label>
+              Descrição
+              <input
+                value={contaPagarForm.descricao}
+                onChange={(event) =>
+                  setContaPagarForm({
+                    ...contaPagarForm,
+                    descricao: event.target.value,
+                  })
+                }
+                placeholder="Ex: Conta de energia, aluguel, compra de material"
+              />
+            </label>
+
+            <div className="finance-form-grid">
+              <label>
+                Fornecedor
+                <input
+                  value={contaPagarForm.fornecedor}
+                  onChange={(event) =>
+                    setContaPagarForm({
+                      ...contaPagarForm,
+                      fornecedor: event.target.value,
+                    })
+                  }
+                  placeholder="Ex: Coelba, Embasa, fornecedor"
+                />
+              </label>
+
+              <label>
+                Conta bancária de pagamento
+                <select
+                  value={contaPagarForm.contaBancariaId}
+                  onChange={(event) =>
+                    setContaPagarForm({
+                      ...contaPagarForm,
+                      contaBancariaId: event.target.value,
+                    })
+                  }
+                >
+                  <option value="">Não informar</option>
+
+                  {contasBancarias
+                    .filter((conta) => conta.ativo !== false)
+                    .map((conta) => (
+                      <option value={conta.id} key={conta.id}>
+                        {conta.nome} {conta.banco ? `- ${conta.banco}` : ''}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            </div>
+
+            {!editandoContaPagarId && (
+              <div className="finance-repeat-options">
+                <label className="finance-toggle-label">
+                  <input
+                    type="checkbox"
+                    checked={contaPagarForm.recorrente}
+                    onChange={(event) =>
+                      setContaPagarForm({
+                        ...contaPagarForm,
+                        recorrente: event.target.checked,
+                        parcelada: event.target.checked
+                          ? false
+                          : contaPagarForm.parcelada,
+                      })
+                    }
+                  />
+                  <span>Despesa recorrente mensal</span>
+                </label>
+
+                <label className="finance-toggle-label">
+                  <input
+                    type="checkbox"
+                    checked={contaPagarForm.parcelada}
+                    onChange={(event) =>
+                      setContaPagarForm({
+                        ...contaPagarForm,
+                        parcelada: event.target.checked,
+                        recorrente: event.target.checked
+                          ? false
+                          : contaPagarForm.recorrente,
+                      })
+                    }
+                  />
+                  <span>Despesa parcelada</span>
+                </label>
+              </div>
+            )}
+
+            {contaPagarForm.recorrente && !editandoContaPagarId && (
+              <div className="finance-info-box">
+                Esta despesa será lançada mensalmente pelos próximos 12 meses,
+                usando a data de vencimento informada como referência.
+              </div>
+            )}
+
+            {contaPagarForm.parcelada && !editandoContaPagarId && (
+              <label>
+                Número de parcelas
+                <input
+                  type="number"
+                  min="2"
+                  value={contaPagarForm.numeroParcelas}
+                  onChange={(event) =>
+                    setContaPagarForm({
+                      ...contaPagarForm,
+                      numeroParcelas: event.target.value,
+                    })
+                  }
+                  placeholder="Ex: 6"
+                />
+              </label>
+            )}
+
+            <div className="finance-form-grid">
+              <label>
+                Status
+                <select
+                  value={contaPagarForm.status}
+                  onChange={(event) =>
+                    setContaPagarForm({
+                      ...contaPagarForm,
+                      status: event.target.value,
+                      dataPagamento:
+                        event.target.value === 'Paga'
+                          ? contaPagarForm.dataPagamento || obterHojeISO()
+                          : contaPagarForm.dataPagamento,
+                    })
+                  }
+                >
+                  {statusContaPagar.map((status) => (
+                    <option value={status} key={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Data de pagamento
+                <input
+                  type="date"
+                  value={contaPagarForm.dataPagamento}
+                  onChange={(event) =>
+                    setContaPagarForm({
+                      ...contaPagarForm,
+                      dataPagamento: event.target.value,
+                    })
+                  }
+                />
+              </label>
+            </div>
+
+            <label>
+              Comprovante
+              <input
+                type="file"
+                onChange={enviarComprovanteContaPagar}
+                disabled={enviandoComprovanteContaPagar}
+              />
+            </label>
+
+            {enviandoComprovanteContaPagar && <p>Enviando comprovante...</p>}
+
+            {contaPagarForm.comprovante && (
+              <a
+                className="admin-file-link"
+                href={contaPagarForm.comprovante}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Abrir comprovante enviado
+              </a>
+            )}
+
+            <label>
+              Observações
+              <textarea
+                value={contaPagarForm.observacoes}
+                onChange={(event) =>
+                  setContaPagarForm({
+                    ...contaPagarForm,
+                    observacoes: event.target.value,
+                  })
+                }
+                placeholder="Observações internas"
+              />
+            </label>
+
+            <div className="finance-toggle-row">
+              <label className="finance-toggle-label">
+                <input
+                  type="checkbox"
+                  checked={contaPagarForm.ativo}
+                  onChange={(event) =>
+                    setContaPagarForm({
+                      ...contaPagarForm,
+                      ativo: event.target.checked,
+                    })
+                  }
+                />
+                <span>Despesa ativa</span>
+              </label>
+            </div>
+
+            <div className="finance-modal-actions">
+              <button
+                type="submit"
+                disabled={loading || enviandoComprovanteContaPagar}
+              >
+                {loading
+                  ? 'Salvando...'
+                  : editandoContaPagarId
+                    ? 'Salvar alterações'
+                    : contaPagarForm.parcelada
+                      ? `Gerar ${contaPagarForm.numeroParcelas} parcelas`
+                      : contaPagarForm.recorrente
+                        ? 'Gerar recorrência'
+                        : 'Salvar despesa'}
+              </button>
+
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={cancelarEdicaoContaPagar}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+    )}
+  </section>
+)}
+
+    {modoFinanceiro === 'aprovisionamentos' && (
+  <section className="finance-table-module">
+    <div className="finance-table-toolbar finance-provision-toolbar">
+      <div>
+        <span className="admin-section-label">Aprovisionamentos</span>
+
+        <h2>Reservas financeiras</h2>
+
+        <p>
+          Controle valores reservados para despesas futuras, eventos, obras e projetos.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        className="finance-primary-action"
+        onClick={abrirNovoAprovisionamento}
+      >
+        + Nova reserva
+      </button>
+    </div>
+
+    <div className="finance-table-summary finance-alert-summary">
+      <article>
+        <span>Total reservado</span>
+        <strong>{formatarMoeda(resumoFinanceiro.totalAprovisionado)}</strong>
+      </article>
+
+      <article>
+        <span>Reservas ativas</span>
+        <strong>{resumoFinanceiro.aprovisionamentosAtivos}</strong>
+      </article>
+
+      <article>
+        <span>Saldo financeiro</span>
+        <strong>{formatarMoeda(resumoFinanceiro.saldoFinanceiro)}</strong>
+      </article>
+
+      <article
+        className={resumoFinanceiro.saldoDisponivel < 0 ? 'danger' : ''}
+      >
+        <span>Saldo disponível</span>
+        <strong>{formatarMoeda(resumoFinanceiro.saldoDisponivel)}</strong>
+      </article>
+    </div>
+
+    <section className="finance-spreadsheet-card">
+      <div className="finance-spreadsheet-topbar">
+        <strong>Relação de aprovisionamentos</strong>
+        <small>Clique em uma linha para editar</small>
+      </div>
+
+      <div className="finance-table-scroll">
+        <table className="finance-spreadsheet-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Previsão uso</th>
+              <th>Categoria</th>
+              <th>Descrição</th>
+              <th>Conta</th>
+              <th>Responsável</th>
+              <th>Status</th>
+              <th className="finance-money-column">Valor</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {aprovisionamentos.length === 0 && (
+              <tr>
+                <td colSpan="9" className="finance-empty-table">
+                  Nenhum aprovisionamento cadastrado ainda.
+                </td>
+              </tr>
+            )}
+
+            {aprovisionamentos.map((item) => (
+              <tr
+                key={item.id}
+                className={
+                  item.status === 'Cancelado'
+                    ? 'finance-row-canceled'
+                    : item.status === 'Utilizado'
+                      ? 'finance-row-paid'
+                      : ''
+                }
+                onClick={() => editarAprovisionamento(item)}
+              >
+                <td>{formatarData(item.data)}</td>
+                <td>{item.previsaoUso ? formatarData(item.previsaoUso) : '-'}</td>
+                <td>{item.categoria}</td>
+
+                <td>
+                  <strong>{item.descricao}</strong>
+
+                  {item.observacoes && <small>{item.observacoes}</small>}
+                </td>
+
+                <td>{item.contaBancariaNome || '-'}</td>
+                <td>{item.responsavel || '-'}</td>
+
+                <td>
+                  <span
+                    className={
+                      item.status === 'Utilizado'
+                        ? 'finance-status paid'
+                        : item.status === 'Cancelado'
+                          ? 'finance-status canceled'
+                          : 'finance-status open'
+                    }
+                  >
+                    {item.status || 'Reservado'}
+                  </span>
+                </td>
+
+                <td className="finance-money-column">
+                  {formatarMoeda(item.valor)}
+                </td>
+
+                <td>
+                  <div className="finance-table-actions">
+                    {item.status === 'Reservado' && (
+                      <button
+                        type="button"
+                        className="activate-button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          marcarAprovisionamentoUtilizado(item)
+                        }}
+                      >
+                        Utilizado
+                      </button>
+                    )}
+
+                    {item.status !== 'Reservado' && (
+                      <button
+                        type="button"
+                        className="activate-button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          reativarAprovisionamento(item)
+                        }}
+                      >
+                        Reativar
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      className="edit-button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        editarAprovisionamento(item)
+                      }}
+                    >
+                      Editar
+                    </button>
+
+                    {item.status !== 'Cancelado' && (
+                      <button
+                        type="button"
+                        className="deactivate-button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          cancelarAprovisionamento(item)
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        excluirAprovisionamento(item.id)
+                      }}
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {formAprovisionamentoAberto && (
+      <div className="finance-modal-backdrop">
+        <section className="finance-modal-card">
+          <div className="finance-modal-header">
+            <div>
+              <span className="admin-section-label">Aprovisionamentos</span>
+
+              <h2>
+                {editandoAprovisionamentoId
+                  ? 'Editar reserva'
+                  : 'Nova reserva'}
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              className="finance-modal-close"
+              onClick={fecharFormularioAprovisionamento}
+            >
+              ×
+            </button>
+          </div>
+
+          <form
+            className="finance-modal-form"
+            onSubmit={salvarAprovisionamento}
+          >
+            <div className="finance-form-grid">
+              <label>
+                Data da reserva
+                <input
+                  type="date"
+                  value={aprovisionamentoForm.data}
+                  onChange={(event) =>
+                    setAprovisionamentoForm({
+                      ...aprovisionamentoForm,
+                      data: event.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                Previsão de uso
+                <input
+                  type="date"
+                  value={aprovisionamentoForm.previsaoUso}
+                  onChange={(event) =>
+                    setAprovisionamentoForm({
+                      ...aprovisionamentoForm,
+                      previsaoUso: event.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                Valor reservado
+                <input
+                  value={aprovisionamentoForm.valor}
+                  onChange={(event) =>
+                    setAprovisionamentoForm({
+                      ...aprovisionamentoForm,
+                      valor: event.target.value,
+                    })
+                  }
+                  placeholder="Ex: 500,00"
+                />
+              </label>
+
+              <label>
+                Categoria
+                <select
+                  value={aprovisionamentoForm.categoria}
+                  onChange={(event) =>
+                    setAprovisionamentoForm({
+                      ...aprovisionamentoForm,
+                      categoria: event.target.value,
+                    })
+                  }
+                >
+                  {categoriasAprovisionamento.map((categoria) => (
+                    <option value={categoria} key={categoria}>
+                      {categoria}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <label>
+              Descrição
+              <input
+                value={aprovisionamentoForm.descricao}
+                onChange={(event) =>
+                  setAprovisionamentoForm({
+                    ...aprovisionamentoForm,
+                    descricao: event.target.value,
+                  })
+                }
+                placeholder="Ex: Reserva para aluguel, evento, obra ou projeto"
+              />
+            </label>
+
+            <div className="finance-form-grid">
+              <label>
+                Conta vinculada
+                <select
+                  value={aprovisionamentoForm.contaBancariaId}
+                  onChange={(event) =>
+                    setAprovisionamentoForm({
+                      ...aprovisionamentoForm,
+                      contaBancariaId: event.target.value,
+                    })
+                  }
+                >
+                  <option value="">Não informar</option>
+
+                  {contasBancarias
+                    .filter((conta) => conta.ativo !== false)
+                    .map((conta) => (
+                      <option value={conta.id} key={conta.id}>
+                        {conta.nome} {conta.banco ? `- ${conta.banco}` : ''}
+                      </option>
+                    ))}
+                </select>
+              </label>
+
+              <label>
+                Responsável
+                <input
+                  value={aprovisionamentoForm.responsavel}
+                  onChange={(event) =>
+                    setAprovisionamentoForm({
+                      ...aprovisionamentoForm,
+                      responsavel: event.target.value,
+                    })
+                  }
+                  placeholder="Quem fez a reserva"
+                />
+              </label>
+            </div>
+
+            <label>
+              Status
+              <select
+                value={aprovisionamentoForm.status}
+                onChange={(event) =>
+                  setAprovisionamentoForm({
+                    ...aprovisionamentoForm,
+                    status: event.target.value,
+                    ativo: event.target.value === 'Reservado',
+                  })
+                }
+              >
+                {statusAprovisionamento.map((status) => (
+                  <option value={status} key={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Observações
+              <textarea
+                value={aprovisionamentoForm.observacoes}
+                onChange={(event) =>
+                  setAprovisionamentoForm({
+                    ...aprovisionamentoForm,
+                    observacoes: event.target.value,
+                  })
+                }
+                placeholder="Observações internas"
+              />
+            </label>
+
+            <div className="finance-toggle-row">
+              <label className="finance-toggle-label">
+                <input
+                  type="checkbox"
+                  checked={aprovisionamentoForm.ativo}
+                  onChange={(event) =>
+                    setAprovisionamentoForm({
+                      ...aprovisionamentoForm,
+                      ativo: event.target.checked,
+                    })
+                  }
+                />
+                <span>Reserva ativa</span>
+              </label>
+            </div>
+
+            <div className="finance-modal-actions">
+              <button type="submit" disabled={loading}>
+                {loading
+                  ? 'Salvando...'
+                  : editandoAprovisionamentoId
+                    ? 'Salvar alterações'
+                    : 'Salvar reserva'}
+              </button>
+
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={cancelarEdicaoAprovisionamento}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+    )}
+  </section>
+)}
+
+    {modoFinanceiro === 'relatorios' && (
+      <section className="admin-card finance-coming-card">
+        <span className="admin-section-label">Relatórios</span>
+        <h2>Relatórios financeiros</h2>
+        <p>
+          Em breve teremos relatórios mensais, por categoria, por conta bancária
+          e exportação para Excel.
+        </p>
+      </section>
+    )}
   </section>
 )}
 {abaAtiva === 'galeria' && (
