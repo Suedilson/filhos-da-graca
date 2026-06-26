@@ -4017,9 +4017,10 @@ function renderizarUsuariosPermissoes() {
 
       <div className="users-permission-grid">
         <form
-          className="admin-card users-permission-form"
-          onSubmit={salvarUsuarioPermissao}
-        >
+  className="admin-card users-permission-form"
+  onSubmit={salvarUsuarioPermissao}
+  autoComplete="off"
+>
           <span className="admin-section-label">
             {editandoUsuarioPermissaoId ? 'Editar usuário' : 'Novo usuário'}
           </span>
@@ -4038,7 +4039,9 @@ function renderizarUsuariosPermissoes() {
           <label>
             Nome
             <input
-              value={usuarioPermissaoForm.nome}
+  name="permissaoNomeUsuario"
+  autoComplete="off"
+  value={usuarioPermissaoForm.nome}
               onChange={(event) =>
                 setUsuarioPermissaoForm((formAtual) => ({
                   ...formAtual,
@@ -4051,10 +4054,12 @@ function renderizarUsuariosPermissoes() {
 
           <label>
             E-mail
-            <input
-              type="email"
-              value={usuarioPermissaoForm.email}
-              disabled={Boolean(editandoUsuarioPermissaoId)}
+           <input
+  type="email"
+  name="permissaoEmailUsuario"
+  autoComplete="new-password"
+  value={usuarioPermissaoForm.email}
+  disabled={Boolean(editandoUsuarioPermissaoId)}
               onChange={(event) =>
                 setUsuarioPermissaoForm((formAtual) => ({
                   ...formAtual,
@@ -4086,7 +4091,9 @@ function renderizarUsuariosPermissoes() {
   <label>
     UID do usuário existente
     <input
-      value={usuarioPermissaoForm.uid}
+  name="permissaoUidUsuario"
+  autoComplete="off"
+  value={usuarioPermissaoForm.uid}
       onChange={(event) =>
         setUsuarioPermissaoForm((formAtual) => ({
           ...formAtual,
@@ -4102,8 +4109,10 @@ function renderizarUsuariosPermissoes() {
   <label>
     Senha inicial
     <input
-      type="password"
-      value={usuarioPermissaoForm.senha}
+  type="password"
+  name="permissaoSenhaInicial"
+  autoComplete="new-password"
+  value={usuarioPermissaoForm.senha}
       onChange={(event) =>
         setUsuarioPermissaoForm((formAtual) => ({
           ...formAtual,
@@ -4403,7 +4412,7 @@ function formatarMoeda(valor) {
   <button onClick={sair}>Sair</button>
 </header>
 
-     <nav className="admin-tabs">
+   <nav className="admin-tabs admin-tabs-grouped">
   {usuarioPodeAcessar('programacao') && (
     <button
       type="button"
@@ -4414,16 +4423,6 @@ function formatarMoeda(valor) {
     </button>
   )}
 
-  {usuarioPodeAcessar('eventos') && (
-    <button
-      type="button"
-      className={abaAtiva === 'eventos' ? 'active' : ''}
-      onClick={() => setAbaAtiva('eventos')}
-    >
-      Eventos
-    </button>
-  )}
-
   {usuarioPodeAcessar('oracao') && (
     <button
       type="button"
@@ -4431,56 +4430,6 @@ function formatarMoeda(valor) {
       onClick={() => setAbaAtiva('oracao')}
     >
       Oração
-    </button>
-  )}
-
-  {usuarioPodeAcessar('midia') && (
-    <button
-      type="button"
-      className={abaAtiva === 'midia' ? 'active' : ''}
-      onClick={() => setAbaAtiva('midia')}
-    >
-      Mídia
-    </button>
-  )}
-
-  {usuarioPodeAcessar('documentos') && (
-    <button
-      type="button"
-      className={abaAtiva === 'documentos' ? 'active' : ''}
-      onClick={() => setAbaAtiva('documentos')}
-    >
-      Documentos
-    </button>
-  )}
-
-  {usuarioPodeAcessar('contribuicao') && (
-    <button
-      type="button"
-      className={abaAtiva === 'contribuicao' ? 'active' : ''}
-      onClick={() => setAbaAtiva('contribuicao')}
-    >
-      Contribuição
-    </button>
-  )}
-
-  {usuarioPodeAcessar('financeiro') && (
-    <button
-      type="button"
-      className={abaAtiva === 'financeiro' ? 'active' : ''}
-      onClick={() => setAbaAtiva('financeiro')}
-    >
-      Financeiro
-    </button>
-  )}
-
-  {usuarioPodeAcessar('galeria') && (
-    <button
-      type="button"
-      className={abaAtiva === 'galeria' ? 'active' : ''}
-      onClick={() => setAbaAtiva('galeria')}
-    >
-      Galeria
     </button>
   )}
 
@@ -4504,13 +4453,100 @@ function formatarMoeda(valor) {
     </button>
   )}
 
+  {(usuarioPodeAcessar('midia') ||
+    usuarioPodeAcessar('galeria') ||
+    usuarioPodeAcessar('eventos')) && (
+    <div
+      className={
+        ['midia', 'galeria', 'eventos'].includes(abaAtiva)
+          ? 'admin-tab-group active'
+          : 'admin-tab-group'
+      }
+    >
+      <button type="button">
+        Mídia
+        <span>▾</span>
+      </button>
+
+      <div className="admin-submenu">
+        {usuarioPodeAcessar('midia') && (
+          <button
+            type="button"
+            className={abaAtiva === 'midia' ? 'active' : ''}
+            onClick={() => setAbaAtiva('midia')}
+          >
+            Vídeos
+          </button>
+        )}
+
+        {usuarioPodeAcessar('galeria') && (
+          <button
+            type="button"
+            className={abaAtiva === 'galeria' ? 'active' : ''}
+            onClick={() => setAbaAtiva('galeria')}
+          >
+            Galeria
+          </button>
+        )}
+
+        {usuarioPodeAcessar('eventos') && (
+          <button
+            type="button"
+            className={abaAtiva === 'eventos' ? 'active' : ''}
+            onClick={() => setAbaAtiva('eventos')}
+          >
+            Eventos
+          </button>
+        )}
+      </div>
+    </div>
+  )}
+
+  {(usuarioPodeAcessar('financeiro') ||
+    usuarioPodeAcessar('contribuicao')) && (
+    <div
+      className={
+        ['financeiro', 'contribuicao'].includes(abaAtiva)
+          ? 'admin-tab-group active'
+          : 'admin-tab-group'
+      }
+    >
+      <button type="button">
+        Financeiro
+        <span>▾</span>
+      </button>
+
+      <div className="admin-submenu">
+        {usuarioPodeAcessar('financeiro') && (
+          <button
+            type="button"
+            className={abaAtiva === 'financeiro' ? 'active' : ''}
+            onClick={() => setAbaAtiva('financeiro')}
+          >
+            Gestão financeira
+          </button>
+        )}
+
+        {usuarioPodeAcessar('contribuicao') && (
+          <button
+            type="button"
+            className={abaAtiva === 'contribuicao' ? 'active' : ''}
+            onClick={() => setAbaAtiva('contribuicao')}
+          >
+            Contribuição
+          </button>
+        )}
+      </div>
+    </div>
+  )}
+
   {usuarioPodeAcessar('usuarios') && (
     <button
       type="button"
       className={abaAtiva === 'usuarios' ? 'active' : ''}
       onClick={() => setAbaAtiva('usuarios')}
     >
-      Usuários
+      Permissões
     </button>
   )}
 </nav>
