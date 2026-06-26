@@ -5118,3 +5118,457 @@ textarea {
   display: grid;
   gap: 4px;
 }
+/* =========================================================
+   Meus dados
+========================================================= */
+
+.my-data-area {
+  display: grid;
+  gap: 18px;
+}
+
+.my-data-form {
+  display: grid;
+  gap: 18px;
+}
+
+.my-data-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.my-data-header h2 {
+  margin-bottom: 8px;
+}
+
+.my-data-photo {
+  width: 112px;
+  height: 112px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #17105f, #6fbd2a);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  flex: 0 0 auto;
+  box-shadow: 0 14px 30px rgba(23, 16, 95, 0.18);
+}
+
+.my-data-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.my-data-photo span {
+  color: #ffffff;
+  font-size: 2.4rem;
+  font-weight: 950;
+}
+
+.my-data-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.my-data-form label {
+  color: #17105f;
+  font-weight: 950;
+  display: grid;
+  gap: 8px;
+}
+
+.my-data-form input,
+.my-data-form textarea {
+  width: 100%;
+  border: 1px solid rgba(23, 16, 95, 0.14);
+  border-radius: 16px;
+  background: #ffffff;
+  color: #17105f;
+  padding: 13px 14px;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.my-data-form textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.my-data-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 220px));
+  gap: 12px;
+}
+
+.my-data-summary article {
+  border: 1px solid rgba(23, 16, 95, 0.08);
+  border-radius: 18px;
+  background: rgba(111, 189, 42, 0.08);
+  padding: 14px;
+}
+
+.my-data-summary span {
+  color: #60708a;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.my-data-summary strong {
+  color: #17105f;
+  display: block;
+  margin-top: 4px;
+  font-size: 1.05rem;
+  font-weight: 950;
+}
+
+@media (max-width: 980px) {
+  .my-data-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .my-data-header {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 620px) {
+  .my-data-header {
+    flex-direction: column-reverse;
+  }
+
+  .my-data-grid,
+  .my-data-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .my-data-photo {
+    width: 96px;
+    height: 96px;
+    border-radius: 24px;
+  }
+}
+/* =========================================================
+   Busca de membro na tela de permissões
+========================================================= */
+
+.permission-member-field label {
+  display: grid;
+  gap: 8px;
+  color: #17105f;
+  font-weight: 950;
+}
+
+.permission-member-field input,
+.permission-member-field select {
+  width: 100%;
+  min-width: 0;
+}
+
+.permission-member-empty {
+  color: #9d241a;
+  background: #fff0ee;
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+@media (max-width: 1180px) {
+  .permission-member-field {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 720px) {
+  .permission-member-field {
+    grid-column: 1 / -1;
+  }
+}
+/* =========================================================
+   Busca clicável de membro na tela de permissões
+========================================================= */
+
+.permission-member-field {
+  grid-column: span 4;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.permission-member-field > label {
+  display: grid;
+  gap: 8px;
+  color: #17105f;
+  font-weight: 950;
+}
+
+.permission-member-field input {
+  width: 100%;
+  min-width: 0;
+}
+
+
+.permission-member-selected span {
+  color: #60708a;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.permission-member-selected strong {
+  color: #17105f;
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+
+.permission-member-selected button {
+  width: fit-content;
+  border: 0;
+  border-radius: 999px;
+  background: #fff0ee;
+  color: #9d241a;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.permission-member-result:hover,
+.permission-member-result.active {
+  border-color: rgba(111, 189, 42, 0.45);
+  background: rgba(111, 189, 42, 0.1);
+}
+
+.permission-member-result strong {
+  color: #17105f;
+  font-size: 0.86rem;
+  font-weight: 950;
+}
+
+.permission-member-result span {
+  color: #60708a;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+@media (max-width: 1180px) {
+  .permission-member-field {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 720px) {
+  .permission-member-field {
+    grid-column: 1 / -1;
+  }
+}
+/* =========================================================
+   Autocomplete de membro no campo Nome - Permissões
+========================================================= */
+
+.permission-name-autocomplete {
+  grid-column: span 6;
+  position: relative;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.permission-name-autocomplete label {
+  display: grid;
+  gap: 8px;
+  color: #17105f;
+  font-weight: 950;
+}
+
+.permission-name-autocomplete input {
+  width: 100%;
+  min-width: 0;
+}
+
+.permission-name-results {
+  width: 100%;
+  border: 1px solid rgba(23, 16, 95, 0.1);
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  box-shadow: 0 16px 36px rgba(23, 16, 95, 0.12);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 80;
+}
+
+.permission-name-results button {
+  width: 100%;
+  border: 1px solid rgba(23, 16, 95, 0.08);
+  border-radius: 13px;
+  background: #ffffff;
+  padding: 10px 12px;
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.permission-name-results button:hover {
+  border-color: rgba(111, 189, 42, 0.45);
+  background: rgba(111, 189, 42, 0.1);
+}
+
+.permission-name-results strong {
+  color: #17105f;
+  font-size: 0.88rem;
+  font-weight: 950;
+}
+
+.permission-name-results span {
+  color: #60708a;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.permission-member-linked {
+  border: 1px solid rgba(111, 189, 42, 0.28);
+  border-radius: 14px;
+  background: rgba(111, 189, 42, 0.1);
+  padding: 9px 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.permission-member-linked span {
+  color: #60708a;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.permission-member-linked strong {
+  color: #17105f;
+  font-size: 0.84rem;
+  font-weight: 950;
+}
+
+.permission-member-linked button {
+  border: 0;
+  border-radius: 999px;
+  background: #fff0ee;
+  color: #9d241a;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+@media (max-width: 1180px) {
+  .permission-name-autocomplete {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 720px) {
+  .permission-name-autocomplete {
+    grid-column: 1 / -1;
+  }
+}
+/* =========================================================
+   Correção do menu mobile
+========================================================= */
+
+.admin-tabs {
+  max-width: 100%;
+}
+
+.admin-tabs-grouped {
+  overflow: visible;
+}
+
+.admin-tabs button,
+.admin-tab-group > button,
+.admin-submenu button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-tab-group.open .admin-submenu {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+@media (max-width: 760px) {
+  .admin-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    overflow-x: hidden;
+    overflow-y: visible;
+    padding: 14px;
+    touch-action: pan-y;
+  }
+
+  .admin-tabs > button,
+  .admin-tab-group,
+  .admin-tab-group > button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .admin-tabs > button,
+  .admin-tab-group > button {
+    justify-content: center;
+    white-space: normal;
+    min-height: 54px;
+    padding: 13px 10px;
+  }
+
+  .admin-tab-group {
+    position: relative;
+  }
+
+  .admin-submenu {
+    position: static;
+    display: none;
+    width: 100%;
+    min-width: 0;
+    margin-top: 8px;
+    padding: 8px;
+    transform: none;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    box-shadow: none;
+    border: 1px solid rgba(23, 16, 95, 0.08);
+  }
+
+  .admin-tab-group:hover .admin-submenu {
+    display: none;
+  }
+
+  .admin-tab-group.open .admin-submenu {
+    display: grid;
+  }
+
+  .admin-submenu button {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+  }
+}
+
+@media (max-width: 420px) {
+  .admin-tabs {
+    grid-template-columns: 1fr;
+  }
+}

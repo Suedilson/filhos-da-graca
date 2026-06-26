@@ -76,6 +76,7 @@ const [email, setEmail] = useState('')
 const [password, setPassword] = useState('')
 const [loading, setLoading] = useState(false)
 const [abaAtiva, setAbaAtiva] = useState('programacao')
+const [grupoMenuAberto, setGrupoMenuAberto] = useState(null)
 
 const [permissaoUsuario, setPermissaoUsuario] = useState(null)
 const [carregandoPermissoes, setCarregandoPermissoes] = useState(false)
@@ -96,6 +97,7 @@ const [usuarioPermissaoForm, setUsuarioPermissaoForm] = useState({
   ativo: true,
   permissoes: PERMISSOES_POR_PERFIL.membro,
 })
+ 
   const [programacao, setProgramacao] = useState([])
   const [editandoId, setEditandoId] = useState(null)
 
@@ -194,6 +196,19 @@ const categoriasGaleria = [
   dataProximaAcao: '',
   observacaoAcompanhamento: '',
 })
+const [meusDadosMembro, setMeusDadosMembro] = useState(null)
+const [enviandoFotoMeusDados, setEnviandoFotoMeusDados] = useState(false)
+
+const [meusDadosForm, setMeusDadosForm] = useState({
+  nome: '',
+  telefone: '',
+  nascimento: '',
+  endereco: '',
+  ministerio: '',
+  foto: '',
+  fotoPublicId: '',
+  observacoes: '',
+})
   const [localizacaoForm, setLocalizacaoForm] = useState({
     nomeLocal: '',
     endereco: '',
@@ -240,20 +255,24 @@ function usuarioPodeAcessar(permissao) {
 
   return permissoesUsuario.includes(permissao)
 }
+function abrirAbaAdmin(aba) {
+  setAbaAtiva(aba)
+  setGrupoMenuAberto(null)
+}
 function obterPrimeiraAbaPermitida() {
   const ordemAbas = [
-    'programacao',
-    'eventos',
-    'oracao',
-    'midia',
-    'documentos',
-    'contribuicao',
-    'financeiro',
-    'galeria',
-    'membros',
-    'localizacao',
-    'usuarios',
-  ]
+  'programacao',
+  'oracao',
+  'membros',
+  'meusDados',
+  'localizacao',
+  'midia',
+  'galeria',
+  'eventos',
+  'financeiro',
+  'contribuicao',
+  'usuarios',
+]
 
   return ordemAbas.find((aba) => usuarioPodeAcessar(aba)) || 'programacao'
 }
@@ -496,9 +515,11 @@ useEffect(() => {
     carregarGaleria()
   }
 
-  if (usuarioPodeAcessar('membros') || usuarioPodeAcessar('meusDados')) {
-    carregarMembros()
-  }
+  if (usuarioPodeAcessar('membros') || usuarioPodeAcessar('usuarios')) {
+  carregarMembros()
+} else if (usuarioPodeAcessar('meusDados')) {
+  carregarMeuCadastroMembro()
+}
 
   if (usuarioPodeAcessar('usuarios')) {
     carregarUsuariosPermissoes()
@@ -691,7 +712,12 @@ if (!editandoUsuarioPermissaoId && !usuarioPermissaoForm.usuarioExistente) {
       return
     }
 
-    alert('Erro ao salvar usuário. Verifique os dados e tente novamente.')
+    alert(
+  `Erro ao salvar usuário.
+
+Código: ${error.code || 'sem código'}
+Mensagem: ${error.message || 'sem mensagem'}`
+)
   } finally {
     setCriandoUsuarioAuth(false)
   }
@@ -699,6 +725,7 @@ if (!editandoUsuarioPermissaoId && !usuarioPermissaoForm.usuarioExistente) {
 
 function editarUsuarioPermissao(usuarioPermissao) {
   setEditandoUsuarioPermissaoId(usuarioPermissao.id)
+
 
   setUsuarioPermissaoForm({
   uid: usuarioPermissao.uid || usuarioPermissao.id,
@@ -3081,6 +3108,109 @@ async function excluirAlbumGaleria(album) {
     console.error(error)
   }
 }
+async function carregarMeuCadastroMembro() {
+  if (!permissaoUsuario?.membroId) {
+    setMeusDadosMembro(null)
+    return
+  }
+
+  try {
+    const refMembro = doc(db, 'membros', permissaoUsuario.membroId)
+    const snapshotMembro = await getDoc(refMembro)
+
+    if (!snapshotMembro.exists()) {
+      setMeusDadosMembro(null)
+      return
+    }
+
+    const dados = {
+      id: snapshotMembro.id,
+      ...snapshotMembro.data(),
+    }
+
+    setMeusDadosMembro(dados)
+
+    setMeusDadosForm({
+      nome: dados.nome || '',
+      telefone: dados.telefone || '',
+      nascimento: dados.nascimento || '',
+      endereco: dados.endereco || '',
+      ministerio: dados.ministerio || '',
+      foto: dados.foto || '',
+      fotoPublicId: dados.fotoPublicId || '',
+      observacoes: dados.observacoes || '',
+    })
+  } catch (error) {
+    alert('Erro ao carregar seus dados.')
+    console.error(error)
+  }
+}
+
+async function enviarFotoMeusDados(event) {
+  const file = event.target.files?.[0]
+
+  if (!file) return
+
+  setEnviandoFotoMeusDados(true)
+
+  try {
+    const arquivo = await uploadArquivoCloudinary(file)
+
+    setMeusDadosForm((formAtual) => ({
+      ...formAtual,
+      foto: arquivo.url,
+      fotoPublicId: arquivo.publicId,
+    }))
+
+    event.target.value = ''
+
+    alert('Foto enviada com sucesso!')
+  } catch (error) {
+    alert('Erro ao enviar foto.')
+    console.error(error)
+  } finally {
+    setEnviandoFotoMeusDados(false)
+  }
+}
+
+async function salvarMeusDados(event) {
+  event.preventDefault()
+
+  if (!permissaoUsuario?.membroId) {
+    alert('Seu usuário não está vinculado a um cadastro de membro.')
+    return
+  }
+
+  if (!meusDadosForm.nome.trim()) {
+    alert('Preencha seu nome.')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    await updateDoc(doc(db, 'membros', permissaoUsuario.membroId), {
+      nome: meusDadosForm.nome,
+      telefone: meusDadosForm.telefone,
+      nascimento: meusDadosForm.nascimento,
+      endereco: meusDadosForm.endereco,
+      ministerio: meusDadosForm.ministerio,
+      foto: meusDadosForm.foto,
+      fotoPublicId: meusDadosForm.fotoPublicId,
+      observacoes: meusDadosForm.observacoes,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await carregarMeuCadastroMembro()
+
+    alert('Seus dados foram atualizados com sucesso!')
+  } catch (error) {
+    alert('Erro ao salvar seus dados.')
+    console.error(error)
+  } finally {
+    setLoading(false)
+  }
+}
   async function carregarMembros() {
     try {
       const q = query(collection(db, 'membros'), orderBy('nome', 'asc'))
@@ -3984,6 +4114,179 @@ const membrosFiltrados = membros.filter((membro) => {
 
   return ''
 }
+function renderizarMeusDados() {
+  if (!permissaoUsuario?.membroId) {
+    return (
+      <section className="admin-card admin-full-card my-data-card">
+        <span className="admin-section-label">Meus dados</span>
+
+        <h2>Cadastro não vinculado</h2>
+
+        <p>
+          Seu usuário ainda não está vinculado a um cadastro de membro. Procure
+          a administração da igreja para fazer o vínculo.
+        </p>
+      </section>
+    )
+  }
+
+  if (!meusDadosMembro) {
+    return (
+      <section className="admin-card admin-full-card my-data-card">
+        <span className="admin-section-label">Meus dados</span>
+
+        <h2>Carregando cadastro</h2>
+
+        <p>Estamos buscando suas informações.</p>
+      </section>
+    )
+  }
+
+  return (
+    <section className="my-data-area">
+      <form className="admin-card my-data-form" onSubmit={salvarMeusDados}>
+        <div className="my-data-header">
+          <div>
+            <span className="admin-section-label">Meus dados</span>
+
+            <h2>Meu cadastro</h2>
+
+            <p>
+              Atualize suas informações de contato para manter o cadastro da
+              igreja sempre correto.
+            </p>
+          </div>
+
+          <div className="my-data-photo">
+            {meusDadosForm.foto ? (
+              <img src={meusDadosForm.foto} alt={meusDadosForm.nome} />
+            ) : (
+              <span>{meusDadosForm.nome?.charAt(0) || '?'}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="my-data-grid">
+          <label>
+            Nome
+            <input
+              value={meusDadosForm.nome}
+              onChange={(event) =>
+                setMeusDadosForm({
+                  ...meusDadosForm,
+                  nome: event.target.value,
+                })
+              }
+              placeholder="Seu nome completo"
+            />
+          </label>
+
+          <label>
+            Telefone
+            <input
+              value={meusDadosForm.telefone}
+              onChange={(event) =>
+                setMeusDadosForm({
+                  ...meusDadosForm,
+                  telefone: event.target.value,
+                })
+              }
+              placeholder="Seu telefone"
+            />
+          </label>
+
+          <label>
+            Data de nascimento
+            <input
+              type="date"
+              value={meusDadosForm.nascimento}
+              onChange={(event) =>
+                setMeusDadosForm({
+                  ...meusDadosForm,
+                  nascimento: event.target.value,
+                })
+              }
+            />
+          </label>
+
+          <label>
+            Ministério
+            <input
+              value={meusDadosForm.ministerio}
+              onChange={(event) =>
+                setMeusDadosForm({
+                  ...meusDadosForm,
+                  ministerio: event.target.value,
+                })
+              }
+              placeholder="Ex: Louvor, Infantil, Recepção"
+            />
+          </label>
+        </div>
+
+        <label>
+          Endereço
+          <textarea
+            value={meusDadosForm.endereco}
+            onChange={(event) =>
+              setMeusDadosForm({
+                ...meusDadosForm,
+                endereco: event.target.value,
+              })
+            }
+            placeholder="Seu endereço completo"
+          />
+        </label>
+
+        <label>
+          Foto
+          <input
+            type="file"
+            accept="image/*"
+            onChange={enviarFotoMeusDados}
+            disabled={enviandoFotoMeusDados}
+          />
+        </label>
+
+        {enviandoFotoMeusDados && <p>Enviando foto...</p>}
+
+        <label>
+          Observações
+          <textarea
+            value={meusDadosForm.observacoes}
+            onChange={(event) =>
+              setMeusDadosForm({
+                ...meusDadosForm,
+                observacoes: event.target.value,
+              })
+            }
+            placeholder="Alguma informação importante para a secretaria"
+          />
+        </label>
+
+        <div className="my-data-summary">
+          <article>
+            <span>Status</span>
+            <strong>{meusDadosMembro.status || 'Não informado'}</strong>
+          </article>
+
+          <article>
+            <span>Idade</span>
+            <strong>
+              {meusDadosForm.nascimento
+                ? `${calcularIdade(meusDadosForm.nascimento)} anos`
+                : 'Não informada'}
+            </strong>
+          </article>
+        </div>
+
+        <button type="submit" disabled={loading || enviandoFotoMeusDados}>
+          {loading ? 'Salvando...' : 'Salvar meus dados'}
+        </button>
+      </form>
+    </section>
+  )
+}
 function renderizarUsuariosPermissoes() {
   const todasPermissoes = [
     { id: 'programacao', nome: 'Programação' },
@@ -3996,9 +4299,27 @@ function renderizarUsuariosPermissoes() {
     { id: 'galeria', nome: 'Galeria' },
     { id: 'membros', nome: 'Membros' },
     { id: 'localizacao', nome: 'Localização' },
-    { id: 'usuarios', nome: 'Usuários' },
+    { id: 'usuarios', nome: 'Permissões' },
     { id: 'meusDados', nome: 'Meus dados' },
   ]
+
+  const membrosParaVinculo = membros
+    .filter((membro) => {
+      const textoBusca = usuarioPermissaoForm.nome.toLowerCase().trim()
+
+      if (textoBusca.length < 2) return false
+
+      return (
+        membro.nome?.toLowerCase().includes(textoBusca) ||
+        membro.telefone?.toLowerCase().includes(textoBusca) ||
+        membro.ministerio?.toLowerCase().includes(textoBusca)
+      )
+    })
+    .slice(0, 8)
+
+  const membroSelecionadoPermissao = usuarioPermissaoForm.membroId
+    ? membros.find((membro) => membro.id === usuarioPermissaoForm.membroId)
+    : null
 
   return (
     <section className="users-permission-area">
@@ -4017,10 +4338,10 @@ function renderizarUsuariosPermissoes() {
 
       <div className="users-permission-grid">
         <form
-  className="admin-card users-permission-form"
-  onSubmit={salvarUsuarioPermissao}
-  autoComplete="off"
->
+          className="admin-card users-permission-form"
+          onSubmit={salvarUsuarioPermissao}
+          autoComplete="off"
+        >
           <span className="admin-section-label">
             {editandoUsuarioPermissaoId ? 'Editar usuário' : 'Novo usuário'}
           </span>
@@ -4032,34 +4353,84 @@ function renderizarUsuariosPermissoes() {
           </h2>
 
           <p>
-            O usuário será criado no Firebase Authentication e também salvo na
-            coleção de permissões.
+            Digite o nome do membro já cadastrado. Ao clicar na sugestão, o
+            vínculo será feito automaticamente.
           </p>
 
-          <label>
-            Nome
-            <input
-  name="permissaoNomeUsuario"
-  autoComplete="off"
-  value={usuarioPermissaoForm.nome}
-              onChange={(event) =>
-                setUsuarioPermissaoForm((formAtual) => ({
-                  ...formAtual,
-                  nome: event.target.value,
-                }))
-              }
-              placeholder="Nome completo"
-            />
-          </label>
+          <div className="permission-name-autocomplete">
+            <label>
+              Nome
+              <input
+                name="permissaoNomeUsuario"
+                autoComplete="off"
+                value={usuarioPermissaoForm.nome}
+                onChange={(event) =>
+                  setUsuarioPermissaoForm((formAtual) => ({
+                    ...formAtual,
+                    nome: event.target.value,
+                    membroId: '',
+                  }))
+                }
+                placeholder="Digite o nome para buscar um membro"
+              />
+            </label>
+
+            {usuarioPermissaoForm.nome.trim().length >= 2 &&
+              !usuarioPermissaoForm.membroId &&
+              membrosParaVinculo.length > 0 && (
+                <div className="permission-name-results">
+                  {membrosParaVinculo.map((membro) => (
+                    <button
+                      type="button"
+                      key={membro.id}
+                      onClick={() =>
+                        setUsuarioPermissaoForm((formAtual) => ({
+                          ...formAtual,
+                          nome: membro.nome || '',
+                          membroId: membro.id,
+                        }))
+                      }
+                    >
+                      <strong>{membro.nome}</strong>
+
+                      <span>
+                        {membro.telefone || 'Sem telefone'}
+                        {membro.ministerio ? ` • ${membro.ministerio}` : ''}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+            {membroSelecionadoPermissao && (
+              <div className="permission-member-linked">
+                <span>Membro vinculado automaticamente</span>
+
+                <strong>{membroSelecionadoPermissao.nome}</strong>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setUsuarioPermissaoForm((formAtual) => ({
+                      ...formAtual,
+                      membroId: '',
+                    }))
+                  }
+                >
+                  Remover vínculo
+                </button>
+              </div>
+            )}
+          </div>
 
           <label>
             E-mail
-           <input
-  type="email"
-  name="permissaoEmailUsuario"
-  autoComplete="new-password"
-  value={usuarioPermissaoForm.email}
-  disabled={Boolean(editandoUsuarioPermissaoId)}
+            <input
+              type="email"
+              name="permissaoEmailUsuario"
+              autoComplete="new-password"
+              value={usuarioPermissaoForm.email}
+              disabled={Boolean(editandoUsuarioPermissaoId)}
               onChange={(event) =>
                 setUsuarioPermissaoForm((formAtual) => ({
                   ...formAtual,
@@ -4070,66 +4441,68 @@ function renderizarUsuariosPermissoes() {
             />
           </label>
 
-         {!editandoUsuarioPermissaoId && (
-  <label className="finance-toggle-label">
-    <input
-      type="checkbox"
-      checked={usuarioPermissaoForm.usuarioExistente}
-      onChange={(event) =>
-        setUsuarioPermissaoForm((formAtual) => ({
-          ...formAtual,
-          usuarioExistente: event.target.checked,
-          senha: event.target.checked ? '' : formAtual.senha,
-        }))
-      }
-    />
-    <span>Usuário já existe no Firebase Authentication</span>
-  </label>
-)}
+          {!editandoUsuarioPermissaoId && (
+            <label className="finance-toggle-label">
+              <input
+                type="checkbox"
+                checked={usuarioPermissaoForm.usuarioExistente}
+                onChange={(event) =>
+                  setUsuarioPermissaoForm((formAtual) => ({
+                    ...formAtual,
+                    usuarioExistente: event.target.checked,
+                    senha: event.target.checked ? '' : formAtual.senha,
+                  }))
+                }
+              />
+              <span>Usuário já existe no Firebase Authentication</span>
+            </label>
+          )}
 
-{!editandoUsuarioPermissaoId && usuarioPermissaoForm.usuarioExistente && (
-  <label>
-    UID do usuário existente
-    <input
-  name="permissaoUidUsuario"
-  autoComplete="off"
-  value={usuarioPermissaoForm.uid}
-      onChange={(event) =>
-        setUsuarioPermissaoForm((formAtual) => ({
-          ...formAtual,
-          uid: event.target.value,
-        }))
-      }
-      placeholder="Cole aqui o UID do Firebase Authentication"
-    />
-  </label>
-)}
+          {!editandoUsuarioPermissaoId &&
+            usuarioPermissaoForm.usuarioExistente && (
+              <label>
+                UID do usuário existente
+                <input
+                  name="permissaoUidUsuario"
+                  autoComplete="off"
+                  value={usuarioPermissaoForm.uid}
+                  onChange={(event) =>
+                    setUsuarioPermissaoForm((formAtual) => ({
+                      ...formAtual,
+                      uid: event.target.value,
+                    }))
+                  }
+                  placeholder="Cole aqui o UID do Firebase Authentication"
+                />
+              </label>
+            )}
 
-{!editandoUsuarioPermissaoId && !usuarioPermissaoForm.usuarioExistente && (
-  <label>
-    Senha inicial
-    <input
-  type="password"
-  name="permissaoSenhaInicial"
-  autoComplete="new-password"
-  value={usuarioPermissaoForm.senha}
-      onChange={(event) =>
-        setUsuarioPermissaoForm((formAtual) => ({
-          ...formAtual,
-          senha: event.target.value,
-        }))
-      }
-      placeholder="Mínimo 6 caracteres"
-    />
-  </label>
-)}
+          {!editandoUsuarioPermissaoId &&
+            !usuarioPermissaoForm.usuarioExistente && (
+              <label>
+                Senha inicial
+                <input
+                  type="password"
+                  name="permissaoSenhaInicial"
+                  autoComplete="new-password"
+                  value={usuarioPermissaoForm.senha}
+                  onChange={(event) =>
+                    setUsuarioPermissaoForm((formAtual) => ({
+                      ...formAtual,
+                      senha: event.target.value,
+                    }))
+                  }
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </label>
+            )}
 
-{editandoUsuarioPermissaoId && (
-  <label>
-    UID
-    <input value={usuarioPermissaoForm.uid} disabled />
-  </label>
-)}
+          {editandoUsuarioPermissaoId && (
+            <label>
+              UID
+              <input value={usuarioPermissaoForm.uid} disabled />
+            </label>
+          )}
 
           <label>
             Perfil
@@ -4142,27 +4515,6 @@ function renderizarUsuariosPermissoes() {
               {Object.entries(PERFIS_USUARIOS).map(([valor, nome]) => (
                 <option value={valor} key={valor}>
                   {nome}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Membro vinculado
-            <select
-              value={usuarioPermissaoForm.membroId}
-              onChange={(event) =>
-                setUsuarioPermissaoForm((formAtual) => ({
-                  ...formAtual,
-                  membroId: event.target.value,
-                }))
-              }
-            >
-              <option value="">Nenhum membro vinculado</option>
-
-              {membros.map((membro) => (
-                <option value={membro.id} key={membro.id}>
-                  {membro.nome}
                 </option>
               ))}
             </select>
@@ -4195,6 +4547,7 @@ function renderizarUsuariosPermissoes() {
                     )}
                     onChange={() => alternarPermissaoUsuario(permissao.id)}
                   />
+
                   <span>{permissao.nome}</span>
                 </label>
               ))}
@@ -4417,7 +4770,7 @@ function formatarMoeda(valor) {
     <button
       type="button"
       className={abaAtiva === 'programacao' ? 'active' : ''}
-      onClick={() => setAbaAtiva('programacao')}
+      onClick={() => abrirAbaAdmin('programacao')}
     >
       Programação
     </button>
@@ -4442,6 +4795,15 @@ function formatarMoeda(valor) {
       Membros
     </button>
   )}
+{usuarioPodeAcessar('meusDados') && (
+  <button
+    type="button"
+    className={abaAtiva === 'meusDados' ? 'active' : ''}
+    onClick={() => setAbaAtiva('meusDados')}
+  >
+    Meus dados
+  </button>
+)}
 
   {usuarioPodeAcessar('localizacao') && (
     <button
@@ -4455,25 +4817,27 @@ function formatarMoeda(valor) {
 
   {(usuarioPodeAcessar('midia') ||
     usuarioPodeAcessar('galeria') ||
-    usuarioPodeAcessar('eventos')) && (
     <div
-      className={
-        ['midia', 'galeria', 'eventos'].includes(abaAtiva)
-          ? 'admin-tab-group active'
-          : 'admin-tab-group'
-      }
-    >
-      <button type="button">
-        Mídia
-        <span>▾</span>
-      </button>
+  className={`admin-tab-group ${
+    ['midia', 'galeria', 'eventos'].includes(abaAtiva) ? 'active' : ''
+  } ${grupoMenuAberto === 'midia' ? 'open' : ''}`}
+>
+  <button
+    type="button"
+    onClick={() =>
+      setGrupoMenuAberto(grupoMenuAberto === 'midia' ? null : 'midia')
+    }
+  >
+    Mídia
+    <span>▾</span>
+  </button>
 
       <div className="admin-submenu">
         {usuarioPodeAcessar('midia') && (
           <button
             type="button"
             className={abaAtiva === 'midia' ? 'active' : ''}
-            onClick={() => setAbaAtiva('midia')}
+            onClick={() => abrirAbaAdmin('midia')}
           >
             Vídeos
           </button>
@@ -4504,24 +4868,29 @@ function formatarMoeda(valor) {
 
   {(usuarioPodeAcessar('financeiro') ||
     usuarioPodeAcessar('contribuicao')) && (
-    <div
-      className={
-        ['financeiro', 'contribuicao'].includes(abaAtiva)
-          ? 'admin-tab-group active'
-          : 'admin-tab-group'
-      }
-    >
-      <button type="button">
-        Financeiro
-        <span>▾</span>
-      </button>
+   <div
+  className={`admin-tab-group ${
+    ['financeiro', 'contribuicao'].includes(abaAtiva) ? 'active' : ''
+  } ${grupoMenuAberto === 'financeiro' ? 'open' : ''}`}
+>
+  <button
+    type="button"
+    onClick={() =>
+      setGrupoMenuAberto(
+        grupoMenuAberto === 'financeiro' ? null : 'financeiro',
+      )
+    }
+  >
+    Financeiro
+    <span>▾</span>
+  </button>
 
       <div className="admin-submenu">
         {usuarioPodeAcessar('financeiro') && (
           <button
             type="button"
             className={abaAtiva === 'financeiro' ? 'active' : ''}
-            onClick={() => setAbaAtiva('financeiro')}
+            onClick={() => abrirAbaAdmin('financeiro')}
           >
             Gestão financeira
           </button>
@@ -4531,7 +4900,7 @@ function formatarMoeda(valor) {
           <button
             type="button"
             className={abaAtiva === 'contribuicao' ? 'active' : ''}
-            onClick={() => setAbaAtiva('contribuicao')}
+            onClick={() => abrirAbaAdmin('contribuicao')}
           >
             Contribuição
           </button>
@@ -8659,6 +9028,9 @@ function formatarMoeda(valor) {
         </div>
       </section>
     )}
+{abaAtiva === 'meusDados' &&
+  usuarioPodeAcessar('meusDados') &&
+  renderizarMeusDados()}
       {abaAtiva === 'usuarios' &&
         usuarioPodeAcessar('usuarios') &&
         renderizarUsuariosPermissoes()}
