@@ -5572,3 +5572,267 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+/* =========================================================
+   Menu mobile definitivo - sobrescreve regras antigas
+========================================================= */
+
+.admin-tabs.admin-tabs-grouped {
+  max-width: 100% !important;
+}
+
+.admin-tab-group.open .admin-submenu {
+  display: grid !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: none !important;
+}
+
+@media (max-width: 760px) {
+  .admin-tabs.admin-tabs-grouped {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    padding: 12px !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    flex-wrap: initial !important;
+    justify-content: initial !important;
+    touch-action: pan-y !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped > button,
+  .admin-tabs.admin-tabs-grouped .admin-tab-group {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    flex: initial !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped > button,
+  .admin-tabs.admin-tabs-grouped .admin-tab-group > button {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 52px !important;
+    padding: 12px 10px !important;
+    white-space: normal !important;
+    text-align: center !important;
+    justify-content: center !important;
+    touch-action: manipulation !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-tab-group {
+    position: relative !important;
+    display: grid !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-tab-group::after {
+    display: none !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-submenu {
+    position: static !important;
+    display: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin-top: 8px !important;
+    padding: 8px !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(23, 16, 95, 0.08) !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-tab-group:hover .admin-submenu,
+  .admin-tabs.admin-tabs-grouped .admin-tab-group:focus-within .admin-submenu,
+  .admin-tabs.admin-tabs-grouped .admin-submenu:hover {
+    display: none !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-tab-group.open .admin-submenu {
+    display: grid !important;
+    gap: 8px !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-submenu button {
+    width: 100% !important;
+    min-height: 46px !important;
+    justify-content: center !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .admin-tabs.admin-tabs-grouped {
+    grid-template-columns: 1fr !important;
+  }
+}
+/* =========================================================
+   Menu mobile estilo site
+========================================================= */
+
+.admin-mobile-menu-toggle {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .admin-tabs.admin-tabs-grouped {
+    width: min(100%, 100%) !important;
+    max-width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    margin: 0 auto 16px !important;
+    border-radius: 24px !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    border: 1px solid rgba(23, 16, 95, 0.08) !important;
+    box-shadow: 0 18px 42px rgba(23, 16, 95, 0.09) !important;
+    overflow: hidden !important;
+  }
+
+  .admin-mobile-menu-toggle {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    min-height: 54px !important;
+    padding: 13px 16px !important;
+    border-radius: 18px !important;
+    background:
+      radial-gradient(circle at top left, rgba(111, 189, 42, 0.18), transparent 34%),
+      linear-gradient(135deg, #17105f, #27137a) !important;
+    color: #ffffff !important;
+    font-size: 0.96rem !important;
+    font-weight: 950 !important;
+    box-shadow: 0 12px 28px rgba(23, 16, 95, 0.18) !important;
+  }
+
+  .admin-mobile-menu-toggle span {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #9be15d;
+    font-size: 1.2rem;
+  }
+
+  .admin-tabs.admin-tabs-grouped > button:not(.admin-mobile-menu-toggle),
+  .admin-tabs.admin-tabs-grouped .admin-tab-group {
+    display: none !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped.mobile-open > button:not(.admin-mobile-menu-toggle),
+  .admin-tabs.admin-tabs-grouped.mobile-open .admin-tab-group {
+    display: flex !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped.mobile-open {
+    padding-bottom: 12px !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped > button:not(.admin-mobile-menu-toggle),
+  .admin-tabs.admin-tabs-grouped .admin-tab-group > button {
+    width: 100% !important;
+    min-height: 48px !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    padding: 12px 14px !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    color: #26344f !important;
+    border: 1px solid rgba(23, 16, 95, 0.07) !important;
+    box-shadow: none !important;
+    font-size: 0.92rem !important;
+    font-weight: 950 !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped > button.active:not(.admin-mobile-menu-toggle),
+  .admin-tabs.admin-tabs-grouped .admin-tab-group.active > button {
+    background: rgba(23, 16, 95, 0.08) !important;
+    color: #17105f !important;
+    border-color: rgba(23, 16, 95, 0.12) !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-tab-group {
+    width: 100% !important;
+    min-width: 0 !important;
+    position: relative !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: none !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-tab-group::after {
+    display: none !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-tab-group > button span {
+    margin-left: auto;
+    color: #6fbd2a;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-submenu {
+    position: static !important;
+    display: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 6px 0 4px 14px !important;
+    border: 0 !important;
+    border-left: 3px solid rgba(111, 189, 42, 0.35) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transform: none !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-tab-group:hover .admin-submenu,
+  .admin-tabs.admin-tabs-grouped .admin-tab-group:focus-within .admin-submenu,
+  .admin-tabs.admin-tabs-grouped .admin-submenu:hover {
+    display: none !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-tab-group.open .admin-submenu {
+    display: grid !important;
+    gap: 6px !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-submenu button {
+    width: 100% !important;
+    min-height: 42px !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
+    background: rgba(111, 189, 42, 0.08) !important;
+    color: #17105f !important;
+    border: 1px solid rgba(111, 189, 42, 0.12) !important;
+    font-size: 0.86rem !important;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-submenu button.active {
+    background: rgba(111, 189, 42, 0.18) !important;
+    color: #17105f !important;
+  }
+}

@@ -77,6 +77,7 @@ const [password, setPassword] = useState('')
 const [loading, setLoading] = useState(false)
 const [abaAtiva, setAbaAtiva] = useState('programacao')
 const [grupoMenuAberto, setGrupoMenuAberto] = useState(null)
+const [menuAdminMobileAberto, setMenuAdminMobileAberto] = useState(false)
 
 const [permissaoUsuario, setPermissaoUsuario] = useState(null)
 const [carregandoPermissoes, setCarregandoPermissoes] = useState(false)
@@ -258,6 +259,7 @@ function usuarioPodeAcessar(permissao) {
 function abrirAbaAdmin(aba) {
   setAbaAtiva(aba)
   setGrupoMenuAberto(null)
+  setMenuAdminMobileAberto(false)
 }
 function obterPrimeiraAbaPermitida() {
   const ordemAbas = [
@@ -4765,7 +4767,19 @@ function formatarMoeda(valor) {
   <button onClick={sair}>Sair</button>
 </header>
 
-   <nav className="admin-tabs admin-tabs-grouped">
+   <nav
+  className={`admin-tabs admin-tabs-grouped ${
+    menuAdminMobileAberto ? 'mobile-open' : ''
+  }`}
+>
+  <button
+    type="button"
+    className="admin-mobile-menu-toggle"
+    onClick={() => setMenuAdminMobileAberto(!menuAdminMobileAberto)}
+  >
+    <span>☰</span>
+    Menu administrativo
+  </button>
   {usuarioPodeAcessar('programacao') && (
     <button
       type="button"
