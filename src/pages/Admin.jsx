@@ -39,6 +39,7 @@ const PERFIS_USUARIOS = {
 const PERMISSOES_POR_PERFIL = {
   admin: [
     'programacao',
+    'ensino',
     'eventos',
     'oracao',
     'midia',
@@ -52,6 +53,7 @@ const PERMISSOES_POR_PERFIL = {
   ],
   presidente: [
     'programacao',
+    'ensino',
     'eventos',
     'oracao',
     'midia',
@@ -64,11 +66,10 @@ const PERMISSOES_POR_PERFIL = {
     'usuarios',
   ],
   tesoureiro: ['financeiro', 'contribuicao'],
-  secretaria: ['programacao', 'eventos', 'oracao', 'membros'],
-  midia: ['midia', 'documentos', 'galeria'],
+  secretaria: ['programacao', 'ensino', 'eventos', 'oracao', 'membros'],
+  midia: ['midia', 'documentos', 'galeria', 'ensino'],
   membro: ['meusDados'],
 }
-
 function Admin() {
   const [user, setUser] = useState(null)
 const [checkingAuth, setCheckingAuth] = useState(true)
@@ -82,6 +83,23 @@ const [menuAdminMobileAberto, setMenuAdminMobileAberto] = useState(false)
 const [permissaoUsuario, setPermissaoUsuario] = useState(null)
 const [carregandoPermissoes, setCarregandoPermissoes] = useState(false)
 
+const [ensinoMateriais, setEnsinoMateriais] = useState([])
+const [editandoEnsinoId, setEditandoEnsinoId] = useState(null)
+const [enviandoCapaEnsino, setEnviandoCapaEnsino] = useState(false)
+const [enviandoPdfEnsino, setEnviandoPdfEnsino] = useState(false)
+
+const [ensinoForm, setEnsinoForm] = useState({
+  titulo: '',
+  descricao: '',
+  categoria: 'Revista EBD',
+  autor: '',
+  periodo: '',
+  capa: '',
+  capaPublicId: '',
+  pdfUrl: '',
+  pdfPublicId: '',
+  ativo: true,
+})
 const [usuariosPermissoes, setUsuariosPermissoes] = useState([])
 const [editandoUsuarioPermissaoId, setEditandoUsuarioPermissaoId] =
   useState(null)
@@ -262,8 +280,9 @@ function abrirAbaAdmin(aba) {
   setMenuAdminMobileAberto(false)
 }
 function obterPrimeiraAbaPermitida() {
-  const ordemAbas = [
+ const ordemAbas = [
   'programacao',
+  'ensino',
   'oracao',
   'membros',
   'meusDados',
@@ -481,6 +500,9 @@ useEffect(() => {
   if (usuarioPodeAcessar('programacao')) {
     carregarProgramacao()
   }
+  if (usuarioPodeAcessar('ensino')) {
+  carregarEnsinoMateriais()
+  }
 
   if (usuarioPodeAcessar('eventos')) {
     carregarEventos()
@@ -553,6 +575,197 @@ const [anoFiltroFinanceiro, setAnoFiltroFinanceiro] = useState(
 )
 const [statusFiltroContaPagar, setStatusFiltroContaPagar] = useState('Todas')
 const [fornecedorFiltroContaPagar, setFornecedorFiltroContaPagar] = useState('')
+async function carregarEnsinoMateriais() {
+  try {
+    const q = query(collection(db, 'ensinoMateriais'), orderBy('criadoEm', 'desc'))
+    const snapshot = await getDocs(q)
+
+    const lista = snapshot.docs.map((item) => ({
+      id: item.id,
+      ...item.data(),
+    }))
+
+    setEnsinoMateriais(lista)
+  } catch (error) {
+    alert('Erro ao carregar materiais de ensino.')
+    console.error(error)
+  }
+}
+
+function limparFormularioEnsino() {
+  setEditandoEnsinoId(null)
+
+  setEnsinoForm({
+    titulo: '',
+    descricao: '',
+    categoria: 'Revista EBD',
+    autor: '',
+    periodo: '',
+    capa: '',
+    capaPublicId: '',
+    pdfUrl: '',
+    pdfPublicId: '',
+    ativo: true,
+  })
+}
+
+async function enviarCapaEnsino(event) {
+  const file = event.target.files?.[0]
+
+  if (!file) return
+
+  setEnviandoCapaEnsino(true)
+
+  try {
+    const arquivo = await uploadArquivoCloudinary(file)
+
+    setEnsinoForm((formAtual) => ({
+      ...formAtual,
+      capa: arquivo.url,
+      capaPublicId: arquivo.publicId,
+    }))
+
+    event.target.value = ''
+
+    alert('Capa enviada com sucesso!')
+  } catch (error) {
+    alert('Erro ao enviar capa.')
+    console.error(error)
+  } finally {
+    setEnviandoCapaEnsino(false)
+  }
+}
+
+async function enviarPdfEnsino(event) {
+  const file = event.target.files?.[0]
+
+  if (!file) return
+
+  setEnviandoPdfEnsino(true)
+
+  try {
+    const arquivo = await uploadArquivoCloudinary(file)
+
+    setEnsinoForm((formAtual) => ({
+      ...formAtual,
+      pdfUrl: arquivo.url,
+      pdfPublicId: arquivo.publicId,
+    }))
+
+    event.target.value = ''
+
+    alert('PDF enviado com sucesso!')
+  } catch (error) {
+    alert('Erro ao enviar PDF.')
+    console.error(error)
+  } finally {
+    setEnviandoPdfEnsino(false)
+  }
+}
+
+async function salvarEnsinoMaterial(event) {
+  event.preventDefault()
+
+  if (!ensinoForm.titulo.trim()) {
+    alert('Informe o título do material.')
+    return
+  }
+
+  if (!ensinoForm.pdfUrl) {
+    alert('Envie o arquivo PDF do material.')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    const dadosMaterial = {
+      titulo: ensinoForm.titulo.trim(),
+      descricao: ensinoForm.descricao,
+      categoria: ensinoForm.categoria,
+      autor: ensinoForm.autor,
+      periodo: ensinoForm.periodo,
+      capa: ensinoForm.capa,
+      capaPublicId: ensinoForm.capaPublicId,
+      pdfUrl: ensinoForm.pdfUrl,
+      pdfPublicId: ensinoForm.pdfPublicId,
+      ativo: ensinoForm.ativo,
+      atualizadoEm: serverTimestamp(),
+    }
+
+    if (editandoEnsinoId) {
+      await updateDoc(doc(db, 'ensinoMateriais', editandoEnsinoId), dadosMaterial)
+
+      alert('Material atualizado com sucesso!')
+    } else {
+      await addDoc(collection(db, 'ensinoMateriais'), {
+        ...dadosMaterial,
+        criadoEm: serverTimestamp(),
+      })
+
+      alert('Material cadastrado com sucesso!')
+    }
+
+    limparFormularioEnsino()
+    await carregarEnsinoMateriais()
+  } catch (error) {
+    alert('Erro ao salvar material de ensino.')
+    console.error(error)
+  } finally {
+    setLoading(false)
+  }
+}
+
+function editarEnsinoMaterial(material) {
+  setAbaAtiva('ensino')
+  setEditandoEnsinoId(material.id)
+
+  setEnsinoForm({
+    titulo: material.titulo || '',
+    descricao: material.descricao || '',
+    categoria: material.categoria || 'Revista EBD',
+    autor: material.autor || '',
+    periodo: material.periodo || '',
+    capa: material.capa || '',
+    capaPublicId: material.capaPublicId || '',
+    pdfUrl: material.pdfUrl || '',
+    pdfPublicId: material.pdfPublicId || '',
+    ativo: material.ativo !== false,
+  })
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
+
+async function alternarStatusEnsinoMaterial(material) {
+  try {
+    await updateDoc(doc(db, 'ensinoMateriais', material.id), {
+      ativo: material.ativo === false ? true : false,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await carregarEnsinoMateriais()
+  } catch (error) {
+    alert('Erro ao alterar status do material.')
+    console.error(error)
+  }
+}
+
+async function excluirEnsinoMaterial(id) {
+  const confirmar = confirm('Deseja realmente excluir este material de ensino?')
+
+  if (!confirmar) return
+
+  try {
+    await deleteDoc(doc(db, 'ensinoMateriais', id))
+    await carregarEnsinoMateriais()
+  } catch (error) {
+    alert('Erro ao excluir material de ensino.')
+    console.error(error)
+  }
+}
 async function carregarUsuariosPermissoes() {
   const usuariosSnapshot = await getDocs(collection(db, 'usuariosPermissoes'))
 
@@ -4116,6 +4329,284 @@ const membrosFiltrados = membros.filter((membro) => {
 
   return ''
 }
+function renderizarEnsino() {
+  const categoriasEnsino = [
+    'Revista EBD',
+    'Apostila',
+    'Estudo bíblico',
+    'Discipulado',
+    'Crianças',
+    'Jovens',
+    'Casais',
+    'Outros',
+  ]
+
+  return (
+    <section className="teaching-admin-area">
+      <div className="finance-table-toolbar finance-report-toolbar">
+        <div>
+          <span className="admin-section-label">Ensino</span>
+
+          <h2>Materiais de ensino</h2>
+
+          <p>
+            Cadastre revistas, apostilas e estudos em PDF. Depois eles serão
+            exibidos no site em formato de revista digital.
+          </p>
+        </div>
+      </div>
+
+      <section className="admin-grid admin-events-grid teaching-admin-grid">
+        <form className="admin-card teaching-form-card" onSubmit={salvarEnsinoMaterial}>
+          <span className="admin-section-label">
+            {editandoEnsinoId ? 'Editar material' : 'Novo material'}
+          </span>
+
+          <h2>{editandoEnsinoId ? 'Editar material' : 'Cadastrar material'}</h2>
+
+          <p>
+            Envie a capa e o PDF do material. Na próxima etapa, criaremos o
+            leitor com efeito de revista.
+          </p>
+
+          <label>
+            Título
+            <input
+              value={ensinoForm.titulo}
+              onChange={(event) =>
+                setEnsinoForm({
+                  ...ensinoForm,
+                  titulo: event.target.value,
+                })
+              }
+              placeholder="Ex: Lições Bíblicas - Abraão"
+            />
+          </label>
+
+          <label>
+            Categoria
+            <select
+              value={ensinoForm.categoria}
+              onChange={(event) =>
+                setEnsinoForm({
+                  ...ensinoForm,
+                  categoria: event.target.value,
+                })
+              }
+            >
+              {categoriasEnsino.map((categoria) => (
+                <option value={categoria} key={categoria}>
+                  {categoria}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Autor / professor
+            <input
+              value={ensinoForm.autor}
+              onChange={(event) =>
+                setEnsinoForm({
+                  ...ensinoForm,
+                  autor: event.target.value,
+                })
+              }
+              placeholder="Ex: Professor, Ministério de Ensino"
+            />
+          </label>
+
+          <label>
+            Período
+            <input
+              value={ensinoForm.periodo}
+              onChange={(event) =>
+                setEnsinoForm({
+                  ...ensinoForm,
+                  periodo: event.target.value,
+                })
+              }
+              placeholder="Ex: 2º Trimestre 2026"
+            />
+          </label>
+
+          <label>
+            Descrição
+            <textarea
+              value={ensinoForm.descricao}
+              onChange={(event) =>
+                setEnsinoForm({
+                  ...ensinoForm,
+                  descricao: event.target.value,
+                })
+              }
+              placeholder="Breve descrição do material"
+            />
+          </label>
+
+          <label>
+            Capa do material
+            <input
+              type="file"
+              accept="image/*"
+              onChange={enviarCapaEnsino}
+              disabled={enviandoCapaEnsino}
+            />
+          </label>
+
+          {enviandoCapaEnsino && <p>Enviando capa...</p>}
+
+          {ensinoForm.capa && (
+            <div className="teaching-cover-preview">
+              <img src={ensinoForm.capa} alt="Capa do material" />
+            </div>
+          )}
+
+          <label>
+            Arquivo PDF
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={enviarPdfEnsino}
+              disabled={enviandoPdfEnsino}
+            />
+          </label>
+
+          {enviandoPdfEnsino && <p>Enviando PDF...</p>}
+
+          {ensinoForm.pdfUrl && (
+            <a
+              className="admin-file-link"
+              href={ensinoForm.pdfUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Abrir PDF enviado
+            </a>
+          )}
+
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={ensinoForm.ativo}
+              onChange={(event) =>
+                setEnsinoForm({
+                  ...ensinoForm,
+                  ativo: event.target.checked,
+                })
+              }
+            />
+            Exibir material no site
+          </label>
+
+          <button type="submit" disabled={loading || enviandoCapaEnsino || enviandoPdfEnsino}>
+            {loading
+              ? 'Salvando...'
+              : editandoEnsinoId
+                ? 'Salvar alterações'
+                : 'Salvar material'}
+          </button>
+
+          {editandoEnsinoId && (
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={limparFormularioEnsino}
+            >
+              Cancelar edição
+            </button>
+          )}
+        </form>
+
+        <section className="admin-card teaching-list-card">
+          <span className="admin-section-label">Biblioteca</span>
+
+          <h2>Materiais cadastrados</h2>
+
+          <p>Lista dos materiais que ficarão disponíveis no módulo Ensino.</p>
+
+          <div className="teaching-admin-list">
+            {ensinoMateriais.length === 0 && (
+              <div className="finance-empty-state">
+                <strong>Nenhum material cadastrado.</strong>
+                <p>Cadastre o primeiro material pelo formulário ao lado.</p>
+              </div>
+            )}
+
+            {ensinoMateriais.map((material) => (
+              <article
+                className={`teaching-admin-item ${
+                  material.ativo === false ? 'inactive-item' : ''
+                }`}
+                key={material.id}
+              >
+                {material.capa ? (
+                  <img src={material.capa} alt={material.titulo} />
+                ) : (
+                  <div className="teaching-cover-placeholder">PDF</div>
+                )}
+
+                <div>
+                  <span>{material.categoria || 'Material'}</span>
+
+                  <strong>{material.titulo}</strong>
+
+                  {material.periodo && <p>{material.periodo}</p>}
+
+                  {material.autor && <small>{material.autor}</small>}
+
+                  {material.descricao && <small>{material.descricao}</small>}
+
+                  <em>{material.ativo === false ? 'Inativo' : 'Ativo'}</em>
+                </div>
+
+                <div className="admin-actions">
+                  {material.pdfUrl && (
+                    <a
+                      className="teaching-open-pdf"
+                      href={material.pdfUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      PDF
+                    </a>
+                  )}
+
+                  <button
+                    type="button"
+                    className="edit-button"
+                    onClick={() => editarEnsinoMaterial(material)}
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    type="button"
+                    className={
+                      material.ativo === false
+                        ? 'activate-button'
+                        : 'deactivate-button'
+                    }
+                    onClick={() => alternarStatusEnsinoMaterial(material)}
+                  >
+                    {material.ativo === false ? 'Ativar' : 'Inativar'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => excluirEnsinoMaterial(material.id)}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      </section>
+    </section>
+  )
+}
 function renderizarMeusDados() {
   if (!permissaoUsuario?.membroId) {
     return (
@@ -4292,6 +4783,7 @@ function renderizarMeusDados() {
 function renderizarUsuariosPermissoes() {
   const todasPermissoes = [
     { id: 'programacao', nome: 'Programação' },
+    { id: 'ensino', nome: 'Ensino' },
     { id: 'eventos', nome: 'Eventos' },
     { id: 'oracao', nome: 'Pedidos de oração' },
     { id: 'midia', nome: 'Vídeos / Mídia' },
@@ -4789,7 +5281,15 @@ function formatarMoeda(valor) {
       Programação
     </button>
   )}
-
+{usuarioPodeAcessar('ensino') && (
+  <button
+    type="button"
+    className={abaAtiva === 'ensino' ? 'active' : ''}
+    onClick={() => abrirAbaAdmin('ensino')}
+  >
+    Ensino
+  </button>
+)}
   {usuarioPodeAcessar('oracao') && (
     <button
       type="button"
@@ -5084,7 +5584,9 @@ function formatarMoeda(valor) {
           </section>
         </section>
       )}
-
+{abaAtiva === 'ensino' &&
+  usuarioPodeAcessar('ensino') &&
+  renderizarEnsino()}
       {abaAtiva === 'eventos' && usuarioPodeAcessar('eventos') && (
         <section className="admin-grid admin-events-grid">
           <form

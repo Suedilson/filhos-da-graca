@@ -5836,3 +5836,175 @@ textarea {
     color: #17105f !important;
   }
 }
+/* =========================================================
+   Admin - Ensino
+========================================================= */
+
+.teaching-admin-area {
+  display: grid;
+  gap: 18px;
+}
+
+.teaching-admin-grid {
+  align-items: start;
+}
+
+.teaching-form-card textarea {
+  min-height: 110px;
+}
+
+.teaching-cover-preview {
+  width: 180px;
+  max-width: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(23, 16, 95, 0.1);
+  background: #f8f7ff;
+  box-shadow: 0 12px 28px rgba(23, 16, 95, 0.08);
+}
+
+.teaching-cover-preview img {
+  width: 100%;
+  height: 240px;
+  display: block;
+  object-fit: cover;
+}
+
+.teaching-admin-list {
+  display: grid;
+  gap: 12px;
+}
+
+.teaching-admin-item {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid rgba(23, 16, 95, 0.08);
+  box-shadow: 0 12px 28px rgba(23, 16, 95, 0.06);
+}
+
+.teaching-admin-item.inactive-item {
+  opacity: 0.65;
+  background: #f4f5f7;
+}
+
+.teaching-admin-item img,
+.teaching-cover-placeholder {
+  width: 92px;
+  height: 122px;
+  border-radius: 14px;
+}
+
+.teaching-admin-item img {
+  object-fit: cover;
+  display: block;
+  background: #f8f7ff;
+}
+
+.teaching-cover-placeholder {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at top left, rgba(111, 189, 42, 0.18), transparent 34%),
+    linear-gradient(135deg, #17105f, #27137a);
+  color: #ffffff;
+  font-weight: 950;
+}
+
+.teaching-admin-item span {
+  display: inline-block;
+  margin-bottom: 4px;
+  color: #6fbd2a;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.teaching-admin-item strong {
+  display: block;
+  color: #17105f;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.teaching-admin-item p {
+  margin: 5px 0 0;
+  color: #172033;
+  font-weight: 850;
+}
+
+.teaching-admin-item small {
+  display: block;
+  margin-top: 5px;
+  color: #60708a;
+  line-height: 1.35;
+}
+
+.teaching-admin-item em {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 8px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(23, 16, 95, 0.08);
+  color: #17105f;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.teaching-open-pdf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(111, 189, 42, 0.13);
+  color: #2f7f12;
+  border: 1px solid rgba(111, 189, 42, 0.22);
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+@media (max-width: 980px) {
+  .teaching-admin-item {
+    grid-template-columns: 78px minmax(0, 1fr);
+  }
+
+  .teaching-admin-item img,
+  .teaching-cover-placeholder {
+    width: 78px;
+    height: 104px;
+  }
+
+  .teaching-admin-item .admin-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 620px) {
+  .teaching-admin-item {
+    grid-template-columns: 1fr;
+  }
+
+  .teaching-admin-item img,
+  .teaching-cover-placeholder {
+    width: 100%;
+    height: 220px;
+  }
+
+  .teaching-cover-preview {
+    width: 100%;
+  }
+
+  .teaching-cover-preview img {
+    height: 260px;
+  }
+}

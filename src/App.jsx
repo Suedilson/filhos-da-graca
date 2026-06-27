@@ -1,4 +1,8 @@
+
+
 import { useEffect, useState } from 'react'
+import Ensino from './pages/Ensino'
+import LeitorEnsino from './pages/LeitorEnsino'
 import {
   addDoc,
   collection,
@@ -20,6 +24,12 @@ const quickActions = [
     icon: '✦',
     href: '#cultos',
   },
+{
+  title: 'Ensino',
+  description: 'Acesse revistas, apostilas e estudos bíblicos.',
+  icon: '✎',
+  href: '/ensino',
+},
   {
     title: 'Oração',
     description: 'Envie seu pedido de oração para a liderança.',
@@ -65,8 +75,18 @@ const schedules = [
 ]
 
 function App() {
-  if (window.location.pathname === '/admin') {
+  const caminhoAtual = window.location.pathname
+
+  if (caminhoAtual === '/admin') {
     return <Admin />
+  }
+
+  if (caminhoAtual === '/ensino') {
+    return <Ensino />
+  }
+
+  if (caminhoAtual.startsWith('/ensino/')) {
+    return <LeitorEnsino />
   }
 
   return <Home />
@@ -391,17 +411,18 @@ function obterThumbnailYoutube(url) {
           </div>
         </a>
 
-        <nav className="menu notranslate" translate="no">
-          <a href="#inicio">Início</a>
-          <a href="#cultos">Cultos</a>
-          <a href="#visitante">Visitantes</a>
-          <a href="#eventos">Eventos</a>
-          <a href="#galeria">Galeria</a>
-          <a href="#contribuicao">Contribuição</a>
-          <a href="#localizacao">Como chegar</a>
-          <a href="#midia">Mídia</a>
-          <a href="#contato">Contato</a>
-        </nav>
+       <nav className="menu notranslate" translate="no">
+  <a href="#inicio">Início</a>
+  <a href="#cultos">Cultos</a>
+  <a href="/ensino">Ensino</a>
+  <a href="#visitante">Visitantes</a>
+  <a href="#eventos">Eventos</a>
+  <a href="#galeria">Galeria</a>
+  <a href="#contribuicao">Contribuição</a>
+  <a href="#localizacao">Como chegar</a>
+  <a href="#midia">Mídia</a>
+  <a href="#contato">Contato</a>
+</nav>
 
         <a href="/admin" className="member-link notranslate" translate="no">
           Área do Membro
