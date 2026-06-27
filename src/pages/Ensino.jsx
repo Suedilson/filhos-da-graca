@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { collection, getDocs, orderBy, query } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import './Ensino.css'
@@ -7,6 +7,7 @@ function Ensino() {
   const [materiais, setMateriais] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [categoriaAtiva, setCategoriaAtiva] = useState('Todos')
+  const [busca, setBusca] = useState('')
 
   useEffect(() => {
     async function carregarMateriais() {
@@ -36,21 +37,38 @@ function Ensino() {
     carregarMateriais()
   }, [])
 
-  const categorias = [
-    'Todos',
-    ...Array.from(
-      new Set(materiais.map((material) => material.categoria).filter(Boolean)),
-    ),
-  ]
+  const categorias = useMemo(
+    () => [
+      'Todos',
+      ...Array.from(
+        new Set(
+          materiais.map((material) => material.categoria).filter(Boolean),
+        ),
+      ),
+    ],
+    [materiais],
+  )
 
-  const materiaisFiltrados =
-    categoriaAtiva === 'Todos'
-      ? materiais
-      : materiais.filter((material) => material.categoria === categoriaAtiva)
+  const materiaisFiltrados = materiais.filter((material) => {
+    const textoBusca = busca.toLowerCase().trim()
+
+    const passaCategoria =
+      categoriaAtiva === 'Todos' || material.categoria === categoriaAtiva
+
+    const passaBusca =
+      !textoBusca ||
+      material.titulo?.toLowerCase().includes(textoBusca) ||
+      material.descricao?.toLowerCase().includes(textoBusca) ||
+      material.autor?.toLowerCase().includes(textoBusca) ||
+      material.periodo?.toLowerCase().includes(textoBusca) ||
+      material.categoria?.toLowerCase().includes(textoBusca)
+
+    return passaCategoria && passaBusca
+  })
 
   return (
-    <main className="teaching-page">
-      <section className="teaching-hero">
+    <main className="teaching-page bookshelf-page">
+      <section className="teaching-hero bookshelf-hero">
         <div>
           <span>Ensino</span>
 
@@ -61,35 +79,57 @@ function Ensino() {
             crescimento espiritual, discipulado e Escola Bíblica.
           </p>
         </div>
+
+        <a href="/" className="teaching-home-button">
+          ← Voltar para a página inicial
+        </a>
       </section>
 
       <section className="teaching-content">
-        <div className="teaching-toolbar">
-          <div>
-            <span>Biblioteca</span>
+        <div className="bookshelf-panel">
+          <div className="bookshelf-panel-header">
+            <div>
+              <span>Biblioteca digital</span>
 
-            <h2>Materiais disponíveis</h2>
+              <h2>Prateleira de estudos</h2>
 
-            <p>
-              Escolha um material para abrir em formato de revista digital ou
-              baixar o PDF.
-            </p>
+              <p>
+                Escolha um material para abrir em formato de revista digital ou
+                baixar o PDF.
+              </p>
+            </div>
+
+            <a href="/" className="bookshelf-back-link">
+              Início
+            </a>
           </div>
 
-          {categorias.length > 1 && (
-            <div className="teaching-categories">
-              {categorias.map((categoria) => (
-                <button
-                  type="button"
-                  key={categoria}
-                  className={categoriaAtiva === categoria ? 'active' : ''}
-                  onClick={() => setCategoriaAtiva(categoria)}
-                >
-                  {categoria}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="bookshelf-tools">
+            <label className="bookshelf-search">
+              <span>Pesquisar</span>
+
+              <input
+                value={busca}
+                onChange={(event) => setBusca(event.target.value)}
+                placeholder="Buscar por título, autor, período ou categoria"
+              />
+            </label>
+
+            {categorias.length > 1 && (
+              <div className="bookshelf-categories">
+                {categorias.map((categoria) => (
+                  <button
+                    type="button"
+                    key={categoria}
+                    className={categoriaAtiva === categoria ? 'active' : ''}
+                    onClick={() => setCategoriaAtiva(categoria)}
+                  >
+                    {categoria}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {carregando && (
@@ -101,52 +141,57 @@ function Ensino() {
 
         {!carregando && materiaisFiltrados.length === 0 && (
           <div className="teaching-empty">
-            <strong>Nenhum material disponível.</strong>
-            <p>Em breve novos conteúdos serão publicados aqui.</p>
+            <strong>Nenhum material encontrado.</strong>
+            <p>
+              Tente mudar a busca, selecionar outra categoria ou voltar mais
+              tarde.
+            </p>
           </div>
         )}
 
-        <div className="teaching-grid">
-          {materiaisFiltrados.map((material) => (
-            <article className="teaching-card" key={material.id}>
-              <div className="teaching-cover">
-                {material.capa ? (
-                  <img src={material.capa} alt={material.titulo} />
-                ) : (
-                  <div>
-                    <span>PDF</span>
+        {!carregando && materiaisFiltrados.length > 0 && (
+          <div className="digital-bookshelf">
+            <div className="digital-bookshelf-top">
+              <strong>Biblioteca Filhos da Graça</strong>
+            </div>
+
+            <div className="digital-bookshelf-grid">
+              {materiaisFiltrados.map((material) => (
+                <article className="digital-book" key={material.id}>
+                  <a href={`/ensino/${material.id}`} className="digital-book-cover">
+                    <div className="digital-book-spine" />
+
+                    {material.capa ? (
+                      <img src={material.capa} alt={material.titulo} />
+                    ) : (
+                      <div className="digital-book-placeholder">
+                        <span>PDF</span>
+                      </div>
+                    )}
+                  </a>
+
+                  <div className="digital-book-label">
+                    <span>{material.categoria || 'Material'}</span>
+
+                    <strong>{material.titulo}</strong>
+
+                    {material.periodo && <small>{material.periodo}</small>}
                   </div>
-                )}
-              </div>
 
-              <div className="teaching-card-content">
-                <span>{material.categoria || 'Material'}</span>
+                  <div className="digital-book-actions">
+                    <a href={`/ensino/${material.id}`}>Abrir revista</a>
 
-                <h3>{material.titulo}</h3>
-
-                {material.periodo && <strong>{material.periodo}</strong>}
-
-                {material.autor && <small>{material.autor}</small>}
-
-                {material.descricao && <p>{material.descricao}</p>}
-
-                <div className="teaching-card-actions">
-                  <a href={`/ensino/${material.id}`}>Abrir revista</a>
-
-                  {material.pdfUrl && (
-                    <a
-                      href={material.pdfUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Baixar PDF
-                    </a>
-                  )}
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+                    {material.pdfUrl && (
+                      <a href={material.pdfUrl} target="_blank" rel="noreferrer">
+                        PDF
+                      </a>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
     </main>
   )
