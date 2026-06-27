@@ -621,3 +621,65 @@ html:has(.teaching-reader-page.fullscreen-mode) {
 .teaching-flipbook .stf__innerShadow {
   opacity: 0.08 !important;
 }
+/* =========================================================
+   Lupa com imagem, arraste e marca-texto visível
+========================================================= */
+
+.teaching-magnifier-window {
+  position: relative !important;
+  width: 100% !important;
+  height: min(70vh, 620px) !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+  border-top: 1px solid rgba(23, 16, 95, 0.08) !important;
+  cursor: grab !important;
+  touch-action: none !important;
+  user-select: none !important;
+}
+
+.teaching-magnifier-window.dragging {
+  cursor: grabbing !important;
+}
+
+.teaching-magnifier-content {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: min(100%, 900px) !important;
+  height: min(100%, 1200px) !important;
+  transform-origin: center center !important;
+  transition: transform 0.08s linear !important;
+}
+
+.teaching-magnifier-content img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  display: block !important;
+  user-select: none !important;
+  pointer-events: none !important;
+}
+
+.teaching-magnifier-content .magnifier-highlight {
+  position: absolute !important;
+  z-index: 5 !important;
+  background: rgba(255, 230, 0, 0.44) !important;
+  box-shadow: 0 0 0 1px rgba(255, 210, 0, 0.35) !important;
+  mix-blend-mode: multiply !important;
+  pointer-events: none !important;
+}
+
+.teaching-magnifier-drag-tip {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  z-index: 8;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(23, 16, 95, 0.72);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 950;
+  pointer-events: none;
+}

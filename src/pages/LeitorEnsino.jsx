@@ -342,15 +342,17 @@ function moverArrasteLupa(event) {
 
   const area = event.currentTarget.getBoundingClientRect()
 
-  const diferencaX = ((event.clientX - inicioArrasteLupa.mouseX) / area.width) * 100
-  const diferencaY = ((event.clientY - inicioArrasteLupa.mouseY) / area.height) * 100
+  const diferencaX =
+    ((event.clientX - inicioArrasteLupa.mouseX) / area.width) * 100
+
+  const diferencaY =
+    ((event.clientY - inicioArrasteLupa.mouseY) / area.height) * 100
 
   setPosicaoLupa({
     x: limitarPosicaoLupa(inicioArrasteLupa.posicaoX - diferencaX),
     y: limitarPosicaoLupa(inicioArrasteLupa.posicaoY - diferencaY),
   })
 }
-
 function finalizarArrasteLupa() {
   setArrastandoLupa(false)
   setInicioArrasteLupa(null)
@@ -685,17 +687,12 @@ return (
                   </div>
                 </div>
 
-                <div
+               <div
   className={
     arrastandoLupa
       ? 'teaching-magnifier-window dragging'
       : 'teaching-magnifier-window'
   }
-  style={{
-    backgroundImage: `url(${lupaAberta.imagem})`,
-    backgroundSize: `${zoomLupa * 100}% auto`,
-    backgroundPosition: `${posicaoLupa.x}% ${posicaoLupa.y}%`,
-  }}
   onPointerDown={(event) => {
     event.currentTarget.setPointerCapture(event.pointerId)
     iniciarArrasteLupa(event)
@@ -707,6 +704,32 @@ return (
   }}
   onPointerCancel={finalizarArrasteLupa}
 >
+  <div
+    className="teaching-magnifier-content"
+    style={{
+      transform: `translate(-${posicaoLupa.x}%, -${posicaoLupa.y}%) scale(${zoomLupa})`,
+    }}
+  >
+    <img
+      src={lupaAberta.imagem}
+      alt={`Ampliação da página ${lupaAberta.numeroPagina}`}
+      draggable="false"
+    />
+
+    {(marcacoes[String(lupaAberta.numeroPagina)] || []).map((marcacao) => (
+      <div
+        className="teaching-highlight magnifier-highlight"
+        key={marcacao.id}
+        style={{
+          left: `${marcacao.x}%`,
+          top: `${marcacao.y}%`,
+          width: `${marcacao.largura}%`,
+          height: `${marcacao.altura}%`,
+        }}
+      />
+    ))}
+  </div>
+
   <span className="teaching-magnifier-drag-tip">
     Clique e arraste para enquadrar o texto
   </span>
