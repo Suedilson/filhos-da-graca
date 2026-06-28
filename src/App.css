@@ -172,17 +172,21 @@ a {
 }
 .hero-image {
   position: absolute;
-  inset: 78px 0 0;
-  border-radius: 8px;
-  background:
-    linear-gradient(90deg, rgba(23, 16, 95, 0.08), rgba(23, 16, 95, 0.02)),
-    url('https://images.unsplash.com/photo-1507692049790-de58290a4334?auto=format&fit=crop&w=1600&q=85');
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(23, 16, 95, 0.72) 0%,
+      rgba(23, 16, 95, 0.34) 42%,
+      rgba(23, 16, 95, 0.12) 100%
+    ),
+    url('/images/banner-jesus.jpg');
   background-size: cover;
-  background-position: center;
+  background-position: center center;
+  background-repeat: no-repeat;
   background-attachment: fixed;
-  box-shadow: var(--shadow);
 }
-
 .hero-card {
   position: absolute;
   left: clamp(22px, 6vw, 150px);
@@ -3209,45 +3213,6 @@ a {
   border-radius: 8px !important;
 }
 
-.hero {
-  width: min(1220px, calc(100% - 36px)) !important;
-  height: 660px !important;
-  min-height: 660px !important;
-}
-
-.hero-image {
-  inset: 42px 0 0 !important;
-  border-radius: 14px !important;
-  background:
-    linear-gradient(90deg, rgba(23, 16, 95, 0.72), rgba(23, 16, 95, 0.18) 52%, rgba(23, 16, 95, 0.05)),
-    url('/fachadaigreja.png') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-attachment: scroll !important;
-  box-shadow: 0 28px 80px rgba(23, 16, 95, 0.18) !important;
-}
-
-.hero-card {
-  top: 84px !important;
-  left: clamp(24px, 5vw, 72px) !important;
-  width: min(520px, calc(100% - 48px)) !important;
-  min-height: 430px !important;
-  border-radius: 12px !important;
-  background: rgba(23, 16, 95, 0.9) !important;
-  backdrop-filter: blur(10px) !important;
-  box-shadow: 0 26px 64px rgba(23, 16, 95, 0.28) !important;
-}
-
-.hero-card p {
-  font-size: 1.03rem !important;
-  line-height: 1.65 !important;
-}
-
-.hero-logo {
-  width: min(100%, 410px) !important;
-  margin-top: 0 !important;
-}
-
 .hero-actions {
   gap: 10px !important;
 }
@@ -3397,31 +3362,6 @@ a {
     font-size: 0.9rem !important;
   }
 
-  .hero {
-    height: 640px !important;
-    min-height: 640px !important;
-  }
-
-  .hero-image {
-    inset: 230px 0 0 !important;
-  }
-
-  .hero-card {
-    top: 0 !important;
-    left: 12px !important;
-    width: calc(100% - 24px) !important;
-    min-height: 380px !important;
-    padding: 26px 22px !important;
-  }
-
-  .hero-logo {
-    width: min(100%, 320px) !important;
-  }
-
-  .hero-card p {
-    font-size: 0.96rem !important;
-  }
-
   .section-copy h2,
   .section-heading h2,
   .feature-card h2,
@@ -3536,6 +3476,307 @@ a {
 @media (max-width: 520px) {
   .quick-actions {
     grid-template-columns: 1fr !important;
+  }
+}
+
+/* =========================================================
+   Restauração do banner principal original
+========================================================= */
+
+.site .hero {
+  width: min(1180px, calc(100% - 32px)) !important;
+  height: clamp(520px, 70vh, 720px) !important;
+  min-height: 0 !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.site .hero-image {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  border-radius: 0 !important;
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(23, 16, 95, 0.72) 0%,
+      rgba(23, 16, 95, 0.34) 42%,
+      rgba(23, 16, 95, 0.12) 100%
+    ),
+    url('/images/banner-jesus.jpg') !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  box-shadow: none !important;
+}
+
+.site .hero-card {
+  position: absolute !important;
+  z-index: 1 !important;
+  left: clamp(22px, 6vw, 150px) !important;
+  top: 0 !important;
+  width: min(560px, calc(100% - 44px)) !important;
+  min-height: 470px !important;
+  padding: clamp(30px, 5vw, 58px) !important;
+  color: #ffffff !important;
+  background: linear-gradient(
+    180deg,
+    rgba(23, 16, 95, 0.94),
+    rgba(23, 16, 95, 0.84)
+  ) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 26px 70px rgba(23, 16, 95, 0.28) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+}
+
+.site .hero-logo {
+  position: relative !important;
+  display: block !important;
+  width: min(100%, 460px) !important;
+  height: auto !important;
+  margin: 24px 0 18px !important;
+  object-fit: contain !important;
+}
+
+.site .hero-card p {
+  position: relative !important;
+  margin: 0 !important;
+  max-width: 450px !important;
+  color: rgba(255, 255, 255, 0.84) !important;
+  font-size: 1.08rem !important;
+  line-height: 1.75 !important;
+}
+
+@media (max-width: 1000px) {
+  .site .hero {
+    height: auto !important;
+    min-height: 620px !important;
+  }
+
+  .site .hero-image {
+    inset: 160px 0 0 !important;
+    background-attachment: scroll !important;
+  }
+
+  .site .hero-card {
+    left: 24px !important;
+    top: 0 !important;
+    min-height: 420px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .site .hero {
+    width: calc(100% - 22px) !important;
+    min-height: 680px !important;
+  }
+
+  .site .hero-image {
+    inset: 260px 0 0 !important;
+  }
+
+  .site .hero-card {
+    width: calc(100% - 28px) !important;
+    left: 14px !important;
+    min-height: auto !important;
+    padding: 30px 24px !important;
+  }
+}
+
+/* =========================================================
+   Banner principal atual da home
+========================================================= */
+
+.home-jesus-banner {
+  width: min(1180px, calc(100% - 32px));
+  height: clamp(520px, 70vh, 720px);
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-jesus-banner-image {
+  position: absolute;
+  inset: 78px 0 0;
+  z-index: 0;
+  border-radius: 8px;
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(23, 16, 95, 0.08),
+      rgba(23, 16, 95, 0.02)
+    ),
+    url('/images/banner-jesus.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  box-shadow: var(--shadow);
+}
+
+.home-jesus-banner-card {
+  position: absolute;
+  z-index: 1;
+  left: clamp(22px, 6vw, 150px);
+  top: 0;
+  width: min(560px, calc(100% - 44px));
+  min-height: 470px;
+  padding: clamp(30px, 5vw, 58px);
+  color: #ffffff;
+  background: linear-gradient(
+    180deg,
+    rgba(23, 16, 95, 0.94),
+    rgba(23, 16, 95, 0.84)
+  );
+  box-shadow: 0 26px 70px rgba(23, 16, 95, 0.28);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.home-jesus-banner-card-border {
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+}
+
+.home-jesus-banner-logo {
+  position: relative;
+  display: block;
+  width: min(100%, 460px);
+  height: auto;
+  margin: 24px 0 18px;
+  object-fit: contain;
+}
+
+.home-jesus-banner-card p {
+  position: relative;
+  margin: 0;
+  max-width: 450px;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 1.08rem;
+  line-height: 1.75;
+}
+
+.home-jesus-banner-actions {
+  position: relative;
+  margin-top: 32px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.home-jesus-banner-primary,
+.home-jesus-banner-secondary {
+  min-height: 50px;
+  padding: 14px 20px;
+  border-radius: 4px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s ease;
+}
+
+.home-jesus-banner-primary {
+  background: var(--gold);
+  color: #211700;
+}
+
+.home-jesus-banner-secondary {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.home-jesus-banner-primary:hover,
+.home-jesus-banner-secondary:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 1000px) {
+  .home-jesus-banner {
+    height: auto;
+    min-height: 620px;
+  }
+
+  .home-jesus-banner-image {
+    inset: 160px 0 0;
+    background-attachment: scroll;
+  }
+
+  .home-jesus-banner-card {
+    left: 24px;
+    top: 0;
+    min-height: 420px;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-jesus-banner {
+    width: calc(100% - 22px);
+    min-height: 680px;
+  }
+
+  .home-jesus-banner-image {
+    inset: 260px 0 0;
+  }
+
+  .home-jesus-banner-card {
+    width: calc(100% - 28px);
+    left: 14px;
+    min-height: auto;
+    padding: 30px 24px;
+  }
+
+  .home-jesus-banner-actions {
+    flex-direction: column;
+  }
+}
+
+/* =========================================================
+   Cabeçalhos compactos da página inicial
+========================================================= */
+
+#galeria .section-heading h2,
+.location-section > .section-heading h2,
+.media-section > .section-heading h2,
+.documents-section > .section-heading h2 {
+  width: fit-content !important;
+  max-width: 100% !important;
+  font-size: clamp(1.8rem, 2.7vw, 2.85rem) !important;
+  line-height: 1.08 !important;
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+}
+
+.contribution-section .section-copy h2 {
+  width: fit-content !important;
+  max-width: 100% !important;
+  font-size: clamp(1.75rem, 2.45vw, 2.55rem) !important;
+  line-height: 1.05 !important;
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+}
+
+.documents-section > .section-heading h2 {
+  font-size: clamp(1.65rem, 2.35vw, 2.45rem) !important;
+}
+
+@media (max-width: 1120px) {
+  #galeria .section-heading h2,
+  .location-section > .section-heading h2,
+  .media-section > .section-heading h2,
+  .documents-section > .section-heading h2,
+  .contribution-section .section-copy h2 {
+    width: auto !important;
+    font-size: clamp(1.55rem, 5.2vw, 2.25rem) !important;
+    white-space: normal !important;
   }
 }
 /* =========================================================

@@ -395,33 +395,34 @@ function obterThumbnailYoutube(url) {
         </a>
       </header>
 
-      <section className="hero" id="inicio">
-        <div className="hero-image" aria-hidden="true"></div>
+     <section className="home-jesus-banner" id="inicio">
+  <div className="home-jesus-banner-image" aria-hidden="true"></div>
 
-        <div className="hero-card">
-          <span className="hero-kicker"></span>
+  <div className="home-jesus-banner-card">
+    <div className="home-jesus-banner-card-border"></div>
 
-          <img
-            src="/logo-filhos.png"
-            alt="Filhos da Graça"
-            className="hero-logo"
-          />
+    <img
+      src="/logo-filhos.png"
+      alt="Filhos da Graça"
+      className="home-jesus-banner-logo"
+    />
 
-          <p>
-            Seja bem-vindo. Aqui caminhamos em família, servimos com amor
-            e vivemos a Palavra de Deus.
-          </p>
+    <p>
+      Seja bem-vindo. Aqui caminhamos em família, servimos com amor
+      e vivemos a Palavra de Deus.
+    </p>
 
-          <div className="hero-actions">
-            <a href="#visitante" className="primary-button">
-              Sou visitante
-            </a>
-            <a href="#cultos" className="secondary-button">
-              Horários dos cultos
-            </a>
-          </div>
-        </div>
-      </section>
+    <div className="home-jesus-banner-actions">
+      <a href="#visitante" className="home-jesus-banner-primary">
+        Sou visitante
+      </a>
+
+      <a href="#cultos" className="home-jesus-banner-secondary">
+        Horários dos cultos
+      </a>
+    </div>
+  </div>
+</section>
 
       <section className="quick-actions">
         {quickActions.map((item) => (
