@@ -6008,3 +6008,53 @@ textarea {
     height: 260px;
   }
 }
+
+/* =========================================================
+   Auto cadastro de membros
+========================================================= */
+
+.login-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 22px 0 0;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(23, 16, 95, 0.06);
+  border: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.login-mode-switch button {
+  min-height: 42px;
+  border-radius: 8px;
+  background: transparent;
+  color: #4e5868;
+  box-shadow: none;
+}
+
+.login-mode-switch button.active {
+  background: #ffffff;
+  color: #17105f;
+  box-shadow: 0 8px 18px rgba(23, 16, 95, 0.08);
+}
+
+.member-signup-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.member-signup-form label:has(textarea),
+.member-signup-form button {
+  grid-column: 1 / -1;
+}
+
+.login-card h1,
+.admin-header h1,
+.admin-card h2 {
+  letter-spacing: 0;
+}
+
+@media (max-width: 560px) {
+  .member-signup-form {
+    grid-template-columns: 1fr;
+  }
+}

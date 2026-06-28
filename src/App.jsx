@@ -25,7 +25,7 @@ const quickActions = [
     href: '#cultos',
   },
 {
-  title: 'Ensino',
+  title: 'Biblioteca',
   description: 'Acesse revistas, apostilas e estudos bíblicos.',
   icon: '✎',
   href: '/ensino',
@@ -214,6 +214,23 @@ const [enviandoPedido, setEnviandoPedido] = useState(false)
       }
     }
 
+    async function carregarContribuicaoHome() {
+      try {
+        const ref = doc(db, 'configuracoes', 'contribuicao')
+        const snapshot = await getDoc(ref)
+
+        if (snapshot.exists()) {
+          const dados = snapshot.data()
+
+          if (dados.ativo !== false) {
+            setContribuicaoHome(dados)
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar contribuição da home:', error)
+      }
+    }
+
        carregarProgramacaoHome()
 carregarEventosHome()
 carregarLocalizacaoHome()
@@ -327,56 +344,6 @@ async function enviarPedidoOracao(event) {
     setEnviandoPedido(false)
   }
 }
-async function carregarContribuicaoHome() {
-  try {
-    const ref = doc(db, 'configuracoes', 'contribuicao')
-    const snapshot = await getDoc(ref)
-
-    if (snapshot.exists()) {
-      const dados = snapshot.data()
-
-      if (dados.ativo !== false) {
-        setContribuicaoHome(dados)
-      }
-    }
-  } catch (error) {
-    console.error('Erro ao carregar contribuição da home:', error)
-  }
-}
-async function carregarDocumentosHome() {
-  try {
-    const q = query(collection(db, 'documentos'), orderBy('criadoEm', 'desc'))
-    const snapshot = await getDocs(q)
-
-    const lista = snapshot.docs
-      .map((item) => ({
-        id: item.id,
-        ...item.data(),
-      }))
-      .filter((item) => item.ativo !== false)
-
-    setDocumentosHome(lista)
-  } catch (error) {
-    console.error('Erro ao carregar documentos da home:', error)
-  }
-}
-async function carregarVideosHome() {
-  try {
-    const q = query(collection(db, 'videos'), orderBy('criadoEm', 'desc'))
-    const snapshot = await getDocs(q)
-
-    const lista = snapshot.docs
-      .map((item) => ({
-        id: item.id,
-        ...item.data(),
-      }))
-      .filter((item) => item.ativo !== false)
-
-    setVideosHome(lista)
-  } catch (error) {
-    console.error('Erro ao carregar vídeos da home:', error)
-  }
-}
 function obterThumbnailYoutube(url) {
   if (!url) return ''
 
@@ -414,13 +381,12 @@ function obterThumbnailYoutube(url) {
        <nav className="menu notranslate" translate="no">
   <a href="#inicio">Início</a>
   <a href="#cultos">Cultos</a>
-  <a href="/ensino">Ensino</a>
-  <a href="#visitante">Visitantes</a>
+  <a href="/ensino">Biblioteca</a>
   <a href="#eventos">Eventos</a>
   <a href="#galeria">Galeria</a>
   <a href="#contribuicao">Contribuição</a>
   <a href="#localizacao">Como chegar</a>
-  <a href="#midia">Mídia</a>
+  <a href="#midia">Vídeos</a>
   <a href="#contato">Contato</a>
 </nav>
 
@@ -641,7 +607,7 @@ function obterThumbnailYoutube(url) {
 </section>
       <section className="media-section" id="midia">
   <div className="section-heading">
-    <span className="section-label">Mídia</span>
+    <span className="section-label">Vídeos</span>
     <h2>Mensagens, vídeos e transmissões</h2>
   </div>
 
@@ -920,7 +886,7 @@ function obterThumbnailYoutube(url) {
           <a href="#galeria">Galeria</a>
           <a href="#contribuicao">Contribuição</a>
           <a href="#oracao">Oração</a>
-          <a href="#midia">Mídia</a>
+          <a href="#midia">Vídeos</a>
           <a href="/admin">Área do Membro</a>
         </nav>
       </footer>

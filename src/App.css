@@ -3162,6 +3162,282 @@ a {
     height: 180px !important;
   }
 }
+
+/* =========================================================
+   Ajuste premium final da página inicial
+========================================================= */
+
+.site {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.98)),
+    #ffffff;
+}
+
+.header {
+  width: min(1220px, calc(100% - 36px)) !important;
+  margin-bottom: 24px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(23, 16, 95, 0.1) !important;
+  box-shadow: 0 18px 44px rgba(23, 16, 95, 0.1) !important;
+}
+
+.menu {
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+}
+
+.menu a {
+  white-space: nowrap !important;
+  border-right: 0 !important;
+  border-radius: 8px !important;
+  padding: 9px 11px !important;
+  font-family: inherit !important;
+  font-size: 0.92rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0 !important;
+}
+
+.menu a:hover {
+  background: rgba(111, 189, 42, 0.1) !important;
+}
+
+.member-link,
+.primary-button,
+.secondary-button,
+.welcome-note a,
+.feature-card a {
+  border-radius: 8px !important;
+}
+
+.hero {
+  width: min(1220px, calc(100% - 36px)) !important;
+  height: 660px !important;
+  min-height: 660px !important;
+}
+
+.hero-image {
+  inset: 42px 0 0 !important;
+  border-radius: 14px !important;
+  background:
+    linear-gradient(90deg, rgba(23, 16, 95, 0.72), rgba(23, 16, 95, 0.18) 52%, rgba(23, 16, 95, 0.05)),
+    url('/fachadaigreja.png') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-attachment: scroll !important;
+  box-shadow: 0 28px 80px rgba(23, 16, 95, 0.18) !important;
+}
+
+.hero-card {
+  top: 84px !important;
+  left: clamp(24px, 5vw, 72px) !important;
+  width: min(520px, calc(100% - 48px)) !important;
+  min-height: 430px !important;
+  border-radius: 12px !important;
+  background: rgba(23, 16, 95, 0.9) !important;
+  backdrop-filter: blur(10px) !important;
+  box-shadow: 0 26px 64px rgba(23, 16, 95, 0.28) !important;
+}
+
+.hero-card p {
+  font-size: 1.03rem !important;
+  line-height: 1.65 !important;
+}
+
+.hero-logo {
+  width: min(100%, 410px) !important;
+  margin-top: 0 !important;
+}
+
+.hero-actions {
+  gap: 10px !important;
+}
+
+.quick-actions {
+  width: min(1120px, calc(100% - 44px)) !important;
+  margin-top: 30px !important;
+  gap: 12px !important;
+}
+
+.quick-card,
+.section-copy,
+.welcome-note,
+.service-card,
+.event-card,
+.gallery-card,
+.gallery-album-card,
+.location-card,
+.location-info,
+.video-card,
+.document-card,
+.contribution-card,
+.prayer {
+  border-radius: 10px !important;
+}
+
+.quick-card {
+  min-height: 122px !important;
+  padding: 18px !important;
+  box-shadow: 0 12px 30px rgba(23, 16, 95, 0.075) !important;
+}
+
+.welcome,
+.services,
+.events-section,
+#galeria.gallery-section,
+.location-section,
+.media-section,
+.contribution-section,
+.documents-section,
+.prayer {
+  margin-top: 68px !important;
+}
+
+#galeria.gallery-section,
+.location-section,
+.media-section,
+.documents-section,
+.prayer-form-section,
+.contribution-section {
+  padding-top: 52px !important;
+  padding-bottom: 52px !important;
+}
+
+.section-heading {
+  margin-bottom: 18px !important;
+}
+
+.section-copy h2,
+.section-heading h2,
+.feature-card h2,
+.prayer h2,
+.location-info h3,
+.welcome-note strong {
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  letter-spacing: 0 !important;
+  line-height: 1.05 !important;
+}
+
+.section-copy h2,
+.section-heading h2,
+.feature-card h2,
+.prayer h2 {
+  font-size: 3rem !important;
+}
+
+.location-info h3 {
+  font-size: 2.1rem !important;
+}
+
+.quick-card h3,
+.service-card strong,
+.event-content h3,
+.gallery-card-content h3,
+.video-content h3,
+.document-card h3 {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  letter-spacing: 0 !important;
+}
+
+.service-list,
+.events-list,
+.video-list,
+.documents-list,
+#galeria .gallery-list,
+#galeria .gallery-album-list {
+  gap: 16px !important;
+}
+
+@media (max-width: 1180px) {
+  .header {
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+
+  .menu {
+    order: 3 !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .header,
+  .hero,
+  .quick-actions,
+  .welcome,
+  .services,
+  .events-section,
+  .location-section,
+  .media-section,
+  .documents-section,
+  .prayer,
+  .footer {
+    width: calc(100% - 24px) !important;
+  }
+
+  .brand-mark {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .member-link {
+    padding: 11px 13px !important;
+    font-size: 0.9rem !important;
+  }
+
+  .hero {
+    height: 640px !important;
+    min-height: 640px !important;
+  }
+
+  .hero-image {
+    inset: 230px 0 0 !important;
+  }
+
+  .hero-card {
+    top: 0 !important;
+    left: 12px !important;
+    width: calc(100% - 24px) !important;
+    min-height: 380px !important;
+    padding: 26px 22px !important;
+  }
+
+  .hero-logo {
+    width: min(100%, 320px) !important;
+  }
+
+  .hero-card p {
+    font-size: 0.96rem !important;
+  }
+
+  .section-copy h2,
+  .section-heading h2,
+  .feature-card h2,
+  .prayer h2 {
+    font-size: 1.85rem !important;
+  }
+
+  .location-info h3,
+  .welcome-note strong {
+    font-size: 1.45rem !important;
+  }
+
+  .welcome,
+  .services,
+  .events-section,
+  #galeria.gallery-section,
+  .location-section,
+  .media-section,
+  .contribution-section,
+  .documents-section,
+  .prayer {
+    margin-top: 44px !important;
+  }
+}
 /* =========================================================
    Controle de usuários e permissões
 ========================================================= */

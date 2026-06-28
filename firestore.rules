@@ -1,0 +1,208 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function superAdmin() {
+      return signedIn() &&
+        request.auth.token.email in ['suedilsonfilho@gmail.com'];
+    }
+
+    function userPermissionPath(uid) {
+      return /databases/$(database)/documents/usuariosPermissoes/$(uid);
+    }
+
+    function userPermission() {
+      return get(userPermissionPath(request.auth.uid)).data;
+    }
+
+    function activeUser() {
+      return signedIn() &&
+        exists(userPermissionPath(request.auth.uid)) &&
+        userPermission().ativo == true;
+    }
+
+    function hasPermission(permission) {
+      return superAdmin() ||
+        (activeUser() && permission in userPermission().permissoes);
+    }
+
+    function isOwnPermission(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isOwnMember(memberId) {
+      return signedIn() &&
+        exists(userPermissionPath(request.auth.uid)) &&
+        get(userPermissionPath(request.auth.uid)).data.membroId == memberId;
+    }
+
+    function validPendingPermission(uid) {
+      return isOwnPermission(uid) &&
+        request.resource.data.keys().hasOnly([
+          'uid',
+          'nome',
+          'email',
+          'perfil',
+          'membroId',
+          'ativo',
+          'permissoes',
+          'origemCadastro',
+          'aguardandoAprovacao',
+          'criadoEm',
+          'atualizadoEm'
+        ]) &&
+        request.resource.data.uid == uid &&
+        request.resource.data.email == request.auth.token.email &&
+        request.resource.data.perfil == 'membro' &&
+        request.resource.data.ativo == false &&
+        request.resource.data.permissoes == ['meusDados'] &&
+        request.resource.data.origemCadastro == 'autoCadastro' &&
+        request.resource.data.aguardandoAprovacao == true;
+    }
+
+    function validPendingMember(memberId) {
+      return signedIn() &&
+        request.resource.data.keys().hasOnly([
+          'nome',
+          'email',
+          'telefone',
+          'nascimento',
+          'endereco',
+          'ministerio',
+          'status',
+          'origemCadastro',
+          'usuarioUid',
+          'ativo',
+          'criadoEm',
+          'atualizadoEm'
+        ]) &&
+        request.resource.data.usuarioUid == request.auth.uid &&
+        request.resource.data.email == request.auth.token.email &&
+        request.resource.data.status == 'Pendente aprovação' &&
+        request.resource.data.origemCadastro == 'autoCadastro' &&
+        request.resource.data.ativo == false &&
+        existsAfter(userPermissionPath(request.auth.uid)) &&
+        getAfter(userPermissionPath(request.auth.uid)).data.membroId == memberId;
+    }
+
+    function validPrayerRequest() {
+      return request.resource.data.keys().hasOnly([
+          'nome',
+          'telefone',
+          'pedido',
+          'lido',
+          'criadoEm'
+        ]) &&
+        request.resource.data.nome is string &&
+        request.resource.data.nome.size() >= 2 &&
+        request.resource.data.nome.size() <= 120 &&
+        request.resource.data.pedido is string &&
+        request.resource.data.pedido.size() >= 3 &&
+        request.resource.data.pedido.size() <= 2500 &&
+        (!('telefone' in request.resource.data) ||
+          request.resource.data.telefone is string) &&
+        request.resource.data.lido == false;
+    }
+
+    function memberSelfUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'nome',
+        'telefone',
+        'nascimento',
+        'endereco',
+        'ministerio',
+        'foto',
+        'fotoPublicId',
+        'observacoes',
+        'atualizadoEm'
+      ]);
+    }
+
+    match /programacao/{id} {
+      allow read: if true;
+      allow write: if hasPermission('programacao');
+    }
+
+    match /eventos/{id} {
+      allow read: if true;
+      allow write: if hasPermission('eventos');
+    }
+
+    match /videos/{id} {
+      allow read: if true;
+      allow write: if hasPermission('midia');
+    }
+
+    match /documentos/{id} {
+      allow read: if true;
+      allow write: if hasPermission('documentos');
+    }
+
+    match /galeria/{id} {
+      allow read: if true;
+      allow write: if hasPermission('galeria');
+    }
+
+    match /ensinoMateriais/{id} {
+      allow read: if true;
+      allow write: if hasPermission('ensino');
+    }
+
+    match /configuracoes/localizacao {
+      allow read: if true;
+      allow write: if hasPermission('localizacao');
+    }
+
+    match /configuracoes/contribuicao {
+      allow read: if true;
+      allow write: if hasPermission('contribuicao');
+    }
+
+    match /pedidosOracao/{id} {
+      allow create: if validPrayerRequest();
+      allow read, update, delete: if hasPermission('oracao');
+    }
+
+    match /usuariosPermissoes/{uid} {
+      allow get: if superAdmin() || isOwnPermission(uid) || hasPermission('usuarios');
+      allow list: if hasPermission('usuarios');
+      allow create: if hasPermission('usuarios') || validPendingPermission(uid);
+      allow update, delete: if hasPermission('usuarios');
+    }
+
+    match /membros/{id} {
+      allow get: if hasPermission('membros') ||
+        hasPermission('usuarios') ||
+        (activeUser() && isOwnMember(id));
+      allow list: if hasPermission('membros') || hasPermission('usuarios');
+      allow create: if hasPermission('membros') || validPendingMember(id);
+      allow update: if hasPermission('membros') ||
+        (activeUser() && isOwnMember(id) && memberSelfUpdate());
+      allow delete: if hasPermission('membros');
+    }
+
+    match /contasBancarias/{id} {
+      allow read, write: if hasPermission('financeiro');
+    }
+
+    match /arrecadacoes/{id} {
+      allow read, write: if hasPermission('financeiro');
+    }
+
+    match /contasPagar/{id} {
+      allow read, write: if hasPermission('financeiro');
+    }
+
+    match /aprovisionamentos/{id} {
+      allow read, write: if hasPermission('financeiro');
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
