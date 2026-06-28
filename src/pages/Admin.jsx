@@ -75,7 +75,13 @@ function Admin() {
 const [checkingAuth, setCheckingAuth] = useState(true)
 const [email, setEmail] = useState('')
 const [password, setPassword] = useState('')
-const [modoEntrada, setModoEntrada] = useState('login')
+const [modoEntrada, setModoEntrada] = useState(() => {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('cadastro') === '1') return 'cadastro'
+  }
+  return 'login'
+})
 const [cadastroMembroForm, setCadastroMembroForm] = useState({
   nome: '',
   email: '',

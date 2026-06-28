@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Ensino from './pages/Ensino'
 import LeitorEnsino from './pages/LeitorEnsino'
+import Cadastro from './pages/Cadastro'
 import {
   addDoc,
   collection,
@@ -22,40 +23,52 @@ const quickActions = [
     title: 'Cultos',
     description: 'Veja os horários dos nossos encontros semanais.',
     icon: '✦',
+    iconImage: '/icons/home/cultos.png',
     href: '#cultos',
   },
-{
-  title: 'Biblioteca',
-  description: 'Acesse revistas, apostilas e estudos bíblicos.',
-  icon: '✎',
-  href: '/ensino',
-},
+  {
+    title: 'Biblioteca',
+    description: 'Acesse revistas, apostilas e estudos bíblicos.',
+    icon: '✎',
+    iconImage: '/icons/home/biblioteca.png',
+    href: '/ensino',
+  },
   {
     title: 'Oração',
     description: 'Envie seu pedido de oração para a liderança.',
     icon: '✚',
+    iconImage: '/icons/home/oracao.png',
     href: '#oracao',
   },
-    {
+  {
     title: 'Vídeos',
     description: 'Acompanhe mensagens, estudos e transmissões.',
     icon: '▶',
+    iconImage: '/icons/home/videos.png',
     href: '#midia',
   },
- {
-  title: 'Contribuição',
-  description: 'Contribua com dízimos, ofertas e projetos da igreja.',
-  icon: '◇',
-  href: '#contribuicao',
-},
+  {
+    title: 'Contribuição',
+    description: 'Contribua com dízimos, ofertas e projetos da igreja.',
+    icon: '◇',
+    iconImage: '/icons/home/contribuicao.png',
+    href: '#contribuicao',
+  },
   {
     title: 'Como chegar',
     description: 'Encontre o caminho para nos visitar.',
     icon: '⌖',
+    iconImage: '/icons/home/como-chegar.png',
     href: '#localizacao',
   },
+  {
+    title: 'Seja membro',
+    description: 'Faça seu cadastro de membro e aguarde a aprovação.',
+    icon: '✚',
+    iconImage: '/icons/home/membro.png',
+    href: '/cadastro',
+  },
 ]
-
 const schedules = [
   {
     day: 'Domingo',
@@ -79,6 +92,10 @@ function App() {
 
   if (caminhoAtual === '/admin') {
     return <Admin />
+  }
+
+  if (caminhoAtual === '/cadastro') {
+    return <Cadastro />
   }
 
   if (caminhoAtual === '/ensino') {
@@ -417,15 +434,26 @@ function obterThumbnailYoutube(url) {
   </div>
 </section>
 
-      <section className="quick-actions">
-        {quickActions.map((item) => (
-          <a className="quick-card" href={item.href} key={item.title}>
-            <span>{item.icon}</span>
-            <h3>{item.title}</h3>
-            <p>{item.description}</p>
-          </a>
-        ))}
-      </section>
+   <section className="quick-actions">
+  {quickActions.map((item) => (
+    <a className="quick-card" href={item.href} key={item.title}>
+      <span className="quick-card-icon" aria-hidden="true">
+        <img
+          src={item.iconImage}
+          alt=""
+          onError={(event) => {
+            event.currentTarget.classList.add('is-missing')
+          }}
+        />
+
+        <b>{item.icon}</b>
+      </span>
+
+      <h3>{item.title}</h3>
+      <p>{item.description}</p>
+    </a>
+  ))}
+</section>
 
       <section className="welcome" id="visitante">
         <div className="section-copy">
