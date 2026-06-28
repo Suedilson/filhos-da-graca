@@ -3256,6 +3256,8 @@ a {
   width: min(1120px, calc(100% - 44px)) !important;
   margin-top: 30px !important;
   gap: 12px !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  padding: 24px 0 !important;
 }
 
 .quick-card,
@@ -3312,17 +3314,18 @@ a {
 .prayer h2,
 .location-info h3,
 .welcome-note strong {
-  white-space: nowrap !important;
+  white-space: normal !important;
   overflow-wrap: normal !important;
   letter-spacing: 0 !important;
-  line-height: 1.05 !important;
+  line-height: 1.08 !important;
 }
 
 .section-copy h2,
 .section-heading h2,
 .feature-card h2,
 .prayer h2 {
-  font-size: 3rem !important;
+  font-size: clamp(2.05rem, 3.4vw, 3.15rem) !important;
+  max-width: 100% !important;
 }
 
 .location-info h3 {
@@ -3335,9 +3338,10 @@ a {
 .gallery-card-content h3,
 .video-content h3,
 .document-card h3 {
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere !important;
   letter-spacing: 0 !important;
 }
 
@@ -3361,6 +3365,10 @@ a {
     width: 100% !important;
     overflow-x: auto !important;
     padding-bottom: 4px !important;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
 
@@ -3418,7 +3426,7 @@ a {
   .section-heading h2,
   .feature-card h2,
   .prayer h2 {
-    font-size: 1.85rem !important;
+    font-size: clamp(1.65rem, 8vw, 2.15rem) !important;
   }
 
   .location-info h3,
@@ -3436,6 +3444,98 @@ a {
   .documents-section,
   .prayer {
     margin-top: 44px !important;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    padding: 14px 0 !important;
+  }
+}
+
+/* =========================================================
+   Proteção final contra textos estourando layouts
+========================================================= */
+
+.site section,
+.site article,
+.site div,
+.site form,
+.site a,
+.site button {
+  min-width: 0;
+}
+
+.site h1,
+.site h2,
+.site h3,
+.site p,
+.site span,
+.site strong,
+.site small,
+.site label,
+.site input,
+.site textarea,
+.site button,
+.site a {
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
+.welcome {
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr) !important;
+  overflow: hidden !important;
+}
+
+.welcome .section-copy,
+.welcome-note {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.welcome .section-copy h2 {
+  max-width: 980px !important;
+}
+
+.welcome-note-content p {
+  max-width: 100% !important;
+}
+
+.prayer-form-section {
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 420px) !important;
+  overflow: hidden !important;
+}
+
+.prayer-copy {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.prayer-copy h2 {
+  max-width: 100% !important;
+}
+
+.quick-card p,
+.event-content small,
+.gallery-card-content p,
+.video-content p,
+.document-card p,
+.location-info p,
+.contribution-section p,
+.prayer-copy p {
+  overflow-wrap: break-word !important;
+  hyphens: auto;
+}
+
+@media (max-width: 980px) {
+  .welcome,
+  .prayer-form-section {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .quick-actions {
+    grid-template-columns: 1fr !important;
   }
 }
 /* =========================================================
