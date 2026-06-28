@@ -4048,3 +4048,179 @@ a {
     grid-template-columns: 1fr;
   }
 }
+/* =========================================================
+   CORREÇÃO FINAL DO MENU PRINCIPAL
+   Logomarca colorida sem texto e botão Área do Membro ajustado
+========================================================= */
+
+.header {
+  width: min(1370px, calc(100% - 64px)) !important;
+  min-height: 140px !important;
+  margin: 30px auto 28px !important;
+  padding: 22px 20px 22px 34px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: clamp(16px, 1.6vw, 28px) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(23, 16, 95, 0.1) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 24px 60px rgba(23, 16, 95, 0.1) !important;
+  overflow: visible !important;
+}
+
+.brand {
+  flex: 0 0 clamp(150px, 13vw, 210px) !important;
+  width: clamp(150px, 13vw, 210px) !important;
+  height: 96px !important;
+  min-width: 150px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+  text-decoration: none !important;
+}
+
+.brand > div,
+.brand-mark,
+.brand strong,
+.brand span {
+  display: none !important;
+}
+
+.brand-logo-img {
+  display: block !important;
+  width: auto !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 88px !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+  border-radius: 0 !important;
+}
+
+.menu {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: clamp(10px, 1vw, 18px) !important;
+  flex-wrap: nowrap !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+.menu a {
+  flex: 0 0 auto !important;
+  padding: 9px 5px !important;
+  color: #17105f !important;
+  border-right: 0 !important;
+  border-radius: 8px !important;
+  font-family: inherit !important;
+  font-size: clamp(0.82rem, 0.92vw, 0.95rem) !important;
+  font-weight: 850 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+  text-decoration: none !important;
+}
+
+.menu a:hover {
+  color: #17105f !important;
+  background: rgba(111, 189, 42, 0.1) !important;
+}
+
+.member-link {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 158px !important;
+  height: 50px !important;
+  padding: 0 22px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #ffffff !important;
+  background: #17105f !important;
+  border-radius: 9px !important;
+  font-size: 0.96rem !important;
+  font-weight: 850 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  text-decoration: none !important;
+  box-shadow: 0 18px 40px rgba(23, 16, 95, 0.24) !important;
+}
+
+@media (max-width: 1240px) {
+  .header {
+    width: min(100% - 36px, 980px) !important;
+    min-height: auto !important;
+    padding: 22px !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .brand {
+    flex: 0 0 210px !important;
+    width: 210px !important;
+    height: auto !important;
+    justify-content: center !important;
+  }
+
+  .brand-logo-img {
+    max-height: 92px !important;
+    object-position: center !important;
+  }
+
+  .menu {
+    order: 3 !important;
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    gap: 12px 18px !important;
+    overflow: visible !important;
+  }
+
+  .member-link {
+    min-width: 170px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    width: calc(100% - 24px) !important;
+    margin-top: 18px !important;
+    padding: 18px 14px !important;
+    gap: 16px !important;
+  }
+
+  .brand {
+    flex-basis: 190px !important;
+    width: 190px !important;
+    min-width: 190px !important;
+  }
+
+  .brand-logo-img {
+    max-height: 82px !important;
+  }
+
+  .menu {
+    gap: 10px 14px !important;
+  }
+
+  .menu a {
+    padding: 8px 4px !important;
+    font-size: 0.9rem !important;
+  }
+
+  .member-link {
+    min-width: 168px !important;
+    height: 48px !important;
+    padding: 0 20px !important;
+    font-size: 0.94rem !important;
+  }
+}

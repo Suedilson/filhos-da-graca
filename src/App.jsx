@@ -362,38 +362,31 @@ function obterThumbnailYoutube(url) {
         <span></span>
       </div>
 
-      <header className="header notranslate" translate="no">
-        <a className="brand" href="#inicio">
-          <div className="brand-mark">
-            <img
-              src="/logo-filhos-colorida.png"
-              alt="Filhos da Graça"
-              className="brand-logo-img"
-            />
-          </div>
+   <header className="header notranslate" translate="no">
+  <a className="brand" href="#inicio" aria-label="Filhos da Graça - Início">
+    <img
+      src="/Filhosdagraça.png"
+      alt="Filhos da Graça"
+      className="brand-logo-img"
+    />
+  </a>
 
-          <div>
-            <strong>Filhos da Graça</strong>
-            <span>Gerados no coração de Deus</span>
-          </div>
-        </a>
+  <nav className="menu notranslate" translate="no">
+    <a href="#inicio">Início</a>
+    <a href="#cultos">Cultos</a>
+    <a href="/ensino">Biblioteca</a>
+    <a href="#eventos">Eventos</a>
+    <a href="#galeria">Galeria</a>
+    <a href="#contribuicao">Contribuição</a>
+    <a href="#localizacao">Como chegar</a>
+    <a href="#midia">Vídeos</a>
+    <a href="#contato">Contato</a>
+  </nav>
 
-       <nav className="menu notranslate" translate="no">
-  <a href="#inicio">Início</a>
-  <a href="#cultos">Cultos</a>
-  <a href="/ensino">Biblioteca</a>
-  <a href="#eventos">Eventos</a>
-  <a href="#galeria">Galeria</a>
-  <a href="#contribuicao">Contribuição</a>
-  <a href="#localizacao">Como chegar</a>
-  <a href="#midia">Vídeos</a>
-  <a href="#contato">Contato</a>
-</nav>
-
-        <a href="/admin" className="member-link notranslate" translate="no">
-          Área do Membro
-        </a>
-      </header>
+  <a href="/admin" className="member-link notranslate" translate="no">
+    Área do Membro
+  </a>
+</header>
 
      <section className="home-jesus-banner" id="inicio">
   <div className="home-jesus-banner-image" aria-hidden="true"></div>
