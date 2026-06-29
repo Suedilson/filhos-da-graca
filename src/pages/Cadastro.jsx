@@ -165,8 +165,23 @@ async function enviarFotoCadastroMembro(event) {
   if (enviado) {
     return (
       <main className="admin-page">
-        <section className="login-card">
-        <div className="admin-logo cadastro-logo-marca">
+        <section className="login-card cadastro-card">
+ <a
+  href="/"
+  className="cadastro-back-arrow"
+  aria-label="Voltar para a página inicial"
+  title="Voltar para a página inicial"
+>
+  <svg
+    viewBox="0 0 64 64"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M26.8 13.4 9.5 30.7a1.9 1.9 0 0 0 0 2.6l17.3 17.3a1.9 1.9 0 0 0 3.2-1.3V39.1h12.3c7.2 0 11.7 3.1 14.2 9.7.6 1.6 3 1.2 3-.5C59.1 30.8 49 21.6 33.2 21.6H30V14.7a1.9 1.9 0 0 0-3.2-1.3Z" />
+  </svg>
+</a>
+
+  <div className="admin-logo cadastro-logo-marca">
   <img src="/Filhosdagraça.png" alt="Filhos da Graça" />
 </div>
           <h1>Cadastro enviado</h1>
@@ -184,8 +199,20 @@ async function enviarFotoCadastroMembro(event) {
 
   return (
     <main className="admin-page">
-      <section className="login-card">
-       <div className="admin-logo cadastro-logo-marca">
+     <section className="login-card cadastro-card">
+  <a
+  href="/"
+  className="cadastro-back-arrow"
+  aria-label="Voltar para a página inicial"
+  title="Voltar para a página inicial"
+>
+  <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+    <path d="M26.8 13.4 9.5 30.7a1.9 1.9 0 0 0 0 2.6l17.3 17.3a1.9 1.9 0 0 0 3.2-1.3V39.1h12.3c7.2 0 11.7 3.1 14.2 9.7.6 1.6 3 1.2 3-.5C59.1 30.8 49 21.6 33.2 21.6H30V14.7a1.9 1.9 0 0 0-3.2-1.3Z" />
+  </svg>
+</a>
+
+  <div className="admin-logo cadastro-logo-marca">
+
   <img src="/Filhosdagraça.png" alt="Filhos da Graça" />
 </div>
 
