@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
+
 import {
   collection,
   doc,
@@ -7,6 +8,7 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 import { auth, db } from '../services/firebase'
+import { uploadArquivoCloudinary } from '../services/cloudinary'
 import './Admin.css'
 
 const PERMISSOES_MEMBRO = ['meusDados']
@@ -21,9 +23,37 @@ function Cadastro() {
     ministerio: '',
     senha: '',
     confirmarSenha: '',
+    foto: '',
+    fotoPublicId: '',
   })
   const [loading, setLoading] = useState(false)
   const [enviado, setEnviado] = useState(false)
+  const [enviandoFotoCadastro, setEnviandoFotoCadastro] = useState(false)
+
+async function enviarFotoCadastroMembro(event) {
+  const file = event.target.files?.[0]
+
+  if (!file) return
+
+  setEnviandoFotoCadastro(true)
+
+  try {
+    const arquivo = await uploadArquivoCloudinary(file)
+
+    setCadastroMembroForm((formAtual) => ({
+      ...formAtual,
+      foto: arquivo.url,
+      fotoPublicId: arquivo.publicId,
+    }))
+
+    event.target.value = ''
+  } catch (error) {
+    console.error('Erro ao enviar foto do cadastro.', error)
+    alert('Não foi possível enviar a foto. Tente novamente.')
+  } finally {
+    setEnviandoFotoCadastro(false)
+  }
+}
 
   async function cadastrarMembroPendente(event) {
     event.preventDefault()
@@ -68,6 +98,8 @@ function Cadastro() {
         nascimento: cadastroMembroForm.nascimento,
         endereco: cadastroMembroForm.endereco.trim(),
         ministerio: cadastroMembroForm.ministerio.trim(),
+        foto: cadastroMembroForm.foto,
+        fotoPublicId: cadastroMembroForm.fotoPublicId,
         status: 'Pendente aprovação',
         origemCadastro: 'autoCadastro',
         usuarioUid: credencial.user.uid,
@@ -104,6 +136,8 @@ function Cadastro() {
         ministerio: '',
         senha: '',
         confirmarSenha: '',
+        foto: '',
+        fotoPublicId: '',
       })
 
       setEnviado(true)
@@ -132,7 +166,9 @@ function Cadastro() {
     return (
       <main className="admin-page">
         <section className="login-card">
-          <div className="admin-logo">FG</div>
+        <div className="admin-logo cadastro-logo-marca">
+  <img src="/Filhosdagraça.png" alt="Filhos da Graça" />
+</div>
           <h1>Cadastro enviado</h1>
           <p>
             Recebemos seu cadastro. A liderança fará a aprovação antes da
@@ -149,8 +185,32 @@ function Cadastro() {
   return (
     <main className="admin-page">
       <section className="login-card">
-        <div className="admin-logo">FG</div>
-        <h1>Cadastro de membro</h1>
+       <div className="admin-logo cadastro-logo-marca">
+  <img src="/Filhosdagraça.png" alt="Filhos da Graça" />
+</div>
+
+<div className="cadastro-photo-top">
+  <div className="cadastro-photo-avatar">
+    {cadastroMembroForm.foto ? (
+      <img src={cadastroMembroForm.foto} alt="Foto do cadastro" />
+    ) : (
+      <span>Foto</span>
+    )}
+  </div>
+
+  <label className="cadastro-photo-button">
+    {enviandoFotoCadastro ? 'Enviando...' : 'Selecionar foto'}
+
+    <input
+      type="file"
+      accept="image/*"
+      onChange={enviarFotoCadastroMembro}
+      disabled={enviandoFotoCadastro}
+    />
+  </label>
+</div>
+
+<h1>Cadastro de membro</h1>
         <p>
           Solicite seu acesso. A liderança fará a aprovação antes da liberação.
         </p>
@@ -274,14 +334,14 @@ function Cadastro() {
             />
           </label>
 
-          <button type="submit" disabled={loading}>
-            {loading ? 'Enviando...' : 'Solicitar cadastro'}
+          <button type="submit" disabled={loading || enviandoFotoCadastro}>
+            {loading || enviandoFotoCadastro ? 'Enviando...' : 'Solicitar cadastro'}
           </button>
         </form>
 
-        <a href="/admin" className="login-secondary-link">
-          Já tem cadastro? Entrar
-        </a>
+       <a href="/admin" className="cadastro-login-link">
+  Já tem cadastro? Entrar
+</a>
       </section>
     </main>
   )
