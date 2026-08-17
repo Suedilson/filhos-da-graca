@@ -581,10 +581,12 @@ useEffect(() => {
   }
 
   if (usuarioPodeAcessar('membros') || usuarioPodeAcessar('usuarios')) {
-  carregarMembros()
-} else if (usuarioPodeAcessar('meusDados')) {
-  carregarMeuCadastroMembro()
-}
+    carregarMembros()
+  }
+
+  if (usuarioPodeAcessar('meusDados')) {
+    carregarMeuCadastroMembro()
+  }
 
   if (usuarioPodeAcessar('usuarios')) {
     carregarUsuariosPermissoes()
