@@ -4773,15 +4773,25 @@ textarea {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
+  width: 100%;
   min-height: auto;
   padding: 18px 20px;
 }
 
+.users-permission-item.pending-approval-item {
+  border-color: rgba(232, 191, 85, 0.55);
+  background: linear-gradient(180deg, #ffffff, rgba(255, 248, 226, 0.72));
+}
+
+.users-permission-item.duplicate-email-item {
+  border-color: rgba(180, 35, 24, 0.28);
+  background: linear-gradient(180deg, #ffffff, rgba(255, 240, 238, 0.68));
+}
+
 .users-permission-item > div:first-child {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  display: grid;
   gap: 7px;
+  width: 100%;
   min-width: 0;
 }
 
@@ -4802,18 +4812,34 @@ textarea {
 }
 
 .users-permission-item small {
-  width: auto;
+  display: block;
+  width: 100%;
   max-width: 100%;
   word-break: break-word;
   white-space: normal;
 }
 
-.users-permission-item small:first-of-type {
-  display: inline-block;
-  max-width: 100%;
+.users-permission-item .user-permission-uid {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: monospace;
-  word-break: break-all;
   line-height: 1.35;
+}
+
+.users-permission-item .user-permission-modules {
+  line-height: 1.45;
+}
+
+.users-permission-item .user-duplicate-warning {
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #fff0ee;
+  color: #9d241a;
+  font-size: 0.76rem;
+  font-weight: 950;
+  line-height: 1.2;
 }
 
 .users-permission-item .admin-actions {
@@ -4826,6 +4852,26 @@ textarea {
 
 .users-status {
   margin-top: 4px;
+}
+
+.users-status.inactive {
+  background: #fff4e5;
+  color: #9a5b00;
+}
+
+.users-permission-item:not(.pending-approval-item) .users-status.inactive {
+  background: #fff0ee;
+  color: #9d241a;
+}
+
+.admin-actions .approve-button {
+  background: #edf8f2;
+  color: #157347;
+}
+
+.admin-actions .remove-access-button {
+  background: #fff0ee;
+  color: #9d241a;
 }
 
 @media (max-width: 1180px) {
@@ -6306,6 +6352,94 @@ textarea {
 
 .login-card h1 {
   text-align: center !important;
+}
+
+/* =========================================================
+   Correção final - lista de permissões
+========================================================= */
+
+.users-permission-list .users-permission-item {
+  display: grid !important;
+  grid-template-columns: minmax(260px, 1fr) auto !important;
+  align-items: center !important;
+  gap: 18px !important;
+  min-height: 0 !important;
+}
+
+.users-permission-list .users-permission-item > div:first-child {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 7px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 760px !important;
+}
+
+.users-permission-list .users-permission-item > div:first-child > * {
+  width: auto !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+.users-permission-list .users-permission-item span,
+.users-permission-list .users-permission-item strong,
+.users-permission-list .users-permission-item p,
+.users-permission-list .users-permission-item small,
+.users-permission-list .users-permission-item em {
+  display: block !important;
+  letter-spacing: 0 !important;
+}
+
+.users-permission-list .users-permission-item > div:first-child > span {
+  color: #6fbd2a !important;
+  font-size: 0.76rem !important;
+  font-weight: 950 !important;
+  text-transform: uppercase !important;
+}
+
+.users-permission-list .users-permission-item strong {
+  color: #17105f !important;
+  font-size: 1.06rem !important;
+  line-height: 1.2 !important;
+}
+
+.users-permission-list .users-permission-item p,
+.users-permission-list .users-permission-item small {
+  color: #4f6380 !important;
+  line-height: 1.42 !important;
+}
+
+.users-permission-list .users-permission-item .users-status {
+  display: inline-flex !important;
+  width: fit-content !important;
+  padding: 5px 10px !important;
+  border-radius: 999px !important;
+}
+
+.users-permission-list .users-permission-item .admin-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  min-width: 170px !important;
+}
+
+@media (max-width: 860px) {
+  .users-permission-list .users-permission-item {
+    grid-template-columns: 1fr !important;
+  }
+
+  .users-permission-list .users-permission-item .admin-actions {
+    justify-content: flex-start !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
 }
 
 @media (max-width: 560px) {

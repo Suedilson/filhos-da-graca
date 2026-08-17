@@ -113,6 +113,7 @@ function Home() {
   const [eventosHome, setEventosHome] = useState([])
   const [localizacaoHome, setLocalizacaoHome] = useState(null)
   const [videosHome, setVideosHome] = useState([])
+  const [videosVisiveis, setVideosVisiveis] = useState(6)
   const [documentosHome, setDocumentosHome] = useState([])
   const [galeriaHome, setGaleriaHome] = useState([])
   const [contribuicaoHome, setContribuicaoHome] = useState(null)
@@ -182,14 +183,25 @@ const [enviandoPedido, setEnviandoPedido] = useState(false)
         const q = query(collection(db, 'videos'), orderBy('criadoEm', 'desc'))
         const snapshot = await getDocs(q)
 
-        const lista = snapshot.docs
+        const videosManuais = snapshot.docs
           .map((item) => ({
             id: item.id,
             ...item.data(),
+            origem: 'manual',
           }))
           .filter((item) => item.ativo !== false)
 
-        setVideosHome(lista)
+        let videosYoutube = []
+
+        try {
+          const configSnapshot = await getDoc(doc(db, 'configuracoes', 'youtube'))
+          const configYoutube = configSnapshot.exists() ? configSnapshot.data() : null
+          videosYoutube = await carregarVideosYoutube(configYoutube)
+        } catch (error) {
+          console.error('Erro ao carregar configuração do YouTube:', error)
+        }
+
+        setVideosHome(videosYoutube.length > 0 ? videosYoutube : videosManuais)
       } catch (error) {
         console.error('Erro ao carregar vídeos da home:', error)
       }
@@ -371,6 +383,103 @@ function obterThumbnailYoutube(url) {
   if (!match?.[1]) return ''
 
   return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`
+}
+
+function obterPlaylistUploadsYoutube(configYoutube) {
+  const playlistInformada = configYoutube?.uploadsPlaylistId?.trim()
+  const channelId = configYoutube?.channelId?.trim()
+
+  if (playlistInformada) return playlistInformada
+
+  if (channelId?.startsWith('UC')) {
+    return `UU${channelId.slice(2)}`
+  }
+
+  return ''
+}
+
+async function carregarVideosYoutube(configYoutube) {
+  if (!configYoutube || configYoutube.ativo === false) return []
+
+  const apiKey = configYoutube.apiKey?.trim()
+  const playlistId = obterPlaylistUploadsYoutube(configYoutube)
+
+  if (!apiKey || !playlistId) return []
+
+  const limiteConfigurado = Number(configYoutube.limiteVideos || 100)
+  const limiteVideos = Math.min(
+    Math.max(Number.isFinite(limiteConfigurado) ? limiteConfigurado : 100, 1),
+    200,
+  )
+  const videos = []
+  let pageToken = ''
+
+  try {
+    while (videos.length < limiteVideos) {
+      const params = new URLSearchParams({
+        part: 'snippet,contentDetails',
+        playlistId,
+        maxResults: String(Math.min(50, limiteVideos - videos.length)),
+        key: apiKey,
+      })
+
+      if (pageToken) {
+        params.set('pageToken', pageToken)
+      }
+
+      const resposta = await fetch(
+        `https://www.googleapis.com/youtube/v3/playlistItems?${params.toString()}`,
+      )
+
+      if (!resposta.ok) {
+        throw new Error(`YouTube API respondeu ${resposta.status}`)
+      }
+
+      const dados = await resposta.json()
+
+      videos.push(
+        ...(dados.items || [])
+          .map((item) => {
+            const snippet = item.snippet || {}
+            const videoId = item.contentDetails?.videoId || snippet.resourceId?.videoId
+
+            if (!videoId || snippet.title === 'Private video') return null
+            if (snippet.title === 'Deleted video') return null
+
+            const thumbnails = snippet.thumbnails || {}
+            const thumbnail =
+              thumbnails.maxres?.url ||
+              thumbnails.standard?.url ||
+              thumbnails.high?.url ||
+              thumbnails.medium?.url ||
+              thumbnails.default?.url ||
+              `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+
+            return {
+              id: `youtube-${videoId}`,
+              titulo: snippet.title || 'Vídeo',
+              descricao: snippet.description || '',
+              url: `https://www.youtube.com/watch?v=${videoId}`,
+              thumbnail,
+              publicadoEm: snippet.publishedAt || '',
+              origem: 'youtube',
+            }
+          })
+          .filter(Boolean),
+      )
+
+      pageToken = dados.nextPageToken || ''
+
+      if (!pageToken) break
+    }
+  } catch (error) {
+    console.error('Erro ao carregar vídeos do YouTube:', error)
+    return []
+  }
+
+  return videos.sort(
+    (a, b) => new Date(b.publicadoEm || 0) - new Date(a.publicadoEm || 0),
+  )
 }
 
   return (
@@ -634,31 +743,44 @@ function obterThumbnailYoutube(url) {
   </div>
 
   {videosHome.length > 0 ? (
-    <div className="video-list">
-      {videosHome.map((video) => {
-        const thumbnail = obterThumbnailYoutube(video.url)
+    <>
+      <div className="video-list">
+        {videosHome.slice(0, videosVisiveis).map((video) => {
+          const thumbnail = video.thumbnail || obterThumbnailYoutube(video.url)
 
-        return (
-          <article className="video-card" key={video.id}>
-            <a href={video.url} target="_blank" rel="noreferrer">
-              {thumbnail ? (
-                <img src={thumbnail} alt={video.titulo} />
-              ) : (
-                <div className="video-placeholder">
-                  <span>Filhos da Graça</span>
+          return (
+            <article className="video-card" key={video.id}>
+              <a href={video.url} target="_blank" rel="noreferrer">
+                {thumbnail ? (
+                  <img src={thumbnail} alt={video.titulo} />
+                ) : (
+                  <div className="video-placeholder">
+                    <span>Filhos da Graça</span>
+                  </div>
+                )}
+
+                <div className="video-content">
+                  <span>Assistir vídeo</span>
+                  <h3>{video.titulo}</h3>
+                  {video.descricao && <p>{video.descricao}</p>}
                 </div>
-              )}
+              </a>
+            </article>
+          )
+        })}
+      </div>
 
-              <div className="video-content">
-                <span>Assistir vídeo</span>
-                <h3>{video.titulo}</h3>
-                {video.descricao && <p>{video.descricao}</p>}
-              </div>
-            </a>
-          </article>
-        )
-      })}
-    </div>
+      {videosHome.length > videosVisiveis && (
+        <div className="video-more-actions">
+          <button
+            type="button"
+            onClick={() => setVideosVisiveis((quantidade) => quantidade + 6)}
+          >
+            Ver mais vídeos
+          </button>
+        </div>
+      )}
+    </>
   ) : (
     <article className="feature-card feature-video">
       <div>

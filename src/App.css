@@ -2775,6 +2775,24 @@ a {
   line-height: 1.4 !important;
 }
 
+.video-more-actions {
+  display: flex !important;
+  justify-content: center !important;
+  margin-top: 24px !important;
+}
+
+.video-more-actions button {
+  min-height: 48px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  padding: 0 26px !important;
+  background: #1b1464 !important;
+  color: #ffffff !important;
+  box-shadow: 0 16px 34px rgba(27, 20, 100, 0.22) !important;
+  cursor: pointer !important;
+  font-weight: 800 !important;
+}
+
 /* CONTRIBUIÇÃO */
 .contribution-section {
   margin-top: 36px !important;

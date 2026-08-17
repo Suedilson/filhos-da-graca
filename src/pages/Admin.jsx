@@ -19,6 +19,7 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
   writeBatch,
 } from 'firebase/firestore'
 import { auth, db, firebaseConfig } from '../services/firebase'
@@ -104,6 +105,7 @@ const [ensinoMateriais, setEnsinoMateriais] = useState([])
 const [editandoEnsinoId, setEditandoEnsinoId] = useState(null)
 const [enviandoCapaEnsino, setEnviandoCapaEnsino] = useState(false)
 const [enviandoPdfEnsino, setEnviandoPdfEnsino] = useState(false)
+const [progressoPdfEnsino, setProgressoPdfEnsino] = useState(0)
 
 const [ensinoForm, setEnsinoForm] = useState({
   titulo: '',
@@ -154,6 +156,13 @@ const [filtroDataFinalOracao, setFiltroDataFinalOracao] = useState('')
 
   const [videos, setVideos] = useState([])
   const [editandoVideoId, setEditandoVideoId] = useState(null)
+  const [youtubeConfigForm, setYoutubeConfigForm] = useState({
+    apiKey: '',
+    channelId: '',
+    uploadsPlaylistId: '',
+    limiteVideos: '100',
+    ativo: true,
+  })
 
   const [documentos, setDocumentos] = useState([])
   const [editandoDocumentoId, setEditandoDocumentoId] = useState(null)
@@ -325,11 +334,25 @@ function obterPrimeiraAbaPermitida() {
     }
 
     if (ADMIN_EMAILS.includes(currentUser.email)) {
+      let dadosPermissaoAdmin = {}
+
+      try {
+        const refPermissaoAdmin = doc(db, 'usuariosPermissoes', currentUser.uid)
+        const snapshotPermissaoAdmin = await getDoc(refPermissaoAdmin)
+
+        if (snapshotPermissaoAdmin.exists()) {
+          dadosPermissaoAdmin = snapshotPermissaoAdmin.data()
+        }
+      } catch (error) {
+        console.error('Erro ao carregar vínculo do administrador.', error)
+      }
+
       setPermissaoUsuario({
         uid: currentUser.uid,
         email: currentUser.email,
-        nome: 'Administrador geral',
+        nome: dadosPermissaoAdmin.nome || 'Administrador geral',
         perfil: 'admin',
+        membroId: dadosPermissaoAdmin.membroId || '',
         permissoes: PERMISSOES_POR_PERFIL.admin,
         ativo: true,
       })
@@ -546,6 +569,7 @@ useEffect(() => {
 
   if (usuarioPodeAcessar('midia')) {
     carregarVideos()
+    carregarYoutubeConfig()
   }
 
   if (usuarioPodeAcessar('documentos')) {
@@ -658,10 +682,19 @@ async function enviarPdfEnsino(event) {
 
   if (!file) return
 
+  if (file.type !== 'application/pdf') {
+    alert('Selecione um arquivo PDF.')
+    event.target.value = ''
+    return
+  }
+
   setEnviandoPdfEnsino(true)
+  setProgressoPdfEnsino(0)
 
   try {
-    const arquivo = await uploadArquivoCloudinary(file)
+    const arquivo = await uploadArquivoCloudinary(file, {
+      onProgress: setProgressoPdfEnsino,
+    })
 
     setEnsinoForm((formAtual) => ({
       ...formAtual,
@@ -673,11 +706,44 @@ async function enviarPdfEnsino(event) {
 
     alert('PDF enviado com sucesso!')
   } catch (error) {
-    alert('Erro ao enviar PDF.')
+    const mensagemErro = error.message || ''
+    const limiteCloudinary = mensagemErro.match(/Maximum is (\d+)/i)
+    const limiteFormatado = limiteCloudinary
+      ? formatarTamanhoArquivo(Number(limiteCloudinary[1]))
+      : '10 MB'
+
+    if (mensagemErro.toLowerCase().includes('file size too large')) {
+      alert(
+        `Erro ao enviar PDF.
+
+O arquivo tem ${formatarTamanhoArquivo(file.size)}, mas o Cloudinary está limitado a ${limiteFormatado} neste preset.
+
+Aumente o limite do upload preset "filhos_da_graca_unsigned" no Cloudinary ou envie um PDF menor.`,
+      )
+      console.error(error)
+      return
+    }
+
+    alert(
+      `Erro ao enviar PDF.
+
+${mensagemErro || 'Verifique o tamanho do arquivo e as configurações do Cloudinary.'}`,
+    )
     console.error(error)
   } finally {
     setEnviandoPdfEnsino(false)
+    setProgressoPdfEnsino(0)
   }
+}
+
+function formatarTamanhoArquivo(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 MB'
+
+  const megabytes = bytes / 1024 / 1024
+
+  return `${megabytes.toLocaleString('pt-BR', {
+    maximumFractionDigits: 1,
+  })} MB`
 }
 
 async function salvarEnsinoMaterial(event) {
@@ -792,7 +858,12 @@ async function carregarUsuariosPermissoes() {
   }))
 
   setUsuariosPermissoes(
-    listaUsuarios.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')),
+    listaUsuarios.sort((a, b) => {
+      if (a.aguardandoAprovacao && !b.aguardandoAprovacao) return -1
+      if (!a.aguardandoAprovacao && b.aguardandoAprovacao) return 1
+
+      return (a.nome || '').localeCompare(b.nome || '')
+    }),
   )
 }
 
@@ -855,6 +926,17 @@ async function criarUsuarioNoAuthentication(emailUsuario, senhaUsuario) {
   }
 }
 
+async function existeOutroUsuarioComEmail(emailUsuario, usuarioIdAtual = '') {
+  const emailNormalizado = emailUsuario.trim().toLowerCase()
+  const consultaEmail = query(
+    collection(db, 'usuariosPermissoes'),
+    where('email', '==', emailNormalizado),
+  )
+  const snapshot = await getDocs(consultaEmail)
+
+  return snapshot.docs.some((documento) => documento.id !== usuarioIdAtual)
+}
+
 async function salvarUsuarioPermissao(event) {
   event.preventDefault()
 
@@ -897,11 +979,24 @@ if (
   setCriandoUsuarioAuth(true)
 
   try {
+    const emailNormalizado = usuarioPermissaoForm.email.trim().toLowerCase()
+    const usuarioDuplicado = await existeOutroUsuarioComEmail(
+      emailNormalizado,
+      editandoUsuarioPermissaoId || usuarioPermissaoForm.uid.trim(),
+    )
+
+    if (usuarioDuplicado) {
+      alert(
+        'Já existe um usuário cadastrado com este e-mail. Use outro e-mail ou edite o cadastro existente.',
+      )
+      return
+    }
+
     let uidUsuario = usuarioPermissaoForm.uid.trim()
 
 if (!editandoUsuarioPermissaoId && !usuarioPermissaoForm.usuarioExistente) {
   uidUsuario = await criarUsuarioNoAuthentication(
-    usuarioPermissaoForm.email.trim().toLowerCase(),
+    emailNormalizado,
     usuarioPermissaoForm.senha.trim(),
   )
 }
@@ -909,7 +1004,7 @@ if (!editandoUsuarioPermissaoId && !usuarioPermissaoForm.usuarioExistente) {
     const dadosUsuario = {
       uid: uidUsuario,
       nome: usuarioPermissaoForm.nome.trim(),
-      email: usuarioPermissaoForm.email.trim().toLowerCase(),
+      email: emailNormalizado,
       perfil: usuarioPermissaoForm.perfil,
       membroId: usuarioPermissaoForm.membroId || '',
       ativo: usuarioPermissaoForm.ativo,
@@ -985,10 +1080,75 @@ async function alternarStatusUsuarioPermissao(usuarioPermissao) {
 
   await updateDoc(doc(db, 'usuariosPermissoes', usuarioPermissao.id), {
     ativo: novoStatus,
+    aguardandoAprovacao: false,
     atualizadoEm: serverTimestamp(),
   })
 
   await carregarUsuariosPermissoes()
+}
+
+async function removerUsuarioPermissao(usuarioPermissao) {
+  const confirmar = confirm(
+    `Deseja remover este acesso de ${usuarioPermissao.nome || usuarioPermissao.email}? Essa ação remove apenas o registro de permissões.`,
+  )
+
+  if (!confirmar) return
+
+  try {
+    await deleteDoc(doc(db, 'usuariosPermissoes', usuarioPermissao.id))
+    await carregarUsuariosPermissoes()
+    alert('Registro de permissões removido com sucesso.')
+  } catch (error) {
+    alert('Erro ao remover o registro de permissões.')
+    console.error(error)
+  }
+}
+
+async function aprovarUsuarioPendente(usuarioPermissao) {
+  if (!usuarioPermissao.membroId) {
+    alert('Este usuário não está vinculado a um cadastro de membro.')
+    return
+  }
+
+  const confirmar = confirm(
+    `Deseja aprovar o acesso de ${usuarioPermissao.nome || usuarioPermissao.email}?`,
+  )
+
+  if (!confirmar) return
+
+  setCriandoUsuarioAuth(true)
+
+  try {
+    const batch = writeBatch(db)
+    const permissaoRef = doc(db, 'usuariosPermissoes', usuarioPermissao.id)
+    const membroRef = doc(db, 'membros', usuarioPermissao.membroId)
+
+    batch.update(permissaoRef, {
+      ativo: true,
+      aguardandoAprovacao: false,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    batch.update(membroRef, {
+      status: 'Ativo',
+      ativo: true,
+      atualizadoEm: serverTimestamp(),
+    })
+
+    await batch.commit()
+    await carregarUsuariosPermissoes()
+
+    if (usuarioPodeAcessar('membros')) {
+      await carregarMembros()
+    }
+
+    alert('Usuário aprovado com sucesso.')
+  } catch (error) {
+    alert('Erro ao aprovar usuário pendente.')
+    console.error(error)
+  } finally {
+    setCriandoUsuarioAuth(false)
+  }
 }
 async function login(event) {
    event.preventDefault()
@@ -2873,6 +3033,67 @@ function pedidoOracaoDentroDoPeriodo(pedido) {
     }
   }
 
+  async function carregarYoutubeConfig() {
+    try {
+      const snapshot = await getDoc(doc(db, 'configuracoes', 'youtube'))
+
+      if (!snapshot.exists()) return
+
+      const dados = snapshot.data()
+
+      setYoutubeConfigForm({
+        apiKey: dados.apiKey || '',
+        channelId: dados.channelId || '',
+        uploadsPlaylistId: dados.uploadsPlaylistId || '',
+        limiteVideos: String(dados.limiteVideos || 100),
+        ativo: dados.ativo !== false,
+      })
+    } catch (error) {
+      console.error('Erro ao carregar configuração do YouTube.', error)
+    }
+  }
+
+  async function salvarYoutubeConfig(event) {
+    event.preventDefault()
+
+    if (!youtubeConfigForm.apiKey.trim()) {
+      alert('Informe a API key do YouTube.')
+      return
+    }
+
+    if (
+      !youtubeConfigForm.uploadsPlaylistId.trim() &&
+      !youtubeConfigForm.channelId.trim()
+    ) {
+      alert('Informe a playlist de uploads ou o Channel ID do YouTube.')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      await setDoc(
+        doc(db, 'configuracoes', 'youtube'),
+        {
+          apiKey: youtubeConfigForm.apiKey.trim(),
+          channelId: youtubeConfigForm.channelId.trim(),
+          uploadsPlaylistId: youtubeConfigForm.uploadsPlaylistId.trim(),
+          limiteVideos: Number(youtubeConfigForm.limiteVideos || 100),
+          ativo: youtubeConfigForm.ativo,
+          atualizadoEm: serverTimestamp(),
+        },
+        { merge: true },
+      )
+
+      alert('Configuração do YouTube salva com sucesso!')
+    } catch (error) {
+      alert('Erro ao salvar configuração do YouTube.')
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function salvarVideo(event) {
     event.preventDefault()
 
@@ -4594,7 +4815,12 @@ function renderizarEnsino() {
             />
           </label>
 
-          {enviandoPdfEnsino && <p>Enviando PDF...</p>}
+          {enviandoPdfEnsino && (
+            <p>
+              Enviando PDF
+              {progressoPdfEnsino > 0 ? `... ${progressoPdfEnsino}%` : '...'}
+            </p>
+          )}
 
           {ensinoForm.pdfUrl && (
             <a
@@ -4936,6 +5162,21 @@ function renderizarUsuariosPermissoes() {
   const membroSelecionadoPermissao = usuarioPermissaoForm.membroId
     ? membros.find((membro) => membro.id === usuarioPermissaoForm.membroId)
     : null
+  const emailsDuplicados = usuariosPermissoes.reduce((emails, usuario) => {
+    const emailUsuario = usuario.email?.trim().toLowerCase()
+
+    if (!emailUsuario) return emails
+
+    const total = usuariosPermissoes.filter(
+      (item) => item.email?.trim().toLowerCase() === emailUsuario,
+    ).length
+
+    if (total > 1) {
+      emails.add(emailUsuario)
+    }
+
+    return emails
+  }, new Set())
 
   return (
     <section className="users-permission-area">
@@ -5208,9 +5449,17 @@ function renderizarUsuariosPermissoes() {
               </div>
             )}
 
-            {usuariosPermissoes.map((usuarioPermissao) => (
+            {usuariosPermissoes.map((usuarioPermissao) => {
+              const emailUsuario = usuarioPermissao.email?.trim().toLowerCase()
+              const emailDuplicado = emailsDuplicados.has(emailUsuario)
+
+              return (
               <article
-                className="users-permission-item"
+                className={`users-permission-item ${
+                  usuarioPermissao.aguardandoAprovacao
+                    ? 'pending-approval-item'
+                    : ''
+                } ${emailDuplicado ? 'duplicate-email-item' : ''}`}
                 key={usuarioPermissao.id}
               >
                 <div>
@@ -5223,11 +5472,13 @@ function renderizarUsuariosPermissoes() {
 
                   <p>{usuarioPermissao.email}</p>
 
-                  <small>
-                    UID: {usuarioPermissao.uid || usuarioPermissao.id}
-                  </small>
+                  {emailDuplicado && (
+                    <small className="user-duplicate-warning">
+                      E-mail duplicado. Remova um dos acessos para este e-mail.
+                    </small>
+                  )}
 
-                  <small>
+                  <small className="user-permission-modules">
                     Permissões:{' '}
                     {(usuarioPermissao.permissoes || []).join(', ') ||
                       'Nenhuma'}
@@ -5240,11 +5491,36 @@ function renderizarUsuariosPermissoes() {
                         : 'users-status active'
                     }
                   >
-                    {usuarioPermissao.ativo === false ? 'Inativo' : 'Ativo'}
+                    {usuarioPermissao.aguardandoAprovacao
+                      ? 'Pendente aprovação'
+                      : usuarioPermissao.ativo === false
+                        ? 'Inativo'
+                        : 'Ativo'}
                   </em>
                 </div>
 
                 <div className="admin-actions">
+                  {usuarioPermissao.aguardandoAprovacao && (
+                    <button
+                      type="button"
+                      className="approve-button"
+                      onClick={() => aprovarUsuarioPendente(usuarioPermissao)}
+                      disabled={criandoUsuarioAuth}
+                    >
+                      Aprovar
+                    </button>
+                  )}
+
+                  {emailDuplicado && (
+                    <button
+                      type="button"
+                      className="remove-access-button"
+                      onClick={() => removerUsuarioPermissao(usuarioPermissao)}
+                    >
+                      Remover duplicado
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     className="edit-button"
@@ -5268,7 +5544,8 @@ function renderizarUsuariosPermissoes() {
                   </button>
                 </div>
               </article>
-            ))}
+              )
+            })}
           </div>
         </section>
       </div>
@@ -5606,6 +5883,7 @@ function formatarMoeda(valor) {
 
   {(usuarioPodeAcessar('midia') ||
     usuarioPodeAcessar('galeria') ||
+    usuarioPodeAcessar('eventos')) && (
     <div
   className={`admin-tab-group ${
     ['midia', 'galeria', 'eventos'].includes(abaAtiva) ? 'active' : ''
@@ -6236,10 +6514,100 @@ function formatarMoeda(valor) {
             )}
           </form>
 
+          <form className="admin-card" onSubmit={salvarYoutubeConfig}>
+            <span className="admin-section-label">Canal do YouTube</span>
+            <h2>Integração automática</h2>
+            <p>
+              Configure o canal para a página inicial carregar automaticamente os
+              vídeos mais novos. A playlist de uploads começa com UU; se você
+              informar apenas o Channel ID começando com UC, o site converte
+              automaticamente.
+            </p>
+
+            <label>
+              YouTube API key
+              <input
+                value={youtubeConfigForm.apiKey}
+                onChange={(event) =>
+                  setYoutubeConfigForm({
+                    ...youtubeConfigForm,
+                    apiKey: event.target.value,
+                  })
+                }
+                placeholder="Cole a API key do Google Cloud"
+              />
+            </label>
+
+            <label>
+              Channel ID
+              <input
+                value={youtubeConfigForm.channelId}
+                onChange={(event) =>
+                  setYoutubeConfigForm({
+                    ...youtubeConfigForm,
+                    channelId: event.target.value,
+                  })
+                }
+                placeholder="Ex: UCxxxxxxxxxxxxxxxxxxxxxx"
+              />
+            </label>
+
+            <label>
+              Playlist de uploads
+              <input
+                value={youtubeConfigForm.uploadsPlaylistId}
+                onChange={(event) =>
+                  setYoutubeConfigForm({
+                    ...youtubeConfigForm,
+                    uploadsPlaylistId: event.target.value,
+                  })
+                }
+                placeholder="Ex: UUxxxxxxxxxxxxxxxxxxxxxx"
+              />
+            </label>
+
+            <label>
+              Limite de vídeos carregados
+              <input
+                type="number"
+                min="1"
+                max="200"
+                value={youtubeConfigForm.limiteVideos}
+                onChange={(event) =>
+                  setYoutubeConfigForm({
+                    ...youtubeConfigForm,
+                    limiteVideos: event.target.value,
+                  })
+                }
+              />
+            </label>
+
+            <label className="finance-toggle-label">
+              <input
+                type="checkbox"
+                checked={youtubeConfigForm.ativo}
+                onChange={(event) =>
+                  setYoutubeConfigForm({
+                    ...youtubeConfigForm,
+                    ativo: event.target.checked,
+                  })
+                }
+              />
+              <span>Usar integração automática no site</span>
+            </label>
+
+            <button type="submit" disabled={loading}>
+              {loading ? 'Salvando...' : 'Salvar integração'}
+            </button>
+          </form>
+
           <section className="admin-card">
             <span className="admin-section-label">Página inicial</span>
             <h2>Vídeos cadastrados</h2>
-            <p>Lista dos vídeos que serão exibidos no site.</p>
+            <p>
+              Estes vídeos continuam como fallback caso a integração automática
+              não esteja configurada ou fique indisponível.
+            </p>
 
             <div className="admin-list">
               {videos.length === 0 && <p>Nenhum vídeo cadastrado ainda.</p>}

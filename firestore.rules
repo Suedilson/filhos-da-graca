@@ -162,6 +162,11 @@ service cloud.firestore {
       allow write: if hasPermission('contribuicao');
     }
 
+    match /configuracoes/youtube {
+      allow read: if true;
+      allow write: if hasPermission('midia');
+    }
+
     match /pedidosOracao/{id} {
       allow create: if validPrayerRequest();
       allow read, update, delete: if hasPermission('oracao');
@@ -181,6 +186,7 @@ service cloud.firestore {
       allow list: if hasPermission('membros') || hasPermission('usuarios');
       allow create: if hasPermission('membros') || validPendingMember(id);
       allow update: if hasPermission('membros') ||
+        hasPermission('usuarios') ||
         (activeUser() && isOwnMember(id) && memberSelfUpdate());
       allow delete: if hasPermission('membros');
     }
