@@ -5883,10 +5883,11 @@ function formatarMoeda(valor) {
 
   {(usuarioPodeAcessar('midia') ||
     usuarioPodeAcessar('galeria') ||
-    usuarioPodeAcessar('eventos')) && (
+    usuarioPodeAcessar('eventos') ||
+    usuarioPodeAcessar('documentos')) && (
     <div
   className={`admin-tab-group ${
-    ['midia', 'galeria', 'eventos'].includes(abaAtiva) ? 'active' : ''
+    ['midia', 'galeria', 'eventos', 'documentos'].includes(abaAtiva) ? 'active' : ''
   } ${grupoMenuAberto === 'midia' ? 'open' : ''}`}
 >
   <button
@@ -5927,6 +5928,16 @@ function formatarMoeda(valor) {
             onClick={() => setAbaAtiva('eventos')}
           >
             Eventos
+          </button>
+        )}
+
+        {usuarioPodeAcessar('documentos') && (
+          <button
+            type="button"
+            className={abaAtiva === 'documentos' ? 'active' : ''}
+            onClick={() => setAbaAtiva('documentos')}
+          >
+            Documentos
           </button>
         )}
       </div>
