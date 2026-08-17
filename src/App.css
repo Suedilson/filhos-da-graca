@@ -1191,6 +1191,30 @@ a {
   font-weight: 900;
 }
 
+.documents-empty {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #ffffff;
+  color: var(--muted);
+  box-shadow: 0 18px 46px rgba(23, 16, 95, 0.06);
+}
+
+.documents-empty span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--green);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.documents-empty p {
+  margin: 0;
+}
+
 @media (max-width: 900px) {
   .documents-list {
     grid-template-columns: 1fr;

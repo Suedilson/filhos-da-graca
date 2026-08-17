@@ -863,13 +863,9 @@ async function carregarVideosYoutube(configYoutube) {
       ))}
     </div>
   ) : (
-    <article className="feature-card feature-transparency">
-      <div>
-        <span>Transparência</span>
-        <h2>Informações e documentos para membros.</h2>
-        <p>Prestação de contas com clareza e organização.</p>
-      </div>
-      <a href="/admin">Acessar portal</a>
+    <article className="documents-empty">
+      <span>Transparência</span>
+      <p>Os documentos para membros serão publicados em breve.</p>
     </article>
   )}
 </section>
