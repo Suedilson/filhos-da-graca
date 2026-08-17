@@ -3706,6 +3706,51 @@ async function carregarMeuCadastroMembro() {
   }
 }
 
+function obterMesDiaNascimento(dataNascimento) {
+  if (!dataNascimento) {
+    return { mes: null, dia: null }
+  }
+
+  const [, mes, dia] = dataNascimento.split('-')
+
+  return {
+    mes: Number(mes),
+    dia: Number(dia),
+  }
+}
+
+async function sincronizarAniversariantePublico(membroId, dadosMembro) {
+  if (!membroId) return
+
+  const refPublica = doc(db, 'aniversariantesPublicos', membroId)
+  const { mes, dia } = obterMesDiaNascimento(dadosMembro.nascimento)
+  const devePublicar =
+    Boolean(dadosMembro.nome?.trim()) &&
+    Boolean(mes) &&
+    Boolean(dia) &&
+    dadosMembro.status !== 'Inativo' &&
+    dadosMembro.ativo !== false
+
+  if (!devePublicar) {
+    await deleteDoc(refPublica)
+    return
+  }
+
+  await setDoc(
+    refPublica,
+    {
+      membroId,
+      nome: dadosMembro.nome.trim(),
+      mes,
+      dia,
+      ministerio: dadosMembro.ministerio || '',
+      foto: dadosMembro.foto || '',
+      ativo: true,
+      atualizadoEm: serverTimestamp(),
+    }
+  )
+}
+
 async function enviarFotoMeusDados(event) {
   const file = event.target.files?.[0]
 
@@ -3749,7 +3794,7 @@ async function salvarMeusDados(event) {
   setLoading(true)
 
   try {
-    await updateDoc(doc(db, 'membros', permissaoUsuario.membroId), {
+    const dadosAtualizados = {
       nome: meusDadosForm.nome,
       telefone: meusDadosForm.telefone,
       nascimento: meusDadosForm.nascimento,
@@ -3759,6 +3804,14 @@ async function salvarMeusDados(event) {
       fotoPublicId: meusDadosForm.fotoPublicId,
       observacoes: meusDadosForm.observacoes,
       atualizadoEm: serverTimestamp(),
+    }
+
+    await updateDoc(doc(db, 'membros', permissaoUsuario.membroId), dadosAtualizados)
+    await sincronizarAniversariantePublico(permissaoUsuario.membroId, {
+      ...meusDadosMembro,
+      ...dadosAtualizados,
+      status: meusDadosMembro?.status || 'Ativo',
+      ativo: meusDadosMembro?.ativo !== false,
     })
 
     await carregarMeuCadastroMembro()
@@ -3846,12 +3899,14 @@ async function salvarMeusDados(event) {
 
       if (editandoMembroId) {
         await updateDoc(doc(db, 'membros', editandoMembroId), dadosMembro)
+        await sincronizarAniversariantePublico(editandoMembroId, dadosMembro)
         alert('Membro atualizado com sucesso!')
       } else {
-        await addDoc(collection(db, 'membros'), {
+        const membroRef = await addDoc(collection(db, 'membros'), {
           ...dadosMembro,
           criadoEm: serverTimestamp(),
         })
+        await sincronizarAniversariantePublico(membroRef.id, dadosMembro)
 
         alert('Membro cadastrado com sucesso!')
       }
@@ -3947,6 +4002,11 @@ async function salvarMeusDados(event) {
         ativo: novoStatus !== 'Inativo',
         atualizadoEm: serverTimestamp(),
       })
+      await sincronizarAniversariantePublico(membro.id, {
+        ...membro,
+        status: novoStatus,
+        ativo: novoStatus !== 'Inativo',
+      })
 
       await carregarMembros()
     } catch (error) {
@@ -3962,6 +4022,7 @@ async function salvarMeusDados(event) {
 
     try {
       await deleteDoc(doc(db, 'membros', id))
+      await deleteDoc(doc(db, 'aniversariantesPublicos', id))
       await carregarMembros()
     } catch (error) {
       alert('Erro ao excluir membro.')

@@ -13,6 +13,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  where,
 } from 'firebase/firestore'
 import './App.css'
 import Admin from './pages/Admin'
@@ -116,6 +117,7 @@ function Home() {
   const [videosVisiveis, setVideosVisiveis] = useState(6)
   const [documentosHome, setDocumentosHome] = useState([])
   const [galeriaHome, setGaleriaHome] = useState([])
+  const [aniversariantesHome, setAniversariantesHome] = useState([])
   const [contribuicaoHome, setContribuicaoHome] = useState(null)
   const [pixCopiado, setPixCopiado] = useState(false)
   const [albumAberto, setAlbumAberto] = useState(null)
@@ -260,6 +262,29 @@ const [enviandoPedido, setEnviandoPedido] = useState(false)
       }
     }
 
+    async function carregarAniversariantesHome() {
+      try {
+        const mesAtual = new Date().getMonth() + 1
+        const q = query(
+          collection(db, 'aniversariantesPublicos'),
+          where('mes', '==', mesAtual),
+        )
+        const snapshot = await getDocs(q)
+
+        const lista = snapshot.docs
+          .map((item) => ({
+            id: item.id,
+            ...item.data(),
+          }))
+          .filter((item) => item.ativo !== false)
+          .sort((a, b) => Number(a.dia || 0) - Number(b.dia || 0))
+
+        setAniversariantesHome(lista)
+      } catch (error) {
+        console.error('Erro ao carregar aniversariantes da home:', error)
+      }
+    }
+
        carregarProgramacaoHome()
 carregarEventosHome()
 carregarLocalizacaoHome()
@@ -267,6 +292,7 @@ carregarVideosHome()
 carregarDocumentosHome()
 carregarGaleriaHome()
 carregarContribuicaoHome()
+carregarAniversariantesHome()
   }, [])
 
   const programacaoExibida =
@@ -340,6 +366,10 @@ async function copiarChavePix() {
 
     return `${dia}/${mes}/${ano}`
   }
+
+function obterNomeMesAtual() {
+  return new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date())
+}
 async function enviarPedidoOracao(event) {
   event.preventDefault()
 
@@ -613,6 +643,43 @@ async function carregarVideosYoutube(configYoutube) {
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="birthdays-section" id="aniversariantes">
+        <div className="section-heading">
+          <span className="section-label">Aniversariantes</span>
+          <h2>Aniversariantes de {obterNomeMesAtual()}</h2>
+        </div>
+
+        {aniversariantesHome.length > 0 ? (
+          <div className="birthdays-list">
+            {aniversariantesHome.map((membro) => (
+              <article className="birthday-card" key={membro.id}>
+                <div className="birthday-day">
+                  <span>Dia</span>
+                  <strong>{String(Number(membro.dia || 0)).padStart(2, '0')}</strong>
+                </div>
+
+                {membro.foto ? (
+                  <img src={membro.foto} alt={membro.nome} />
+                ) : (
+                  <div className="birthday-avatar">
+                    {membro.nome?.charAt(0) || '?'}
+                  </div>
+                )}
+
+                <div>
+                  <h3>{membro.nome}</h3>
+                  {membro.ministerio && <p>{membro.ministerio}</p>}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <article className="birthdays-empty">
+            <p>Nenhum aniversariante cadastrado para este mês.</p>
+          </article>
+        )}
       </section>
 
       {eventosHome.length > 0 && (

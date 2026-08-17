@@ -108,6 +108,32 @@ service cloud.firestore {
         request.resource.data.lido == false;
     }
 
+    function validPublicBirthday(memberId) {
+      return request.resource.data.keys().hasOnly([
+          'membroId',
+          'nome',
+          'mes',
+          'dia',
+          'ministerio',
+          'foto',
+          'ativo',
+          'atualizadoEm'
+        ]) &&
+        request.resource.data.membroId == memberId &&
+        request.resource.data.nome is string &&
+        request.resource.data.nome.size() >= 2 &&
+        request.resource.data.nome.size() <= 140 &&
+        request.resource.data.mes is int &&
+        request.resource.data.mes >= 1 &&
+        request.resource.data.mes <= 12 &&
+        request.resource.data.dia is int &&
+        request.resource.data.dia >= 1 &&
+        request.resource.data.dia <= 31 &&
+        request.resource.data.ministerio is string &&
+        request.resource.data.foto is string &&
+        request.resource.data.ativo is bool;
+    }
+
     function memberSelfUpdate() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
         'nome',
@@ -145,6 +171,17 @@ service cloud.firestore {
     match /galeria/{id} {
       allow read: if true;
       allow write: if hasPermission('galeria');
+    }
+
+    match /aniversariantesPublicos/{id} {
+      allow read: if true;
+      allow create, update: if (hasPermission('membros') ||
+        hasPermission('usuarios') ||
+        (activeUser() && isOwnMember(id))) &&
+        validPublicBirthday(id);
+      allow delete: if hasPermission('membros') ||
+        hasPermission('usuarios') ||
+        (activeUser() && isOwnMember(id));
     }
 
     match /ensinoMateriais/{id} {
