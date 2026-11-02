@@ -3,6 +3,7 @@ import {
   createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
 } from 'firebase/auth'
@@ -24,10 +25,22 @@ import {
 } from 'firebase/firestore'
 import { auth, db, firebaseConfig } from '../services/firebase'
 import { uploadArquivoCloudinary } from '../services/cloudinary'
+import { mostrarAviso } from '../services/avisos'
 import './Admin.css'
 import Louvor from './Louvor'
 
 const ADMIN_EMAILS = ['suedilsonfilho@gmail.com']
+
+// Evita que o Excel interprete como fórmula um texto que começa com =, +, - ou @.
+function campoCsv(valor) {
+  let texto = String(valor ?? '')
+
+  if (/^[=+\-@\t\r]/.test(texto) && !/^[+-]?\d[\d\s().-]*$/.test(texto)) {
+    texto = `'${texto}`
+  }
+
+  return `"${texto.replaceAll('"', '""')}"`
+}
 
 function escaparHtml(valor) {
   return String(valor ?? '')
@@ -644,7 +657,7 @@ async function carregarEnsinoMateriais() {
 
     setEnsinoMateriais(lista)
   } catch (error) {
-    alert('Erro ao carregar materiais de ensino.')
+    mostrarAviso('Erro ao carregar materiais de ensino.')
     console.error(error)
   }
 }
@@ -684,9 +697,9 @@ async function enviarCapaEnsino(event) {
 
     event.target.value = ''
 
-    alert('Capa enviada com sucesso!')
+    mostrarAviso('Capa enviada com sucesso!')
   } catch (error) {
-    alert('Erro ao enviar capa.')
+    mostrarAviso('Erro ao enviar capa.')
     console.error(error)
   } finally {
     setEnviandoCapaEnsino(false)
@@ -699,7 +712,7 @@ async function enviarPdfEnsino(event) {
   if (!file) return
 
   if (file.type !== 'application/pdf') {
-    alert('Selecione um arquivo PDF.')
+    mostrarAviso('Selecione um arquivo PDF.')
     event.target.value = ''
     return
   }
@@ -720,7 +733,7 @@ async function enviarPdfEnsino(event) {
 
     event.target.value = ''
 
-    alert('PDF enviado com sucesso!')
+    mostrarAviso('PDF enviado com sucesso!')
   } catch (error) {
     const mensagemErro = error.message || ''
     const limiteCloudinary = mensagemErro.match(/Maximum is (\d+)/i)
@@ -729,7 +742,7 @@ async function enviarPdfEnsino(event) {
       : '10 MB'
 
     if (mensagemErro.toLowerCase().includes('file size too large')) {
-      alert(
+      mostrarAviso(
         `Erro ao enviar PDF.
 
 O arquivo tem ${formatarTamanhoArquivo(file.size)}, mas o Cloudinary está limitado a ${limiteFormatado} neste preset.
@@ -740,7 +753,7 @@ Aumente o limite do upload preset "filhos_da_graca_unsigned" no Cloudinary ou en
       return
     }
 
-    alert(
+    mostrarAviso(
       `Erro ao enviar PDF.
 
 ${mensagemErro || 'Verifique o tamanho do arquivo e as configurações do Cloudinary.'}`,
@@ -766,12 +779,12 @@ async function salvarEnsinoMaterial(event) {
   event.preventDefault()
 
   if (!ensinoForm.titulo.trim()) {
-    alert('Informe o título do material.')
+    mostrarAviso('Informe o título do material.')
     return
   }
 
   if (!ensinoForm.pdfUrl) {
-    alert('Envie o arquivo PDF do material.')
+    mostrarAviso('Envie o arquivo PDF do material.')
     return
   }
 
@@ -795,20 +808,20 @@ async function salvarEnsinoMaterial(event) {
     if (editandoEnsinoId) {
       await updateDoc(doc(db, 'ensinoMateriais', editandoEnsinoId), dadosMaterial)
 
-      alert('Material atualizado com sucesso!')
+      mostrarAviso('Material atualizado com sucesso!')
     } else {
       await addDoc(collection(db, 'ensinoMateriais'), {
         ...dadosMaterial,
         criadoEm: serverTimestamp(),
       })
 
-      alert('Material cadastrado com sucesso!')
+      mostrarAviso('Material cadastrado com sucesso!')
     }
 
     limparFormularioEnsino()
     await carregarEnsinoMateriais()
   } catch (error) {
-    alert('Erro ao salvar material de ensino.')
+    mostrarAviso('Erro ao salvar material de ensino.')
     console.error(error)
   } finally {
     setLoading(false)
@@ -847,7 +860,7 @@ async function alternarStatusEnsinoMaterial(material) {
 
     await carregarEnsinoMateriais()
   } catch (error) {
-    alert('Erro ao alterar status do material.')
+    mostrarAviso('Erro ao alterar status do material.')
     console.error(error)
   }
 }
@@ -861,7 +874,7 @@ async function excluirEnsinoMaterial(id) {
     await deleteDoc(doc(db, 'ensinoMateriais', id))
     await carregarEnsinoMateriais()
   } catch (error) {
-    alert('Erro ao excluir material de ensino.')
+    mostrarAviso('Erro ao excluir material de ensino.')
     console.error(error)
   }
 }
@@ -957,12 +970,12 @@ async function salvarUsuarioPermissao(event) {
   event.preventDefault()
 
   if (!usuarioPermissaoForm.nome.trim()) {
-    alert('Informe o nome do usuário.')
+    mostrarAviso('Informe o nome do usuário.')
     return
   }
 
   if (!usuarioPermissaoForm.email.trim()) {
-    alert('Informe o e-mail do usuário.')
+    mostrarAviso('Informe o e-mail do usuário.')
     return
   }
 
@@ -971,7 +984,7 @@ async function salvarUsuarioPermissao(event) {
   !usuarioPermissaoForm.usuarioExistente &&
   !usuarioPermissaoForm.senha.trim()
 ) {
-  alert('Informe uma senha inicial para o novo usuário.')
+  mostrarAviso('Informe uma senha inicial para o novo usuário.')
   return
 }
 
@@ -980,7 +993,7 @@ if (
   usuarioPermissaoForm.usuarioExistente &&
   !usuarioPermissaoForm.uid.trim()
 ) {
-  alert('Informe o UID do usuário já existente no Firebase Authentication.')
+  mostrarAviso('Informe o UID do usuário já existente no Firebase Authentication.')
   return
 }
 
@@ -988,7 +1001,7 @@ if (
     usuarioPermissaoForm.perfil === 'membro' &&
     !usuarioPermissaoForm.membroId.trim()
   ) {
-    alert('Para perfil de membro, vincule o cadastro de membro.')
+    mostrarAviso('Para perfil de membro, vincule o cadastro de membro.')
     return
   }
 
@@ -1002,7 +1015,7 @@ if (
     )
 
     if (usuarioDuplicado) {
-      alert(
+      mostrarAviso(
         'Já existe um usuário cadastrado com este e-mail. Use outro e-mail ou edite o cadastro existente.',
       )
       return
@@ -1039,23 +1052,23 @@ if (!editandoUsuarioPermissaoId && !usuarioPermissaoForm.usuarioExistente) {
     await carregarUsuariosPermissoes()
     limparFormularioUsuarioPermissao()
 
-    alert('Usuário e permissões salvos com sucesso.')
+    mostrarAviso('Usuário e permissões salvos com sucesso.')
   } catch (error) {
     console.error('Erro ao salvar usuário.', error)
 
     if (error.code === 'auth/email-already-in-use') {
-      alert(
+      mostrarAviso(
         'Este e-mail já existe no Firebase Authentication. Use outro e-mail ou edite as permissões já existentes.',
       )
       return
     }
 
     if (error.code === 'auth/weak-password') {
-      alert('A senha precisa ter pelo menos 6 caracteres.')
+      mostrarAviso('A senha precisa ter pelo menos 6 caracteres.')
       return
     }
 
-    alert(
+    mostrarAviso(
   `Erro ao salvar usuário.
 
 Código: ${error.code || 'sem código'}
@@ -1113,16 +1126,16 @@ async function removerUsuarioPermissao(usuarioPermissao) {
   try {
     await deleteDoc(doc(db, 'usuariosPermissoes', usuarioPermissao.id))
     await carregarUsuariosPermissoes()
-    alert('Registro de permissões removido com sucesso.')
+    mostrarAviso('Registro de permissões removido com sucesso.')
   } catch (error) {
-    alert('Erro ao remover o registro de permissões.')
+    mostrarAviso('Erro ao remover o registro de permissões.')
     console.error(error)
   }
 }
 
 async function aprovarUsuarioPendente(usuarioPermissao) {
   if (!usuarioPermissao.membroId) {
-    alert('Este usuário não está vinculado a um cadastro de membro.')
+    mostrarAviso('Este usuário não está vinculado a um cadastro de membro.')
     return
   }
 
@@ -1145,7 +1158,7 @@ async function aprovarUsuarioPendente(usuarioPermissao) {
       !membroSnapshot.exists() ||
       membroSnapshot.data().usuarioUid !== usuarioPermissao.id
     ) {
-      alert(
+      mostrarAviso(
         'O cadastro de membro vinculado não pertence a este usuário. Verifique antes de aprovar.',
       )
       return
@@ -1170,9 +1183,9 @@ async function aprovarUsuarioPendente(usuarioPermissao) {
       await carregarMembros()
     }
 
-    alert('Usuário aprovado com sucesso.')
+    mostrarAviso('Usuário aprovado com sucesso.')
   } catch (error) {
-    alert('Erro ao aprovar usuário pendente.')
+    mostrarAviso('Erro ao aprovar usuário pendente.')
     console.error(error)
   } finally {
     setCriandoUsuarioAuth(false)
@@ -1185,33 +1198,59 @@ async function login(event) {
     try {
       await signInWithEmailAndPassword(auth, email, password)
     } catch (error) {
-      alert('Não foi possível entrar. Verifique o e-mail e a senha.')
+      mostrarAviso('Não foi possível entrar. Verifique o e-mail e a senha.')
       console.error(error)
     } finally {
       setLoading(false)
     }
   }
 
+async function recuperarSenha() {
+  const emailInformado = email.trim().toLowerCase()
+
+  if (!emailInformado) {
+    mostrarAviso('Digite seu e-mail no campo acima para receber o link de nova senha.', 'info')
+    return
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, emailInformado)
+  } catch (error) {
+    if (error.code === 'auth/invalid-email') {
+      mostrarAviso('Este e-mail não é válido.', 'erro')
+      return
+    }
+
+    console.error(error)
+  }
+
+  // Mesma mensagem para e-mail cadastrado ou não, para não revelar quem tem conta.
+  mostrarAviso(
+    'Se este e-mail estiver cadastrado, você receberá um link para criar uma nova senha. Confira também a caixa de spam.',
+    'sucesso',
+  )
+}
+
 async function cadastrarMembroPendente(event) {
   event.preventDefault()
 
   if (!cadastroMembroForm.nome.trim()) {
-    alert('Informe seu nome completo.')
+    mostrarAviso('Informe seu nome completo.')
     return
   }
 
   if (!cadastroMembroForm.email.trim()) {
-    alert('Informe seu e-mail.')
+    mostrarAviso('Informe seu e-mail.')
     return
   }
 
   if (cadastroMembroForm.senha.length < 6) {
-    alert('A senha precisa ter pelo menos 6 caracteres.')
+    mostrarAviso('A senha precisa ter pelo menos 6 caracteres.')
     return
   }
 
   if (cadastroMembroForm.senha !== cadastroMembroForm.confirmarSenha) {
-    alert('As senhas não conferem.')
+    mostrarAviso('As senhas não conferem.')
     return
   }
 
@@ -1277,21 +1316,21 @@ async function cadastrarMembroPendente(event) {
       confirmarSenha: '',
     })
 
-    alert('Cadastro enviado com sucesso. Aguarde a aprovação da liderança.')
+    mostrarAviso('Cadastro enviado com sucesso. Aguarde a aprovação da liderança.')
   } catch (error) {
     console.error('Erro ao solicitar cadastro de membro.', error)
 
     if (error.code === 'auth/email-already-in-use') {
-      alert('Este e-mail já possui cadastro. Faça login ou fale com a liderança.')
+      mostrarAviso('Este e-mail já possui cadastro. Faça login ou fale com a liderança.')
       return
     }
 
     if (error.code === 'auth/weak-password') {
-      alert('A senha precisa ter pelo menos 6 caracteres.')
+      mostrarAviso('A senha precisa ter pelo menos 6 caracteres.')
       return
     }
 
-    alert('Não foi possível enviar seu cadastro. Tente novamente.')
+    mostrarAviso('Não foi possível enviar seu cadastro. Tente novamente.')
   } finally {
     setLoading(false)
   }
@@ -1317,7 +1356,7 @@ async function cadastrarMembroPendente(event) {
     event.preventDefault()
 
     if (!form.dia || !form.titulo || !form.horario) {
-      alert('Preencha dia, título e horário.')
+      mostrarAviso('Preencha dia, título e horário.')
       return
     }
 
@@ -1333,7 +1372,7 @@ async function cadastrarMembroPendente(event) {
           atualizadoEm: serverTimestamp(),
         })
 
-        alert('Programação atualizada com sucesso!')
+        mostrarAviso('Programação atualizada com sucesso!')
       } else {
         await addDoc(collection(db, 'programacao'), {
           dia: form.dia,
@@ -1345,7 +1384,7 @@ async function cadastrarMembroPendente(event) {
           criadoEm: serverTimestamp(),
         })
 
-        alert('Programação cadastrada com sucesso!')
+        mostrarAviso('Programação cadastrada com sucesso!')
       }
 
       setForm({
@@ -1358,7 +1397,7 @@ async function cadastrarMembroPendente(event) {
       setEditandoId(null)
       await carregarProgramacao()
     } catch (error) {
-      alert('Erro ao salvar programação.')
+      mostrarAviso('Erro ao salvar programação.')
       console.error(error)
     } finally {
       setLoading(false)
@@ -1402,7 +1441,7 @@ async function cadastrarMembroPendente(event) {
       await deleteDoc(doc(db, 'programacao', id))
       await carregarProgramacao()
     } catch (error) {
-      alert('Erro ao excluir programação.')
+      mostrarAviso('Erro ao excluir programação.')
       console.error(error)
     }
   }
@@ -1416,7 +1455,7 @@ async function cadastrarMembroPendente(event) {
 
       await carregarProgramacao()
     } catch (error) {
-      alert('Erro ao alterar status da programação.')
+      mostrarAviso('Erro ao alterar status da programação.')
       console.error(error)
     }
   }
@@ -1447,7 +1486,7 @@ async function cadastrarMembroPendente(event) {
       await batch.commit()
       await carregarProgramacao()
     } catch (error) {
-      alert('Erro ao ordenar programação.')
+      mostrarAviso('Erro ao ordenar programação.')
       console.error(error)
     }
   }
@@ -1468,7 +1507,7 @@ async function cadastrarMembroPendente(event) {
     event.preventDefault()
 
     if (!eventoForm.titulo || !eventoForm.data) {
-      alert('Preencha pelo menos o título e a data do evento.')
+      mostrarAviso('Preencha pelo menos o título e a data do evento.')
       return
     }
 
@@ -1486,7 +1525,7 @@ async function cadastrarMembroPendente(event) {
           atualizadoEm: serverTimestamp(),
         })
 
-        alert('Evento atualizado com sucesso!')
+        mostrarAviso('Evento atualizado com sucesso!')
       } else {
         await addDoc(collection(db, 'eventos'), {
           titulo: eventoForm.titulo,
@@ -1499,7 +1538,7 @@ async function cadastrarMembroPendente(event) {
           criadoEm: serverTimestamp(),
         })
 
-        alert('Evento cadastrado com sucesso!')
+        mostrarAviso('Evento cadastrado com sucesso!')
       }
 
       setEventoForm({
@@ -1514,7 +1553,7 @@ async function cadastrarMembroPendente(event) {
       setEditandoEventoId(null)
       await carregarEventos()
     } catch (error) {
-      alert('Erro ao salvar evento.')
+      mostrarAviso('Erro ao salvar evento.')
       console.error(error)
     } finally {
       setLoading(false)
@@ -1562,7 +1601,7 @@ async function cadastrarMembroPendente(event) {
       await deleteDoc(doc(db, 'eventos', id))
       await carregarEventos()
     } catch (error) {
-      alert('Erro ao excluir evento.')
+      mostrarAviso('Erro ao excluir evento.')
       console.error(error)
     }
   }
@@ -1576,7 +1615,7 @@ async function cadastrarMembroPendente(event) {
 
       await carregarEventos()
     } catch (error) {
-      alert('Erro ao alterar status do evento.')
+      mostrarAviso('Erro ao alterar status do evento.')
       console.error(error)
     }
   }
@@ -1599,7 +1638,7 @@ async function cadastrarMembroPendente(event) {
         })
       }
     } catch (error) {
-      alert('Erro ao carregar localização.')
+      mostrarAviso('Erro ao carregar localização.')
       console.error(error)
     }
   }
@@ -1608,7 +1647,7 @@ async function cadastrarMembroPendente(event) {
     event.preventDefault()
 
     if (!localizacaoForm.endereco) {
-      alert('Preencha pelo menos o endereço.')
+      mostrarAviso('Preencha pelo menos o endereço.')
       return
     }
 
@@ -1629,9 +1668,9 @@ async function cadastrarMembroPendente(event) {
         { merge: true },
       )
 
-      alert('Localização salva com sucesso!')
+      mostrarAviso('Localização salva com sucesso!')
     } catch (error) {
-      alert('Erro ao salvar localização.')
+      mostrarAviso('Erro ao salvar localização.')
       console.error(error)
     } finally {
       setLoading(false)
@@ -1659,7 +1698,7 @@ async function carregarContribuicao() {
       })
     }
   } catch (error) {
-    alert('Erro ao carregar dados de contribuição.')
+    mostrarAviso('Erro ao carregar dados de contribuição.')
     console.error(error)
   }
 }
@@ -1682,9 +1721,9 @@ async function enviarQrCodePix(event) {
 
     event.target.value = ''
 
-    alert('QR Code enviado com sucesso!')
+    mostrarAviso('QR Code enviado com sucesso!')
   } catch (error) {
-    alert('Erro ao enviar QR Code.')
+    mostrarAviso('Erro ao enviar QR Code.')
     console.error(error)
   } finally {
     setEnviandoQrCodePix(false)
@@ -1695,12 +1734,12 @@ async function salvarContribuicao(event) {
   event.preventDefault()
 
   if (!contribuicaoForm.titulo) {
-    alert('Preencha o título da seção.')
+    mostrarAviso('Preencha o título da seção.')
     return
   }
 
   if (!contribuicaoForm.chavePix) {
-    alert('Preencha a chave Pix.')
+    mostrarAviso('Preencha a chave Pix.')
     return
   }
 
@@ -1723,9 +1762,9 @@ async function salvarContribuicao(event) {
       { merge: true },
     )
 
-    alert('Dados de contribuição salvos com sucesso!')
+    mostrarAviso('Dados de contribuição salvos com sucesso!')
   } catch (error) {
-    alert('Erro ao salvar dados de contribuição.')
+    mostrarAviso('Erro ao salvar dados de contribuição.')
     console.error(error)
   } finally {
     setLoading(false)
@@ -1743,7 +1782,7 @@ async function carregarContasBancarias() {
 
     setContasBancarias(lista)
   } catch (error) {
-    alert('Erro ao carregar contas bancárias.')
+    mostrarAviso('Erro ao carregar contas bancárias.')
     console.error(error)
   }
 }
@@ -1767,7 +1806,7 @@ async function salvarContaBancaria(event) {
   event.preventDefault()
 
   if (!contaBancariaForm.nome) {
-    alert('Preencha o nome da conta.')
+    mostrarAviso('Preencha o nome da conta.')
     return
   }
 
@@ -1792,20 +1831,20 @@ async function salvarContaBancaria(event) {
 
     if (editandoContaBancariaId) {
       await updateDoc(doc(db, 'contasBancarias', editandoContaBancariaId), dadosConta)
-      alert('Conta bancária atualizada com sucesso!')
+      mostrarAviso('Conta bancária atualizada com sucesso!')
     } else {
       await addDoc(collection(db, 'contasBancarias'), {
         ...dadosConta,
         criadoEm: serverTimestamp(),
       })
 
-      alert('Conta bancária cadastrada com sucesso!')
+      mostrarAviso('Conta bancária cadastrada com sucesso!')
     }
 
     limparFormularioContaBancaria()
     await carregarContasBancarias()
   } catch (error) {
-    alert('Erro ao salvar conta bancária.')
+    mostrarAviso('Erro ao salvar conta bancária.')
     console.error(error)
   } finally {
     setLoading(false)
@@ -1850,7 +1889,7 @@ async function alternarStatusContaBancaria(conta) {
 
     await carregarContasBancarias()
   } catch (error) {
-    alert('Erro ao alterar status da conta bancária.')
+    mostrarAviso('Erro ao alterar status da conta bancária.')
     console.error(error)
   }
 }
@@ -1864,7 +1903,7 @@ async function excluirContaBancaria(id) {
     await deleteDoc(doc(db, 'contasBancarias', id))
     await carregarContasBancarias()
   } catch (error) {
-    alert('Erro ao excluir conta bancária.')
+    mostrarAviso('Erro ao excluir conta bancária.')
     console.error(error)
   }
 }
@@ -1880,7 +1919,7 @@ async function carregarArrecadacoes() {
 
     setArrecadacoes(lista)
   } catch (error) {
-    alert('Erro ao carregar arrecadações.')
+    mostrarAviso('Erro ao carregar arrecadações.')
     console.error(error)
   }
 }
@@ -1929,9 +1968,9 @@ async function enviarComprovanteArrecadacao(event) {
 
     event.target.value = ''
 
-    alert('Comprovante enviado com sucesso!')
+    mostrarAviso('Comprovante enviado com sucesso!')
   } catch (error) {
-    alert('Erro ao enviar comprovante.')
+    mostrarAviso('Erro ao enviar comprovante.')
     console.error(error)
   } finally {
     setEnviandoComprovanteArrecadacao(false)
@@ -1942,30 +1981,30 @@ async function salvarArrecadacao(event) {
   event.preventDefault()
 
   if (!arrecadacaoForm.data) {
-    alert('Preencha a data da arrecadação.')
+    mostrarAviso('Preencha a data da arrecadação.')
     return
   }
 
   if (!arrecadacaoForm.descricao) {
-    alert('Preencha a descrição da arrecadação.')
+    mostrarAviso('Preencha a descrição da arrecadação.')
     return
   }
 
   if (!arrecadacaoForm.valor) {
-    alert('Preencha o valor da arrecadação.')
+    mostrarAviso('Preencha o valor da arrecadação.')
     return
   }
 
   
     if (!arrecadacaoForm.valor) {
-    alert('Preencha o valor da arrecadação.')
+    mostrarAviso('Preencha o valor da arrecadação.')
     return
   }
 
   const valor = Number(String(arrecadacaoForm.valor).replace(',', '.'))
 
   if (!valor || valor <= 0) {
-    alert('Informe um valor válido.')
+    mostrarAviso('Informe um valor válido.')
     return
   }
 
@@ -1998,21 +2037,21 @@ async function salvarArrecadacao(event) {
         dadosArrecadacao,
       )
 
-      alert('Arrecadação atualizada com sucesso!')
+      mostrarAviso('Arrecadação atualizada com sucesso!')
     } else {
       await addDoc(collection(db, 'arrecadacoes'), {
         ...dadosArrecadacao,
         criadoEm: serverTimestamp(),
       })
 
-      alert('Arrecadação cadastrada com sucesso!')
+      mostrarAviso('Arrecadação cadastrada com sucesso!')
     }
 
     limparFormularioArrecadacao()
     setFormArrecadacaoAberto(false)
     await carregarArrecadacoes()
   } catch (error) {
-    alert('Erro ao salvar arrecadação.')
+    mostrarAviso('Erro ao salvar arrecadação.')
     console.error(error)
   } finally {
     setLoading(false)
@@ -2060,7 +2099,7 @@ async function alternarStatusArrecadacao(arrecadacao) {
 
     await carregarArrecadacoes()
   } catch (error) {
-    alert('Erro ao alterar status da arrecadação.')
+    mostrarAviso('Erro ao alterar status da arrecadação.')
     console.error(error)
   }
 }
@@ -2074,7 +2113,7 @@ async function excluirArrecadacao(id) {
     await deleteDoc(doc(db, 'arrecadacoes', id))
     await carregarArrecadacoes()
   } catch (error) {
-    alert('Erro ao excluir arrecadação.')
+    mostrarAviso('Erro ao excluir arrecadação.')
     console.error(error)
   }
 }
@@ -2090,7 +2129,7 @@ async function carregarContasPagar() {
 
     setContasPagar(lista)
   } catch (error) {
-    alert('Erro ao carregar contas a pagar.')
+    mostrarAviso('Erro ao carregar contas a pagar.')
     console.error(error)
   }
 }
@@ -2228,7 +2267,7 @@ async function exportarRelatorioFinanceiroPdf() {
     })
   } catch (error) {
     console.error('Erro ao gerar relatório financeiro PDF:', error)
-    alert('Não foi possível gerar o relatório financeiro em PDF. Tente novamente.')
+    mostrarAviso('Não foi possível gerar o relatório financeiro em PDF. Tente novamente.')
   } finally { setGerandoPdfFinanceiro(false) }
 }
 
@@ -2385,7 +2424,7 @@ function exportarRelatorioFinanceiroExcel() {
   ]
     .map((linha) =>
       linha
-        .map((campo) => `"${String(campo).replaceAll('"', '""')}"`)
+        .map((campo) => campoCsv(campo))
         .join(';'),
     )
     .join('\n')
@@ -2500,9 +2539,9 @@ async function enviarComprovanteContaPagar(event) {
 
     event.target.value = ''
 
-    alert('Comprovante enviado com sucesso!')
+    mostrarAviso('Comprovante enviado com sucesso!')
   } catch (error) {
-    alert('Erro ao enviar comprovante.')
+    mostrarAviso('Erro ao enviar comprovante.')
     console.error(error)
   } finally {
     setEnviandoComprovanteContaPagar(false)
@@ -2513,31 +2552,31 @@ async function salvarContaPagar(event) {
   event.preventDefault()
 
   if (!contaPagarForm.vencimento) {
-    alert('Preencha a data de vencimento.')
+    mostrarAviso('Preencha a data de vencimento.')
     return
   }
 
   if (!contaPagarForm.descricao) {
-    alert('Preencha a descrição da despesa.')
+    mostrarAviso('Preencha a descrição da despesa.')
     return
   }
 
   if (!contaPagarForm.valor) {
-    alert('Preencha o valor da despesa.')
+    mostrarAviso('Preencha o valor da despesa.')
     return
   }
 
   const valor = Number(String(contaPagarForm.valor).replace(',', '.'))
 
   if (!valor || valor <= 0) {
-    alert('Informe um valor válido.')
+    mostrarAviso('Informe um valor válido.')
     return
   }
 
   const numeroParcelas = Number(contaPagarForm.numeroParcelas || 1)
 
   if (contaPagarForm.parcelada && (!numeroParcelas || numeroParcelas < 2)) {
-    alert('Informe pelo menos 2 parcelas.')
+    mostrarAviso('Informe pelo menos 2 parcelas.')
     return
   }
 
@@ -2576,7 +2615,7 @@ async function salvarContaPagar(event) {
           : contaPagarForm.dataPagamento,
       })
 
-      alert('Despesa atualizada com sucesso!')
+      mostrarAviso('Despesa atualizada com sucesso!')
     } else if (contaPagarForm.parcelada) {
       const grupoParcelamentoId = crypto.randomUUID()
       const batch = writeBatch(db)
@@ -2610,7 +2649,7 @@ async function salvarContaPagar(event) {
 
       await batch.commit()
 
-      alert(`${numeroParcelas} parcelas cadastradas com sucesso!`)
+      mostrarAviso(`${numeroParcelas} parcelas cadastradas com sucesso!`)
     } else if (contaPagarForm.recorrente) {
       const grupoRecorrenciaId = crypto.randomUUID()
       const batch = writeBatch(db)
@@ -2643,7 +2682,7 @@ async function salvarContaPagar(event) {
 
       await batch.commit()
 
-      alert('Despesa recorrente cadastrada para os próximos 12 meses!')
+      mostrarAviso('Despesa recorrente cadastrada para os próximos 12 meses!')
     } else {
       await addDoc(collection(db, 'contasPagar'), {
         ...dadosBase,
@@ -2655,14 +2694,14 @@ async function salvarContaPagar(event) {
         criadoEm: serverTimestamp(),
       })
 
-      alert('Despesa cadastrada com sucesso!')
+      mostrarAviso('Despesa cadastrada com sucesso!')
     }
 
     limparFormularioContaPagar()
     setFormContaPagarAberto(false)
     await carregarContasPagar()
   } catch (error) {
-    alert('Erro ao salvar despesa.')
+    mostrarAviso('Erro ao salvar despesa.')
     console.error(error)
   } finally {
     setLoading(false)
@@ -2717,7 +2756,7 @@ async function marcarContaPagarComoPaga(conta) {
 
     await carregarContasPagar()
   } catch (error) {
-    alert('Erro ao marcar despesa como paga.')
+    mostrarAviso('Erro ao marcar despesa como paga.')
     console.error(error)
   }
 }
@@ -2737,7 +2776,7 @@ async function reabrirContaPagar(conta) {
 
     await carregarContasPagar()
   } catch (error) {
-    alert('Erro ao reabrir despesa.')
+    mostrarAviso('Erro ao reabrir despesa.')
     console.error(error)
   }
 }
@@ -2756,7 +2795,7 @@ async function cancelarContaPagar(conta) {
 
     await carregarContasPagar()
   } catch (error) {
-    alert('Erro ao cancelar despesa.')
+    mostrarAviso('Erro ao cancelar despesa.')
     console.error(error)
   }
 }
@@ -2770,7 +2809,7 @@ async function excluirContaPagar(id) {
     await deleteDoc(doc(db, 'contasPagar', id))
     await carregarContasPagar()
   } catch (error) {
-    alert('Erro ao excluir despesa.')
+    mostrarAviso('Erro ao excluir despesa.')
     console.error(error)
   }
 }
@@ -2786,7 +2825,7 @@ async function carregarAprovisionamentos() {
 
     setAprovisionamentos(lista)
   } catch (error) {
-    alert('Erro ao carregar aprovisionamentos.')
+    mostrarAviso('Erro ao carregar aprovisionamentos.')
     console.error(error)
   }
 }
@@ -2822,24 +2861,24 @@ async function salvarAprovisionamento(event) {
   event.preventDefault()
 
   if (!aprovisionamentoForm.data) {
-    alert('Preencha a data da reserva.')
+    mostrarAviso('Preencha a data da reserva.')
     return
   }
 
   if (!aprovisionamentoForm.descricao) {
-    alert('Preencha a descrição da reserva.')
+    mostrarAviso('Preencha a descrição da reserva.')
     return
   }
 
   if (!aprovisionamentoForm.valor) {
-    alert('Preencha o valor reservado.')
+    mostrarAviso('Preencha o valor reservado.')
     return
   }
 
   const valor = Number(String(aprovisionamentoForm.valor).replace(',', '.'))
 
   if (!valor || valor <= 0) {
-    alert('Informe um valor válido.')
+    mostrarAviso('Informe um valor válido.')
     return
   }
 
@@ -2874,21 +2913,21 @@ async function salvarAprovisionamento(event) {
         dadosAprovisionamento,
       )
 
-      alert('Aprovisionamento atualizado com sucesso!')
+      mostrarAviso('Aprovisionamento atualizado com sucesso!')
     } else {
       await addDoc(collection(db, 'aprovisionamentos'), {
         ...dadosAprovisionamento,
         criadoEm: serverTimestamp(),
       })
 
-      alert('Aprovisionamento cadastrado com sucesso!')
+      mostrarAviso('Aprovisionamento cadastrado com sucesso!')
     }
 
     limparFormularioAprovisionamento()
     setFormAprovisionamentoAberto(false)
     await carregarAprovisionamentos()
   } catch (error) {
-    alert('Erro ao salvar aprovisionamento.')
+    mostrarAviso('Erro ao salvar aprovisionamento.')
     console.error(error)
   } finally {
     setLoading(false)
@@ -2935,7 +2974,7 @@ async function marcarAprovisionamentoUtilizado(item) {
 
     await carregarAprovisionamentos()
   } catch (error) {
-    alert('Erro ao marcar aprovisionamento como utilizado.')
+    mostrarAviso('Erro ao marcar aprovisionamento como utilizado.')
     console.error(error)
   }
 }
@@ -2956,7 +2995,7 @@ async function cancelarAprovisionamento(item) {
 
     await carregarAprovisionamentos()
   } catch (error) {
-    alert('Erro ao cancelar aprovisionamento.')
+    mostrarAviso('Erro ao cancelar aprovisionamento.')
     console.error(error)
   }
 }
@@ -2977,7 +3016,7 @@ async function reativarAprovisionamento(item) {
 
     await carregarAprovisionamentos()
   } catch (error) {
-    alert('Erro ao reativar aprovisionamento.')
+    mostrarAviso('Erro ao reativar aprovisionamento.')
     console.error(error)
   }
 }
@@ -2991,7 +3030,7 @@ async function excluirAprovisionamento(id) {
     await deleteDoc(doc(db, 'aprovisionamentos', id))
     await carregarAprovisionamentos()
   } catch (error) {
-    alert('Erro ao excluir aprovisionamento.')
+    mostrarAviso('Erro ao excluir aprovisionamento.')
     console.error(error)
   }
 }
@@ -3007,7 +3046,7 @@ async function excluirAprovisionamento(id) {
 
       setPedidosOracao(lista)
     } catch (error) {
-      alert('Erro ao carregar pedidos de oração.')
+      mostrarAviso('Erro ao carregar pedidos de oração.')
       console.error(error)
     }
   }
@@ -3021,7 +3060,7 @@ async function excluirAprovisionamento(id) {
 
       await carregarPedidosOracao()
     } catch (error) {
-      alert('Erro ao alterar status do pedido.')
+      mostrarAviso('Erro ao alterar status do pedido.')
       console.error(error)
     }
   }
@@ -3035,7 +3074,7 @@ async function excluirAprovisionamento(id) {
       await deleteDoc(doc(db, 'pedidosOracao', id))
       await carregarPedidosOracao()
     } catch (error) {
-      alert('Erro ao excluir pedido de oração.')
+      mostrarAviso('Erro ao excluir pedido de oração.')
       console.error(error)
     }
   }
@@ -3080,7 +3119,7 @@ function pedidoOracaoDentroDoPeriodo(pedido) {
 
       setVideos(lista)
     } catch (error) {
-      alert('Erro ao carregar vídeos.')
+      mostrarAviso('Erro ao carregar vídeos.')
       console.error(error)
     }
   }
@@ -3109,7 +3148,7 @@ function pedidoOracaoDentroDoPeriodo(pedido) {
     event.preventDefault()
 
     if (!youtubeConfigForm.apiKey.trim()) {
-      alert('Informe a API key do YouTube.')
+      mostrarAviso('Informe a API key do YouTube.')
       return
     }
 
@@ -3117,7 +3156,7 @@ function pedidoOracaoDentroDoPeriodo(pedido) {
       !youtubeConfigForm.uploadsPlaylistId.trim() &&
       !youtubeConfigForm.channelId.trim()
     ) {
-      alert('Informe a playlist de uploads ou o Channel ID do YouTube.')
+      mostrarAviso('Informe a playlist de uploads ou o Channel ID do YouTube.')
       return
     }
 
@@ -3137,9 +3176,9 @@ function pedidoOracaoDentroDoPeriodo(pedido) {
         { merge: true },
       )
 
-      alert('Configuração do YouTube salva com sucesso!')
+      mostrarAviso('Configuração do YouTube salva com sucesso!')
     } catch (error) {
-      alert('Erro ao salvar configuração do YouTube.')
+      mostrarAviso('Erro ao salvar configuração do YouTube.')
       console.error(error)
     } finally {
       setLoading(false)
@@ -3150,7 +3189,7 @@ function pedidoOracaoDentroDoPeriodo(pedido) {
     event.preventDefault()
 
     if (!videoForm.titulo || !videoForm.url) {
-      alert('Preencha pelo menos o título e o link do vídeo.')
+      mostrarAviso('Preencha pelo menos o título e o link do vídeo.')
       return
     }
 
@@ -3165,7 +3204,7 @@ function pedidoOracaoDentroDoPeriodo(pedido) {
           atualizadoEm: serverTimestamp(),
         })
 
-        alert('Vídeo atualizado com sucesso!')
+        mostrarAviso('Vídeo atualizado com sucesso!')
       } else {
         await addDoc(collection(db, 'videos'), {
           titulo: videoForm.titulo,
@@ -3175,7 +3214,7 @@ function pedidoOracaoDentroDoPeriodo(pedido) {
           criadoEm: serverTimestamp(),
         })
 
-        alert('Vídeo cadastrado com sucesso!')
+        mostrarAviso('Vídeo cadastrado com sucesso!')
       }
 
       setVideoForm({
@@ -3187,7 +3226,7 @@ function pedidoOracaoDentroDoPeriodo(pedido) {
       setEditandoVideoId(null)
       await carregarVideos()
     } catch (error) {
-      alert('Erro ao salvar vídeo.')
+      mostrarAviso('Erro ao salvar vídeo.')
       console.error(error)
     } finally {
       setLoading(false)
@@ -3229,7 +3268,7 @@ function pedidoOracaoDentroDoPeriodo(pedido) {
 
       await carregarVideos()
     } catch (error) {
-      alert('Erro ao alterar status do vídeo.')
+      mostrarAviso('Erro ao alterar status do vídeo.')
       console.error(error)
     }
   }
@@ -3243,7 +3282,7 @@ function pedidoOracaoDentroDoPeriodo(pedido) {
       await deleteDoc(doc(db, 'videos', id))
       await carregarVideos()
     } catch (error) {
-      alert('Erro ao excluir vídeo.')
+      mostrarAviso('Erro ao excluir vídeo.')
       console.error(error)
     }
   }
@@ -3260,7 +3299,7 @@ function pedidoOracaoDentroDoPeriodo(pedido) {
 
       setDocumentos(lista)
     } catch (error) {
-      alert('Erro ao carregar documentos.')
+      mostrarAviso('Erro ao carregar documentos.')
       console.error(error)
     }
   }
@@ -3276,7 +3315,7 @@ async function carregarGaleria() {
 
     setGaleria(lista)
   } catch (error) {
-    alert('Erro ao carregar galeria.')
+    mostrarAviso('Erro ao carregar galeria.')
     console.error(error)
   }
 }
@@ -3296,9 +3335,9 @@ async function carregarGaleria() {
         publicId: arquivo.publicId,
       }))
 
-      alert('Arquivo enviado com sucesso!')
+      mostrarAviso('Arquivo enviado com sucesso!')
     } catch (error) {
-      alert('Erro ao enviar arquivo.')
+      mostrarAviso('Erro ao enviar arquivo.')
       console.error(error)
     } finally {
       setEnviandoArquivo(false)
@@ -3309,7 +3348,7 @@ async function carregarGaleria() {
     event.preventDefault()
 
     if (!documentoForm.titulo || !documentoForm.url) {
-      alert('Preencha pelo menos o título e o link do documento.')
+      mostrarAviso('Preencha pelo menos o título e o link do documento.')
       return
     }
 
@@ -3326,7 +3365,7 @@ async function carregarGaleria() {
           atualizadoEm: serverTimestamp(),
         })
 
-        alert('Documento atualizado com sucesso!')
+        mostrarAviso('Documento atualizado com sucesso!')
       } else {
         await addDoc(collection(db, 'documentos'), {
           titulo: documentoForm.titulo,
@@ -3338,7 +3377,7 @@ async function carregarGaleria() {
           criadoEm: serverTimestamp(),
         })
 
-        alert('Documento cadastrado com sucesso!')
+        mostrarAviso('Documento cadastrado com sucesso!')
       }
 
       setDocumentoForm({
@@ -3352,7 +3391,7 @@ async function carregarGaleria() {
       setEditandoDocumentoId(null)
       await carregarDocumentos()
     } catch (error) {
-      alert('Erro ao salvar documento.')
+      mostrarAviso('Erro ao salvar documento.')
       console.error(error)
     } finally {
       setLoading(false)
@@ -3398,7 +3437,7 @@ async function carregarGaleria() {
 
       await carregarDocumentos()
     } catch (error) {
-      alert('Erro ao alterar status do documento.')
+      mostrarAviso('Erro ao alterar status do documento.')
       console.error(error)
     }
   }
@@ -3412,7 +3451,7 @@ async function carregarGaleria() {
       await deleteDoc(doc(db, 'documentos', id))
       await carregarDocumentos()
     } catch (error) {
-      alert('Erro ao excluir documento.')
+      mostrarAviso('Erro ao excluir documento.')
       console.error(error)
     }
   }
@@ -3463,13 +3502,13 @@ async function carregarGaleria() {
 
     event.target.value = ''
 
-    alert(
+    mostrarAviso(
       imagensEnviadas.length === 1
         ? 'Imagem adicionada com sucesso!'
         : `${imagensEnviadas.length} imagens adicionadas com sucesso!`,
     )
   } catch (error) {
-    alert('Erro ao enviar imagem da galeria.')
+    mostrarAviso('Erro ao enviar imagem da galeria.')
     console.error(error)
   } finally {
     setEnviandoImagemGaleria(false)
@@ -3480,17 +3519,17 @@ async function carregarGaleria() {
   event.preventDefault()
 
   if (!galeriaForm.titulo) {
-    alert('Preencha o título da galeria.')
+    mostrarAviso('Preencha o título da galeria.')
     return
   }
 
   if (editandoFotoId && !galeriaForm.imagem) {
-    alert('Envie uma imagem.')
+    mostrarAviso('Envie uma imagem.')
     return
   }
 
   if (!editandoFotoId && imagensGaleria.length === 0) {
-    alert('Selecione e envie pelo menos uma imagem.')
+    mostrarAviso('Selecione e envie pelo menos uma imagem.')
     return
   }
 
@@ -3519,7 +3558,7 @@ async function carregarGaleria() {
 
         await batch.commit()
 
-        alert('Álbum atualizado com sucesso!')
+        mostrarAviso('Álbum atualizado com sucesso!')
       } else {
         await updateDoc(doc(db, 'galeria', editandoFotoId), {
           ...dadosBase,
@@ -3527,7 +3566,7 @@ async function carregarGaleria() {
           imagemPublicId: galeriaForm.imagemPublicId,
         })
 
-        alert('Foto atualizada com sucesso!')
+        mostrarAviso('Foto atualizada com sucesso!')
       }
     } else {
       await Promise.all(
@@ -3541,7 +3580,7 @@ async function carregarGaleria() {
         ),
       )
 
-      alert(
+      mostrarAviso(
         imagensGaleria.length === 1
           ? 'Foto cadastrada com sucesso!'
           : `${imagensGaleria.length} fotos cadastradas com sucesso!`,
@@ -3551,7 +3590,7 @@ async function carregarGaleria() {
     limparFormularioGaleria()
     await carregarGaleria()
   } catch (error) {
-    alert('Erro ao salvar galeria.')
+    mostrarAviso('Erro ao salvar galeria.')
     console.error(error)
   } finally {
     setLoading(false)
@@ -3559,12 +3598,12 @@ async function carregarGaleria() {
 }
 async function adicionarFotosAoEventoGaleria() {
   if (!galeriaForm.titulo) {
-    alert('Preencha o título do álbum antes de salvar novas fotos.')
+    mostrarAviso('Preencha o título do álbum antes de salvar novas fotos.')
     return
   }
 
   if (imagensGaleria.length === 0) {
-    alert('Selecione pelo menos uma foto para adicionar.')
+    mostrarAviso('Selecione pelo menos uma foto para adicionar.')
     return
   }
 
@@ -3590,7 +3629,7 @@ async function adicionarFotosAoEventoGaleria() {
       ),
     )
 
-    alert(
+    mostrarAviso(
       imagensGaleria.length === 1
         ? 'Foto adicionada ao álbum com sucesso!'
         : `${imagensGaleria.length} fotos adicionadas ao álbum com sucesso!`,
@@ -3599,7 +3638,7 @@ async function adicionarFotosAoEventoGaleria() {
     setImagensGaleria([])
     await carregarGaleria()
   } catch (error) {
-    alert('Erro ao adicionar fotos ao álbum.')
+    mostrarAviso('Erro ao adicionar fotos ao álbum.')
     console.error(error)
   } finally {
     setLoading(false)
@@ -3638,7 +3677,7 @@ async function adicionarFotosAoEventoGaleria() {
 
       await carregarGaleria()
     } catch (error) {
-      alert('Erro ao alterar status da foto.')
+      mostrarAviso('Erro ao alterar status da foto.')
       console.error(error)
     }
   }
@@ -3652,7 +3691,7 @@ async function adicionarFotosAoEventoGaleria() {
       await deleteDoc(doc(db, 'galeria', id))
       await carregarGaleria()
     } catch (error) {
-      alert('Erro ao excluir foto da galeria.')
+      mostrarAviso('Erro ao excluir foto da galeria.')
       console.error(error)
     }
   }
@@ -3673,7 +3712,7 @@ async function alternarStatusAlbumGaleria(album) {
     await batch.commit()
     await carregarGaleria()
   } catch (error) {
-    alert('Erro ao alterar status do álbum.')
+    mostrarAviso('Erro ao alterar status do álbum.')
     console.error(error)
   }
 }
@@ -3693,7 +3732,7 @@ async function excluirFotoIndividualGaleria(foto) {
 
     await carregarGaleria()
   } catch (error) {
-    alert('Erro ao excluir foto do álbum.')
+    mostrarAviso('Erro ao excluir foto do álbum.')
     console.error(error)
   }
 }
@@ -3714,7 +3753,7 @@ async function excluirAlbumGaleria(album) {
     await batch.commit()
     await carregarGaleria()
   } catch (error) {
-    alert('Erro ao excluir álbum da galeria.')
+    mostrarAviso('Erro ao excluir álbum da galeria.')
     console.error(error)
   }
 }
@@ -3751,7 +3790,7 @@ async function carregarMeuCadastroMembro() {
       observacoes: dados.observacoes || '',
     })
   } catch (error) {
-    alert('Erro ao carregar seus dados.')
+    mostrarAviso('Erro ao carregar seus dados.')
     console.error(error)
   }
 }
@@ -3819,9 +3858,9 @@ async function enviarFotoMeusDados(event) {
 
     event.target.value = ''
 
-    alert('Foto enviada com sucesso!')
+    mostrarAviso('Foto enviada com sucesso!')
   } catch (error) {
-    alert('Erro ao enviar foto.')
+    mostrarAviso('Erro ao enviar foto.')
     console.error(error)
   } finally {
     setEnviandoFotoMeusDados(false)
@@ -3832,12 +3871,12 @@ async function salvarMeusDados(event) {
   event.preventDefault()
 
   if (!permissaoUsuario?.membroId) {
-    alert('Seu usuário não está vinculado a um cadastro de membro.')
+    mostrarAviso('Seu usuário não está vinculado a um cadastro de membro.')
     return
   }
 
   if (!meusDadosForm.nome.trim()) {
-    alert('Preencha seu nome.')
+    mostrarAviso('Preencha seu nome.')
     return
   }
 
@@ -3866,9 +3905,9 @@ async function salvarMeusDados(event) {
 
     await carregarMeuCadastroMembro()
 
-    alert('Seus dados foram atualizados com sucesso!')
+    mostrarAviso('Seus dados foram atualizados com sucesso!')
   } catch (error) {
-    alert('Erro ao salvar seus dados.')
+    mostrarAviso('Erro ao salvar seus dados.')
     console.error(error)
   } finally {
     setLoading(false)
@@ -3886,7 +3925,7 @@ async function salvarMeusDados(event) {
 
       setMembros(lista)
     } catch (error) {
-      alert('Erro ao carregar membros.')
+      mostrarAviso('Erro ao carregar membros.')
       console.error(error)
     }
   }
@@ -3907,9 +3946,9 @@ async function salvarMeusDados(event) {
         fotoPublicId: arquivo.publicId,
       }))
 
-      alert('Foto enviada com sucesso!')
+      mostrarAviso('Foto enviada com sucesso!')
     } catch (error) {
-      alert('Erro ao enviar foto.')
+      mostrarAviso('Erro ao enviar foto.')
       console.error(error)
     } finally {
       setEnviandoFotoMembro(false)
@@ -3920,7 +3959,7 @@ async function salvarMeusDados(event) {
     event.preventDefault()
 
     if (!membroForm.nome) {
-      alert('Preencha o nome do membro.')
+      mostrarAviso('Preencha o nome do membro.')
       return
     }
 
@@ -3950,7 +3989,7 @@ async function salvarMeusDados(event) {
       if (editandoMembroId) {
         await updateDoc(doc(db, 'membros', editandoMembroId), dadosMembro)
         await sincronizarAniversariantePublico(editandoMembroId, dadosMembro)
-        alert('Membro atualizado com sucesso!')
+        mostrarAviso('Membro atualizado com sucesso!')
       } else {
         const membroRef = await addDoc(collection(db, 'membros'), {
           ...dadosMembro,
@@ -3958,7 +3997,7 @@ async function salvarMeusDados(event) {
         })
         await sincronizarAniversariantePublico(membroRef.id, dadosMembro)
 
-        alert('Membro cadastrado com sucesso!')
+        mostrarAviso('Membro cadastrado com sucesso!')
       }
 
      setMembroForm({
@@ -3983,7 +4022,7 @@ async function salvarMeusDados(event) {
       await carregarMembros()
       setModoMembros('lista')
     } catch (error) {
-      alert('Erro ao salvar membro.')
+      mostrarAviso('Erro ao salvar membro.')
       console.error(error)
     } finally {
       setLoading(false)
@@ -4060,7 +4099,7 @@ async function salvarMeusDados(event) {
 
       await carregarMembros()
     } catch (error) {
-      alert('Erro ao alterar status do membro.')
+      mostrarAviso('Erro ao alterar status do membro.')
       console.error(error)
     }
   }
@@ -4075,7 +4114,7 @@ async function salvarMeusDados(event) {
       await deleteDoc(doc(db, 'aniversariantesPublicos', id))
       await carregarMembros()
     } catch (error) {
-      alert('Erro ao excluir membro.')
+      mostrarAviso('Erro ao excluir membro.')
       console.error(error)
     }
   }
@@ -4289,7 +4328,7 @@ function exportarAniversariantesExcel() {
   const conteudo = [cabecalho, ...linhas]
     .map((linha) =>
       linha
-        .map((campo) => `"${String(campo).replaceAll('"', '""')}"`)
+        .map((campo) => campoCsv(campo))
         .join(';'),
     )
     .join('\n')
@@ -4353,7 +4392,7 @@ function exportarMembrosExcel() {
   const conteudo = [cabecalho, ...linhas]
     .map((linha) =>
       linha
-        .map((campo) => `"${String(campo).replaceAll('"', '""')}"`)
+        .map((campo) => campoCsv(campo))
         .join(';'),
     )
     .join('\n')
@@ -4391,7 +4430,7 @@ function exportarPedidosOracaoExcel() {
   const conteudo = [cabecalho, ...linhas]
     .map((linha) =>
       linha
-        .map((campo) => `"${String(campo).replaceAll('"', '""')}"`)
+        .map((campo) => campoCsv(campo))
         .join(';'),
     )
     .join('\n')
@@ -5736,6 +5775,14 @@ function formatarMoeda(valor) {
 
               <button type="submit" disabled={loading}>
                 {loading ? 'Entrando...' : 'Entrar'}
+              </button>
+
+              <button
+                type="button"
+                className="login-forgot-password"
+                onClick={recuperarSenha}
+              >
+                Esqueci minha senha
               </button>
             </form>
           ) : (

@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore'
 import { auth, db } from '../services/firebase'
 import { uploadArquivoCloudinary } from '../services/cloudinary'
+import { mostrarAviso } from '../services/avisos'
 import './Admin.css'
 
 const PERMISSOES_MEMBRO = ['meusDados']
@@ -49,7 +50,7 @@ async function enviarFotoCadastroMembro(event) {
     event.target.value = ''
   } catch (error) {
     console.error('Erro ao enviar foto do cadastro.', error)
-    alert('Não foi possível enviar a foto. Tente novamente.')
+    mostrarAviso('Não foi possível enviar a foto. Tente novamente.')
   } finally {
     setEnviandoFotoCadastro(false)
   }
@@ -59,22 +60,22 @@ async function enviarFotoCadastroMembro(event) {
     event.preventDefault()
 
     if (!cadastroMembroForm.nome.trim()) {
-      alert('Informe seu nome completo.')
+      mostrarAviso('Informe seu nome completo.')
       return
     }
 
     if (!cadastroMembroForm.email.trim()) {
-      alert('Informe seu e-mail.')
+      mostrarAviso('Informe seu e-mail.')
       return
     }
 
     if (cadastroMembroForm.senha.length < 6) {
-      alert('A senha precisa ter pelo menos 6 caracteres.')
+      mostrarAviso('A senha precisa ter pelo menos 6 caracteres.')
       return
     }
 
     if (cadastroMembroForm.senha !== cadastroMembroForm.confirmarSenha) {
-      alert('As senhas não conferem.')
+      mostrarAviso('As senhas não conferem.')
       return
     }
 
@@ -145,18 +146,18 @@ async function enviarFotoCadastroMembro(event) {
       console.error('Erro ao solicitar cadastro de membro.', error)
 
       if (error.code === 'auth/email-already-in-use') {
-        alert(
+        mostrarAviso(
           'Este e-mail já possui cadastro. Faça login ou fale com a liderança.',
         )
         return
       }
 
       if (error.code === 'auth/weak-password') {
-        alert('A senha precisa ter pelo menos 6 caracteres.')
+        mostrarAviso('A senha precisa ter pelo menos 6 caracteres.')
         return
       }
 
-      alert('Não foi possível enviar seu cadastro. Tente novamente.')
+      mostrarAviso('Não foi possível enviar seu cadastro. Tente novamente.')
     } finally {
       setLoading(false)
     }

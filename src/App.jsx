@@ -16,6 +16,7 @@ import {
   where,
 } from 'firebase/firestore'
 import './App.css'
+import { mostrarAviso } from './services/avisos'
 import Admin from './pages/Admin'
 import { db } from './services/firebase'
 
@@ -121,6 +122,7 @@ function Home() {
   const [contribuicaoHome, setContribuicaoHome] = useState(null)
   const [pixCopiado, setPixCopiado] = useState(false)
   const [albumAberto, setAlbumAberto] = useState(null)
+  const [menuAberto, setMenuAberto] = useState(false)
   const [fotoAtualAlbum, setFotoAtualAlbum] = useState(0)
   const [pedidoForm, setPedidoForm] = useState({
   nome: '',
@@ -354,7 +356,7 @@ async function copiarChavePix() {
       setPixCopiado(false)
     }, 2500)
   } catch (error) {
-    alert('Não foi possível copiar a chave Pix.')
+    mostrarAviso('Não foi possível copiar a chave Pix.')
     console.error(error)
   }
 }
@@ -374,7 +376,7 @@ async function enviarPedidoOracao(event) {
   event.preventDefault()
 
   if (!pedidoForm.nome || !pedidoForm.pedido) {
-    alert('Preencha seu nome e o pedido de oração.')
+    mostrarAviso('Preencha seu nome e o pedido de oração.')
     return
   }
 
@@ -395,9 +397,9 @@ async function enviarPedidoOracao(event) {
       pedido: '',
     })
 
-    alert('Pedido de oração enviado com sucesso!')
+    mostrarAviso('Pedido de oração enviado com sucesso!')
   } catch (error) {
-    alert('Não foi possível enviar o pedido de oração. Tente novamente.')
+    mostrarAviso('Não foi possível enviar o pedido de oração. Tente novamente.')
     console.error('Erro ao enviar pedido de oração:', error)
   } finally {
     setEnviandoPedido(false)
@@ -518,7 +520,10 @@ async function carregarVideosYoutube(configYoutube) {
         <span></span>
       </div>
 
-   <header className="header notranslate" translate="no">
+   <header
+  className={`header notranslate ${menuAberto ? 'menu-aberto' : ''}`}
+  translate="no"
+>
   <a className="brand" href="#inicio" aria-label="Filhos da Graça - Início">
     <img
       src="/Filhosdagraça.png"
@@ -527,7 +532,27 @@ async function carregarVideosYoutube(configYoutube) {
     />
   </a>
 
-  <nav className="menu notranslate" translate="no">
+  <button
+    type="button"
+    className="menu-toggle"
+    aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'}
+    aria-expanded={menuAberto}
+    aria-controls="menu-principal"
+    onClick={() => setMenuAberto((aberto) => !aberto)}
+  >
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <nav
+    className="menu notranslate"
+    id="menu-principal"
+    translate="no"
+    onClick={(event) => {
+      if (event.target.closest('a')) setMenuAberto(false)
+    }}
+  >
     <a href="#inicio">Início</a>
     <a href="#cultos">Cultos</a>
     <a href="/ensino">Biblioteca</a>

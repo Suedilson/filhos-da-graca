@@ -125,7 +125,8 @@ service cloud.firestore {
         request.resource.data.pedido.size() >= 3 &&
         request.resource.data.pedido.size() <= 2500 &&
         (!('telefone' in request.resource.data) ||
-          request.resource.data.telefone is string) &&
+          (request.resource.data.telefone is string &&
+            request.resource.data.telefone.size() <= 40)) &&
         request.resource.data.lido == false;
     }
 

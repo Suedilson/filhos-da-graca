@@ -11,3 +11,10 @@
 body {
   min-width: 320px;
 }
+/* Placeholders mais claros e leves, para não parecerem texto já preenchido */
+input::placeholder,
+textarea::placeholder {
+  color: #9aa1b5 !important;
+  font-weight: 400 !important;
+  opacity: 1;
+}
