@@ -7,7 +7,8 @@
 .worship-area button:disabled { opacity: .55; cursor: wait; }
 .worship-area button:focus-visible, .worship-area summary:focus-visible { outline: 3px solid #6fbd2a; outline-offset: 2px; }
 .worship-layout { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 24px; align-items: start; }
-.worship-area .admin-card { width: 100%; min-width: 0; border-radius: 8px; padding: 22px; margin: 0 0 16px; }
+.worship-area .admin-card { width: 100%; min-width: 0; grid-template-columns: minmax(0, 1fr); border-radius: 8px; padding: 22px; margin: 0 0 16px; }
+.worship-area details { min-width: 0; max-width: 100%; }
 .worship-records { min-width: 0; }
 .worship-area .worship-filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; }
 .worship-area .worship-filters label:only-of-type { grid-column: span 2; }
@@ -37,6 +38,24 @@
 .worship-song-row span { flex: 1; min-width: 100px; overflow-wrap: anywhere; }
 .worship-song-row label { width: 70px; }
 .worship-area pre, .worship-prewrap { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 1.6; }
+.worship-area .worship-chord-input,
+.worship-area .worship-chord-display {
+  font-family: Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 14px;
+  font-weight: 400;
+  font-variant-ligatures: none;
+  letter-spacing: 0;
+  line-height: 1.65;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  tab-size: 8;
+  overflow-x: auto;
+  max-width: 100%;
+  min-width: 0;
+}
+.worship-area .worship-chord-input { min-height: 240px; }
+.worship-area .worship-chord-display { display: block; padding: 12px; background: #f6f8fb; border: 1px solid #d5d8e3; border-radius: 6px; }
 .worship-area summary { cursor: pointer; padding: 10px 0; font-weight: 700; }
 .worship-area p, .worship-area li { overflow-wrap: anywhere; }
 .worship-error { color: #a01a24; background: #fff0f1; padding: 14px; border-radius: 6px; }

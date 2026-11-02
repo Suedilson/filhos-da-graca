@@ -3,6 +3,7 @@ const assert = require('node:assert/strict')
 const path = require('node:path')
 const { webcrypto } = require('node:crypto')
 const { Miniflare, convertV4MiniflareOptions } = require('miniflare')
+const { buildSync } = require('esbuild')
 
 test('Worker autentica, extrai cifra, bloqueia acesso externo e reutiliza cache', async () => {
   const keys = await webcrypto.subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['sign', 'verify'])
@@ -15,12 +16,13 @@ test('Worker autentica, extrai cifra, bloqueia acesso externo e reutiliza cache'
   let chamadasFonte = 0
   let bloquearPrincipal = false
   let ativo = true
-  const mf = new Miniflare(convertV4MiniflareOptions({ workers: [{ modules: true, scriptPath: path.resolve(__dirname, '../cloudflare/worker.js'), compatibilityDate: '2026-11-02', bindings: { FIREBASE_PROJECT: 'filhos-da-graca' },
+  const bundle = buildSync({ entryPoints: [path.resolve(__dirname, '../cloudflare/worker.js')], bundle: true, write: false, format: 'esm', platform: 'browser' }).outputFiles[0].text
+  const mf = new Miniflare(convertV4MiniflareOptions({ workers: [{ modules: true, script: bundle, compatibilityDate: '2026-11-02', bindings: { FIREBASE_PROJECT: 'filhos-da-graca' },
     outboundService: async (request) => {
       const url = new URL(request.url)
       if (url.hostname === 'www.googleapis.com') return Response.json({ keys: [jwk] })
       if (url.hostname === 'firestore.googleapis.com') return Response.json({ fields: { ativo: { booleanValue: ativo }, permissoes: { arrayValue: { values: [{ stringValue: 'louvor' }] } } } })
-      if (url.hostname === 'tudocifras.com.br') return new Response('<h1>Cântico novo (Cifras)</h1><h2>Intérprete Novo</h2><pre id="acorde"><a>D</a>    <a>G</a><br>Texto fictício da alternativa</pre>', { headers: { 'Content-Type': 'text/html' } })
+      if (url.hostname === 'tudocifras.com.br') return new Response('<h1>C&acirc;ntico novo (Cifras)</h1><h2>Intérprete Novo</h2><pre id="acorde">&nbsp;&nbsp;<a>D</a>&nbsp;&nbsp;&nbsp;&nbsp;<a>G</a><br>Texto fictício da alternativa &amp; final</pre>', { headers: { 'Content-Type': 'text/html' } })
       if (url.hostname === 'www.cifraclub.com.br') {
         chamadasFonte++
         if (bloquearPrincipal) return new Response('Sem acesso', { status: 403 })
@@ -55,7 +57,9 @@ test('Worker autentica, extrai cifra, bloqueia acesso externo e reutiliza cache'
     assert.equal(alternativo.status, 200, await alternativo.clone().text())
     const cifraAlternativa = await alternativo.json()
     assert.equal(cifraAlternativa.tom, '')
-    assert.ok(cifraAlternativa.notas.includes('D    G\nTexto fictício'))
+    assert.ok(cifraAlternativa.notas.startsWith('  D    G\nTexto fictício'))
+    assert.ok(cifraAlternativa.notas.includes(' & final'))
+    assert.ok(!cifraAlternativa.notas.includes('&nbsp;'))
     assert.ok(cifraAlternativa.fonte.startsWith('https://tudocifras.com.br/'))
     ativo = false
     const semPermissao = await mf.dispatchFetch(url, { method: 'POST', headers, body })

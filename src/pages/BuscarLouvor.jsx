@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { buscarLetras, normalizarTitulo } from '../services/buscaLouvor'
+import { formatarCifra } from '../services/formatoCifra.js'
 
 export default function BuscarLouvor({ musica, musicas, musicaId, onSelecionar }) {
   const [resultado, setResultado] = useState({ chave: '', itens: [], status: '' })
@@ -44,7 +45,7 @@ export default function BuscarLouvor({ musica, musicas, musicaId, onSelecionar }
       (item.tom && musica.tom.trim() && item.tom !== musica.tom)
     if (alteraria && !window.confirm('Substituir a letra e os dados musicais preenchidos pela versão selecionada?')) return
     onSelecionar({ ...musica, titulo: item.titulo.slice(0, 180), autor: (item.autor || musica.autor).slice(0, 180),
-      letra: item.letra || musica.letra, notas: item.notas || musica.notas, tom: item.tom || musica.tom })
+      letra: item.letra || musica.letra, notas: item.notas ? formatarCifra(item.notas) : musica.notas, tom: item.tom || musica.tom })
     setSelecionado(`${item.titulo.slice(0, 180).trim()}|${(item.autor || musica.autor).slice(0, 180).trim()}`)
   }
 

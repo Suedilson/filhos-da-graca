@@ -1,7 +1,10 @@
+import { decodeHTML } from 'entities'
+import { formatarCifra } from '../src/services/formatoCifra.js'
+
 const ORIGEM = 'https://www.cifraclub.com.br'
 const dominios = new Set(['https://filhosdagraca.com.br', 'https://www.filhosdagraca.com.br', 'https://filhos-da-graca.web.app', 'https://filhos-da-graca.firebaseapp.com', 'http://localhost:5173'])
 const limites = new Map()
-const normalizar = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+const normalizar = (s) => decodeHTML(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
 const slug = (s) => normalizar(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 let chaves
 let expiraChaves = 0
@@ -82,7 +85,7 @@ async function consultarCifraClub(titulo, autor) {
     .on('#cifra_tom a, #cifra_tom b', { text(t) { tom += t.text } })
     .transform(await pagina(encontrado.href)).arrayBuffer()
   if (!tom) tom = paragrafos[paragrafos.indexOf('Tom') + 1] || ''
-  cifra = cifra.replace(/\u200b/g, '').trim()
+  cifra = formatarCifra(cifra)
   if (normalizar(nome) !== normalizar(titulo)) throw falha(404, 'A versão encontrada não corresponde ao título informado.')
   if (!acordes || !cifra || cifra.length > 19000 || !/^[A-G](?:#|b)?m?$/.test(tom.trim())) throw falha(404, 'Não foi possível confirmar a cifra e o tom desta versão.')
   const fonte = `${ORIGEM}${encontrado.href}`
@@ -103,7 +106,7 @@ async function consultarTudoCifras(titulo, autor) {
     .on('[data-original-key]', { element(el) { tom = el.getAttribute('data-original-key') || '' } })
     .transform(r).arrayBuffer()
   nome = nome.replace(/\(Cifras\)/gi, '').trim()
-  cifra = cifra.replace(/\u00a0/g, ' ').trim()
+  cifra = formatarCifra(cifra)
   if (normalizar(nome) !== normalizar(titulo) || normalizar(artista) !== normalizar(autor)) throw falha(404, 'A versão encontrada não corresponde ao título e intérprete.')
   if (!acordes || !cifra || cifra.length > 19000) throw falha(404, 'Não foi encontrada uma cifra válida nesta versão.')
   if (!/^[A-G](?:#|b)?m?$/.test(tom)) tom = ''
@@ -139,7 +142,7 @@ export default {
       const { titulo, autor } = JSON.parse(conteudo)
       if (typeof titulo !== 'string' || typeof autor !== 'string' || titulo.trim().length < 3 || !autor.trim() || titulo.length > 180 || autor.length > 180) throw falha(400, 'Informe o título e o intérprete.')
       const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${normalizar(titulo)}|${normalizar(autor)}`)))].map((n) => n.toString(16).padStart(2, '0')).join('')
-      const chave = new Request(`${new URL(request.url).origin}/cache/${hash}`)
+      const chave = new Request(`${new URL(request.url).origin}/cache/v2/${hash}`)
       const cache = caches.default
       const anterior = await cache.match(chave)
       const resultado = anterior ? await anterior.json() : await consultarCifra(titulo.trim(), autor.trim())

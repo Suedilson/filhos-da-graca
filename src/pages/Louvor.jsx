@@ -4,6 +4,7 @@ import { db } from '../services/firebase'
 import './Louvor.css'
 import BuscarLouvor from './BuscarLouvor'
 import BuscarCifra from './BuscarCifra'
+import { formatarCifra } from '../services/formatoCifra.js'
 
 const novaMusica = () => ({ titulo: '', autor: '', letra: '', tom: '', notas: '', ministros: '', ativo: true })
 const novaEscala = () => ({ titulo: '', data: '', horario: '', ministro: '', observacoes: '', status: 'Confirmada', equipe: [{ nome: '', funcao: '' }], repertorio: [] })
@@ -122,7 +123,7 @@ export default function Louvor({ user }) {
     if (!item || escala.repertorio.some((m) => m.id === id)) return
     setEscala({ ...escala, repertorio: [...escala.repertorio, {
       id: item.id, titulo: item.titulo, tom: item.tom, ministros: item.ministros,
-      letra: item.letra, notas: item.notas,
+      letra: item.letra, notas: formatarCifra(item.notas),
     }] })
   }
 
@@ -154,7 +155,7 @@ export default function Louvor({ user }) {
           <label>Tom<input maxLength={40} value={musica.tom} onChange={(e) => setMusica({ ...musica, tom: e.target.value })} /></label>
           <BuscarCifra musica={musica} onSelecionar={setMusica} />
           <label>Letra<textarea rows={10} maxLength={40000} value={musica.letra} onChange={(e) => setMusica({ ...musica, letra: e.target.value })} /></label>
-          <label>Notas, cifras e observações<textarea rows={5} maxLength={20000} value={musica.notas} onChange={(e) => setMusica({ ...musica, notas: e.target.value })} /></label>
+          <label>Notas, cifras e observações<textarea className="worship-chord-input" wrap="off" rows={12} maxLength={20000} value={musica.notas} onChange={(e) => setMusica({ ...musica, notas: e.target.value })} /></label>
           <label className="worship-check"><input type="checkbox" checked={musica.ativo} onChange={(e) => setMusica({ ...musica, ativo: e.target.checked })} />Ativo no repertório</label>
           <button type="submit">{salvando ? 'Salvando...' : 'Salvar louvor'}</button>
           {musicaId && <button type="button" onClick={() => { setMusica(novaMusica()); setMusicaId(null) }}>Cancelar edição</button>}
@@ -195,13 +196,13 @@ export default function Louvor({ user }) {
         {aba === 'louvores' ? listaMusicas.map((m) => <article className="admin-card" key={m.id}>
           <h3>{m.titulo}</h3><p>{m.autor} {m.tom && `· Tom: ${m.tom}`} {!m.ativo && '· Arquivado'}</p>
           <p><strong>Ministros:</strong> {m.ministros || 'Não informado'}</p>
-          <details><summary>Letra e notas</summary><pre>{m.letra || 'Letra não cadastrada.'}</pre><pre>{m.notas}</pre></details>
-          <button type="button" disabled={salvando} onClick={() => { const { id, ...dados } = m; setMusica(dados); setMusicaId(id); setMensagem('') }}>Editar louvor</button>
+          <details><summary>Letra e notas</summary><pre>{m.letra || 'Letra não cadastrada.'}</pre><pre className="worship-chord-display">{formatarCifra(m.notas)}</pre></details>
+          <button type="button" disabled={salvando} onClick={() => { const { id, ...dados } = m; setMusica({ ...dados, notas: formatarCifra(dados.notas) }); setMusicaId(id); setMensagem('') }}>Editar louvor</button>
         </article>) : listaEscalas.map((e) => <article className="admin-card" key={e.id}>
           <span>{dataLegivel(e.data)} · {e.horario} · {e.status}</span><h3>{e.titulo}</h3>
           <p><strong>Ministro:</strong> {e.ministro}</p>
           <ul>{e.equipe.map((p, i) => <li key={i}>{p.nome} · {p.funcao}</li>)}</ul>
-          <details><summary>Repertório ({e.repertorio.length})</summary><ol>{e.repertorio.map((m) => <li key={m.id}><strong>{m.titulo}</strong> · {m.tom || 'Tom não informado'}<details><summary>Letra e notas</summary><pre>{m.letra}</pre><pre>{m.notas}</pre></details></li>)}</ol></details>
+          <details><summary>Repertório ({e.repertorio.length})</summary><ol>{e.repertorio.map((m) => <li key={m.id}><strong>{m.titulo}</strong> · {m.tom || 'Tom não informado'}<details><summary>Letra e notas</summary><pre>{m.letra}</pre><pre className="worship-chord-display">{formatarCifra(m.notas)}</pre></details></li>)}</ol></details>
           {e.observacoes && <p className="worship-prewrap">{e.observacoes}</p>}
           <div className="admin-actions"><button type="button" disabled={salvando} onClick={() => editarEscala(e)}>Editar escala</button><button type="button" disabled={carregandoHistorico} onClick={() => abrirHistorico(e)}>Histórico de alterações</button><button type="button" disabled={gerandoPdf} onClick={() => imprimirRelatorio([e], 'Escala individual')}>Imprimir / PDF</button></div>
         </article>)}
@@ -211,7 +212,7 @@ export default function Louvor({ user }) {
             <h4>Versão {v.versao} · {v.status}</h4><p>{v.atualizadoEm?.toDate().toLocaleString('pt-BR')} · {v.responsavel}</p>
             <p>{v.titulo} · {dataLegivel(v.data)} · {v.horario} · {v.ministro}</p>
             <ul>{v.equipe.map((p, i) => <li key={i}>{p.nome} · {p.funcao}</li>)}</ul>
-            <ol>{v.repertorio.map((m) => <li key={m.id}>{m.titulo} · {m.tom}<details><summary>Letra e notas</summary><pre>{m.letra}</pre><pre>{m.notas}</pre></details></li>)}</ol><p className="worship-prewrap">{v.observacoes}</p>
+            <ol>{v.repertorio.map((m) => <li key={m.id}>{m.titulo} · {m.tom}<details><summary>Letra e notas</summary><pre>{m.letra}</pre><pre className="worship-chord-display">{formatarCifra(m.notas)}</pre></details></li>)}</ol><p className="worship-prewrap">{v.observacoes}</p>
           </article>)}
         </section>}
       </section>
