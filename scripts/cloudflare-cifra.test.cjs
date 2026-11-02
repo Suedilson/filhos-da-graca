@@ -27,7 +27,7 @@ test('Worker autentica, extrai cifra, bloqueia acesso externo e reutiliza cache'
       if (url.hostname === 'www.cifraclub.com.br') {
         chamadasFonte++
         if (bloquearPrincipal) return new Response('Sem acesso', { status: 403 })
-        return new Response(url.pathname === '/adhemar-de-campos/' ? '<a href="/adhemar-de-campos/grande-o-senhor/">Grande É o Senhor</a>' : '<h1>Grande É o Senhor</h1><div><p>Tom</p><p>A</p></div><pre data-chord-content="true"><b>A</b>      <b>D</b>\nTexto fictício de teste</pre>', { headers: { 'Content-Type': 'text/html' } })
+        return new Response(url.pathname === '/adhemar-de-campos/' ? '<a href="/adhemar-de-campos/grande-o-senhor/">Grande É o Senhor</a>' : '<h1>Grande É o Senhor</h1><div><span>Tom<!-- -->: </span> <button type="button" data-anchor="--chord-tone">A</button></div><pre data-chord-content="true"><b>A</b>      <b>D</b>\nTexto fictício de teste</pre>', { headers: { 'Content-Type': 'text/html' } })
       }
       throw new Error('Destino externo não permitido no teste')
     },

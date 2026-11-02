@@ -63,6 +63,7 @@ async function buscarComRepeticao(url) {
 async function pagina(caminho) {
   const r = await buscarComRepeticao(`${ORIGEM}${caminho}`)
   if (r.status === 403 || r.status === 429) throw falha(503, MENSAGEM_FONTE_RECUSOU)
+  if (r.status === 404) throw falha(404, 'Intérprete ou música não encontrados no Cifra Club. Confira a grafia do nome.')
   if (!r.ok || !r.headers.get('content-type')?.includes('text/html')) throw falha(502, `A fonte de cifras está indisponível (HTTP ${r.status}).`)
   return r
 }
@@ -98,14 +99,16 @@ async function consultarCifraClub(titulo, autor) {
     })
     .on('pre b', { element() { if (pre) acordes = true } })
     .on('pre br', { element() { if (pre) cifra += '\n' } })
-    .on('#cifra_tom a, #cifra_tom b', { text(t) { tom += t.text } })
+    .on('#cifra_tom a, #cifra_tom b, [data-anchor="--chord-tone"]', { text(t) { tom += t.text } })
     .transform(await pagina(encontrado.href)).arrayBuffer()
   if (!tom) tom = paragrafos[paragrafos.indexOf('Tom') + 1] || ''
   cifra = formatarCifra(cifra)
   if (normalizar(nome) !== normalizar(titulo)) throw falha(404, 'A versão encontrada não corresponde ao título informado.')
-  if (!acordes || !cifra || cifra.length > 19000 || !/^[A-G](?:#|b)?m?$/.test(tom.trim())) throw falha(404, 'Não foi possível confirmar a cifra e o tom desta versão.')
+  if (!acordes || !cifra || cifra.length > 19000) throw falha(404, 'Não foi possível confirmar a cifra desta versão.')
+  // O tom é opcional: sem ele, a cifra é aproveitada e o usuário confirma o tom na tela.
+  tom = /^[A-G](?:#|b)?m?$/.test(tom.trim()) ? tom.trim() : ''
   const fonte = `${ORIGEM}${encontrado.href}`
-  return { tom: tom.trim(), notas: `${cifra}\n\nFonte: Cifra Club\n${fonte}`, fonte }
+  return { tom, notas: `${cifra}\n\nFonte: Cifra Club\n${fonte}`, fonte }
 }
 
 async function consultarTudoCifras(titulo, autor) {
@@ -136,7 +139,8 @@ export async function consultarCifra(titulo, autor) {
   try { return await consultarTudoCifras(titulo, autor) }
   catch (error) {
     // Se o Cifra Club estava fora do ar, "não encontrada" seria enganoso: informa a indisponibilidade.
-    if (error.status === 404 && erroPrincipal?.status >= 500) throw erroPrincipal
+    // A mensagem do Cifra Club (fonte principal) é a mais útil quando nenhuma das duas encontrou.
+    if (error.status === 404 && erroPrincipal?.status) throw erroPrincipal
     throw error
   }
 }
@@ -165,7 +169,7 @@ export default {
       const { titulo, autor } = JSON.parse(conteudo)
       if (typeof titulo !== 'string' || typeof autor !== 'string' || titulo.trim().length < 3 || !autor.trim() || titulo.length > 180 || autor.length > 180) throw falha(400, 'Informe o título e o intérprete.')
       const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${normalizar(titulo)}|${normalizar(autor)}`)))].map((n) => n.toString(16).padStart(2, '0')).join('')
-      const chave = new Request(`${new URL(request.url).origin}/cache/v3/${hash}`)
+      const chave = new Request(`${new URL(request.url).origin}/cache/v4/${hash}`)
       const cache = caches.default
       const anterior = await cache.match(chave)
       const resultado = anterior ? await anterior.json() : await consultarCifra(titulo.trim(), autor.trim())
