@@ -391,6 +391,7 @@ function obterPrimeiraAbaPermitida() {
   return () => unsubscribe()
 }, [])
 const [modoFinanceiro, setModoFinanceiro] = useState('dashboard')
+const [gerandoPdfFinanceiro, setGerandoPdfFinanceiro] = useState(false)
 const [contasBancarias, setContasBancarias] = useState([])
 const [editandoContaBancariaId, setEditandoContaBancariaId] = useState(null)
 
@@ -2186,6 +2187,30 @@ function obterDescricaoMesesFinanceiro() {
 
   return `${anoFiltroFinanceiro}-${descricaoMeses}`
 }
+async function exportarRelatorioFinanceiroPdf() {
+  if (!usuarioPodeAcessar('financeiro') || gerandoPdfFinanceiro) return
+  setGerandoPdfFinanceiro(true)
+  try {
+    const { baixarRelatorioFinanceiro } = await import('../services/relatorioFinanceiro')
+    await baixarRelatorioFinanceiro({
+      resumo: resumoFinanceiro,
+      entradasPorTipo: arrecadacoesPorTipo,
+      despesasPorCategoria,
+      reservasPorCategoria: aprovisionamentosPorCategoria,
+      movimentoPorConta: movimentacaoPorContaBancaria,
+      arrecadacoes: arrecadacoesFiltradasFinanceiro,
+      despesas: contasPagarFiltradasFinanceiro.map((conta) => ({ ...conta, statusRelatorio: obterStatusVisualContaPagar(conta) })),
+    }, {
+      periodo: `${mesesFinanceiro.filter((mes) => mesesFiltroFinanceiro.includes(mes.valor)).map((mes) => mes.nome).join(', ')} / ${anoFiltroFinanceiro}`,
+      emitidoPor: user?.email || '',
+      filtros: `Despesas: ${statusFiltroContaPagar}. Fornecedor: ${fornecedorFiltroContaPagar.trim() || 'Todos'}.`,
+    })
+  } catch (error) {
+    console.error('Erro ao gerar relatório financeiro PDF:', error)
+    alert('Não foi possível gerar o relatório financeiro em PDF. Tente novamente.')
+  } finally { setGerandoPdfFinanceiro(false) }
+}
+
 function exportarRelatorioFinanceiroExcel() {
   const cabecalho = ['Indicador', 'Valor']
 
@@ -8971,18 +8996,19 @@ function formatarMoeda(valor) {
     <h2>Relatórios financeiros</h2>
 
     <p>
-      Consulte o resumo financeiro por ano e mês, com entradas, saídas,
+    Consulte o resumo financeiro por ano e mês, com entradas, saídas,
       contas em aberto e valores aprovisionados.
     </p>
   </div>
 
-  <button
-    type="button"
-    className="finance-primary-action"
-    onClick={exportarRelatorioFinanceiroExcel}
-  >
-    📊 Exportar Excel
-  </button>
+  <div className="finance-export-actions">
+    <button type="button" className="finance-primary-action" onClick={exportarRelatorioFinanceiroPdf} disabled={gerandoPdfFinanceiro}>
+      {gerandoPdfFinanceiro ? 'Gerando PDF...' : 'Imprimir / PDF'}
+    </button>
+    <button type="button" className="finance-primary-action" onClick={exportarRelatorioFinanceiroExcel}>
+      📊 Exportar Excel
+    </button>
+  </div>
 </div>
 
     <div className="finance-premium-filters">
