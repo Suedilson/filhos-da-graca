@@ -49,8 +49,8 @@ export default function BuscarLouvor({ musica, musicas, musicaId, onSelecionar }
   }
 
   return <div className="worship-lookup" aria-label="Resultados da busca de louvores">
-    <strong>Versões encontradas</strong>
-    <p role="status">{atual.status === 'buscando' ? 'Buscando letras...' : atual.status === 'erro' ? 'Busca online indisponível. Tente alterar o título ou intérprete.' : !locais.length && !atual.itens.length ? 'Nenhuma letra encontrada. Confira o título ou informe o intérprete.' : ''}</p>
+    <strong>Buscar letra e repertório</strong>
+    <p role="status">{atual.status === 'buscando' ? 'Buscando letras; tentativas alternativas são automáticas...' : atual.status === 'erro' ? 'O serviço de letras está temporariamente indisponível. Você pode continuar preenchendo o cadastro.' : !locais.length && !atual.itens.length ? 'Nenhuma letra encontrada. Confira o título ou informe o intérprete.' : ''}</p>
     {atual.status === 'erro' && <button type="button" onClick={() => setTentativa((valor) => valor + 1)}>Tentar novamente</button>}
     {[...locais, ...atual.itens].map((item) => <button type="button" key={`${item.fonte}-${item.id}`} onClick={() => selecionar(item)}>
       <strong>{item.titulo}</strong>
@@ -59,5 +59,6 @@ export default function BuscarLouvor({ musica, musicas, musicaId, onSelecionar }
     </button>)}
     {atual.itens.length > 0 && <a href="https://lrclib.net" target="_blank" rel="noreferrer">Letras: LRCLIB</a>}
     <a href={`https://www.cifraclub.com.br/?q=${encodeURIComponent(`${musica.titulo} ${musica.autor}`.trim())}`} target="_blank" rel="noreferrer">Consultar cifras no Cifra Club</a>
+    <p>Cifras externas precisam ser inseridas no campo de notas. Cifras já salvas no repertório são preenchidas ao selecionar a música.</p>
   </div>
 }
