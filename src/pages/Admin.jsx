@@ -5725,7 +5725,9 @@ function formatarMoeda(valor) {
     return (
       <main className="admin-page">
         <section className="login-card">
-          <div className="admin-logo">FG</div>
+          <div className="admin-logo cadastro-logo-marca">
+            <img src="/Filhosdagraça.png" alt="Filhos da Graça" />
+          </div>
           <h1>{modoEntrada === 'login' ? 'Área do Membro' : 'Cadastro de membro'}</h1>
           <p>
             {modoEntrada === 'login'

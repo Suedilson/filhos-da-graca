@@ -22,3 +22,31 @@ test('conteúdo marcado continua sendo texto, sem executar HTML', () => {
   assert.equal(formatarCifra('&lt;script&gt;teste&lt;/script&gt;'), '<script>teste</script>')
   assert.equal(formatarCifra(null), '')
 })
+
+test('extrai a letra da cifra sem acordes, tablaturas, seções e fonte', async () => {
+  const { extrairLetraDaCifra } = await import('../src/services/formatoCifra.js')
+  const cifra = [
+    '[Intro] A9  E  F#m7  D9  (2x)',
+    '',
+    '[Primeira Parte]',
+    '',
+    'A9                E',
+    '  Linha fictícia um',
+    '       F#m7         D9/F#',
+    'Linha fictícia dois',
+    '',
+    '[Solo] A  E',
+    'E|-----2---|',
+    'B|--3------|',
+    '',
+    '',
+    '',
+    '[Refrão]',
+    'C#m7(b5)   Bsus4  E7M',
+    'A vitória é do Senhor',
+    '',
+    'Fonte: Cifra Club',
+    'https://exemplo.test/cifra',
+  ].join('\n')
+  assert.equal(extrairLetraDaCifra(cifra), 'Linha fictícia um\nLinha fictícia dois\n\nA vitória é do Senhor')
+})

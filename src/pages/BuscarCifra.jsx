@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { consultarCifraCloudflare } from '../services/cifrasCloudflare'
-import { formatarCifra } from '../services/formatoCifra.js'
+import { extrairLetraDaCifra, formatarCifra } from '../services/formatoCifra.js'
 
 export default function BuscarCifra({ musica, onSelecionar }) {
   const [status, setStatus] = useState('')
@@ -27,7 +27,10 @@ export default function BuscarCifra({ musica, onSelecionar }) {
         }
         onSelecionar((atual) => {
           if (atual.titulo !== titulo || atual.autor !== autor || atual.notas !== notas || atual.tom !== tom) return atual
-          return { ...atual, notas: formatarCifra(data.notas), tom: data.tom || atual.tom }
+          const notasNovas = formatarCifra(data.notas)
+          // Sem letra cadastrada, aproveita a letra que vem junto com a cifra.
+          const letra = atual.letra.trim() ? atual.letra : extrairLetraDaCifra(notasNovas)
+          return { ...atual, notas: notasNovas, tom: data.tom || atual.tom, letra }
         })
         setStatus(data.tom ? 'pronto' : 'sem-tom')
       } catch (error) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { buscarLetras, normalizarTitulo } from '../services/buscaLouvor'
-import { formatarCifra } from '../services/formatoCifra.js'
+import { extrairLetraDaCifra, formatarCifra } from '../services/formatoCifra.js'
 
 export default function BuscarLouvor({ musica, musicas, musicaId, onSelecionar }) {
   const [resultado, setResultado] = useState({ chave: '', itens: [], status: '' })
@@ -49,9 +49,17 @@ export default function BuscarLouvor({ musica, musicas, musicaId, onSelecionar }
     setSelecionado(`${item.titulo.slice(0, 180).trim()}|${(item.autor || musica.autor).slice(0, 180).trim()}`)
   }
 
+  const letraDaCifra = !musica.letra.trim() && musica.notas.trim() ? extrairLetraDaCifra(musica.notas) : ''
+  const semResultados = atual.status !== 'buscando' && !locais.length && !atual.itens.length
+
   return <div className="worship-lookup" aria-label="Resultados da busca de louvores">
     <strong>Buscar letra e repertório</strong>
-    <p role="status">{atual.status === 'buscando' ? 'Buscando letras; tentativas alternativas são automáticas...' : atual.status === 'erro' ? 'O serviço de letras está temporariamente indisponível. Você pode continuar preenchendo o cadastro.' : !locais.length && !atual.itens.length ? 'Nenhuma letra encontrada. Confira o título ou informe o intérprete.' : ''}</p>
+    <p role="status">{atual.status === 'buscando' ? 'Buscando letras; tentativas alternativas são automáticas...' : atual.status === 'erro' ? 'O serviço de letras está temporariamente indisponível. Você pode continuar preenchendo o cadastro.' : !locais.length && !atual.itens.length ? (letraDaCifra ? 'Nenhuma letra encontrada no LRCLIB, mas a cifra preenchida tem a letra.' : 'Nenhuma letra encontrada no LRCLIB. Use "Buscar cifra e tom": a letra será preenchida junto com a cifra.') : ''}</p>
+    {semResultados && letraDaCifra && <button type="button" onClick={() => onSelecionar({ ...musica, letra: letraDaCifra })}>
+      <strong>Usar a letra da cifra</strong>
+      <span>{musica.autor || 'Intérprete não informado'} · Cifra preenchida</span>
+      <small>Letra sem os acordes</small>
+    </button>}
     {atual.status === 'erro' && <button type="button" onClick={() => setTentativa((valor) => valor + 1)}>Tentar novamente</button>}
     {[...locais, ...atual.itens].map((item) => <button type="button" key={`${item.fonte}-${item.id}`} onClick={() => selecionar(item)}>
       <strong>{item.titulo}</strong>
