@@ -7,16 +7,22 @@ export default function BuscarCifra({ musica, onSelecionar }) {
   const [erro, setErro] = useState('')
   const [tentativa, setTentativa] = useState(0)
   const ultimaTentativa = useRef(0)
+  const buscasAutomaticas = useRef(new Set())
   const { titulo, autor, notas, tom } = musica
 
   useEffect(() => {
     const pedidoManual = tentativa > ultimaTentativa.current
     ultimaTentativa.current = tentativa
     if (titulo.trim().length < 3 || !autor.trim() || (notas.trim() && !pedidoManual)) return
+    // A busca automática espera o intérprete completo e não repete a mesma música;
+    // assim não gasta o limite de consultas enquanto o nome ainda está sendo digitado.
+    const chaveBusca = `${titulo.trim().toLowerCase()}|${autor.trim().toLowerCase()}`
+    if (!pedidoManual && (autor.trim().length < 3 || buscasAutomaticas.current.has(chaveBusca))) return
     let ativo = true
     const controller = new AbortController()
     const limite = setTimeout(() => controller.abort(), 28000)
     const timer = setTimeout(async () => {
+      if (!pedidoManual) buscasAutomaticas.current.add(chaveBusca)
       setStatus('buscando'); setErro('')
       try {
         const { data } = await consultarCifraCloudflare({ titulo: titulo.trim(), autor: autor.trim() }, controller.signal)
@@ -40,9 +46,10 @@ export default function BuscarCifra({ musica, onSelecionar }) {
         setErro(error.code === 'cifras/resource-exhausted' ? 'Aguarde um minuto para buscar novamente.' :
           error.code === 'cifras/unauthenticated' ? 'Entre novamente na sua conta para buscar a cifra.' :
           error.code === 'cifras/permission-denied' ? 'Seu usuário não tem permissão para buscar cifras.' :
-          error.code === 'cifras/not-found' ? error.message : 'O serviço de cifras não está disponível. Os campos preenchidos foram mantidos.')
+          error.code === 'cifras/not-found' || error.code === 'cifras/unavailable' && error.message ? error.message :
+          'O serviço de cifras não está disponível. Os campos preenchidos foram mantidos.')
       } finally { clearTimeout(limite) }
-    }, 1100)
+    }, pedidoManual ? 0 : 2500)
     return () => { ativo = false; clearTimeout(timer); clearTimeout(limite); controller.abort() }
   }, [titulo, autor, notas, tom, tentativa, onSelecionar])
 

@@ -22,6 +22,7 @@ test('Worker autentica, extrai cifra, bloqueia acesso externo e reutiliza cache'
       const url = new URL(request.url)
       if (url.hostname === 'www.googleapis.com') return Response.json({ keys: [jwk] })
       if (url.hostname === 'firestore.googleapis.com') return Response.json({ fields: { ativo: { booleanValue: ativo }, permissoes: { arrayValue: { values: [{ stringValue: 'louvor' }] } } } })
+      if (url.hostname === 'tudocifras.com.br' && url.pathname.includes('desconhecida')) return new Response('', { status: 404 })
       if (url.hostname === 'tudocifras.com.br') return new Response('<h1>C&acirc;ntico novo (Cifras)</h1><h2>Intérprete Novo</h2><pre id="acorde">&amp;nbsp;&amp;nbsp;<a>D</a>&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;<a>G</a><br>Texto fictício da alternativa &amp; final</pre>', { headers: { 'Content-Type': 'text/html' } })
       if (url.hostname === 'www.cifraclub.com.br') {
         chamadasFonte++
@@ -61,6 +62,9 @@ test('Worker autentica, extrai cifra, bloqueia acesso externo e reutiliza cache'
     assert.ok(cifraAlternativa.notas.includes(' & final'))
     assert.ok(!cifraAlternativa.notas.includes('&nbsp;'))
     assert.ok(cifraAlternativa.fonte.startsWith('https://tudocifras.com.br/'))
+    const recusado = await mf.dispatchFetch(url, { method: 'POST', headers, body: JSON.stringify({ titulo: 'Música desconhecida', autor: 'Intérprete Novo' }) })
+    assert.equal(recusado.status, 503)
+    assert.match((await recusado.json()).mensagem, /recusou a consulta/)
     ativo = false
     const semPermissao = await mf.dispatchFetch(url, { method: 'POST', headers, body })
     assert.equal(semPermissao.status, 403)

@@ -45,8 +45,24 @@ export async function autenticar(token, projeto) {
   }
 }
 
+const MENSAGEM_FONTE_RECUSOU = 'O Cifra Club recusou a consulta automática agora. Tente de novo em alguns instantes ou use o link "Consultar cifras no Cifra Club".'
+
+// Repete uma vez apenas falhas passageiras (rede, tempo esgotado ou erro 5xx do servidor).
+async function buscarComRepeticao(url) {
+  for (let tentativa = 0; ; tentativa++) {
+    try {
+      const r = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(8000) })
+      if (r.status < 500 || tentativa > 0) return r
+    } catch {
+      if (tentativa > 0) throw falha(503, 'A fonte de cifras não respondeu a tempo. Tente novamente.')
+    }
+    await new Promise((resolve) => setTimeout(resolve, 600))
+  }
+}
+
 async function pagina(caminho) {
-  const r = await fetch(`${ORIGEM}${caminho}`, { redirect: 'manual', signal: AbortSignal.timeout(8000) })
+  const r = await buscarComRepeticao(`${ORIGEM}${caminho}`)
+  if (r.status === 403 || r.status === 429) throw falha(503, MENSAGEM_FONTE_RECUSOU)
   if (!r.ok || !r.headers.get('content-type')?.includes('text/html')) throw falha(502, `A fonte de cifras está indisponível (HTTP ${r.status}).`)
   return r
 }
@@ -94,7 +110,7 @@ async function consultarCifraClub(titulo, autor) {
 
 async function consultarTudoCifras(titulo, autor) {
   const fonte = `https://tudocifras.com.br/cancion/${slug(autor)}/${slug(titulo)}`
-  const r = await fetch(fonte, { redirect: 'manual', signal: AbortSignal.timeout(8000) })
+  const r = await buscarComRepeticao(fonte)
   if (!r.ok || !r.headers.get('content-type')?.includes('text/html')) throw falha(404, 'Não encontramos uma cifra para este título e intérprete.')
   let nome = '', artista = '', cifra = '', acordes = false, tom = ''
   await new HTMLRewriter()
@@ -114,8 +130,15 @@ async function consultarTudoCifras(titulo, autor) {
 }
 
 export async function consultarCifra(titulo, autor) {
+  let erroPrincipal
   try { return await consultarCifraClub(titulo, autor) }
-  catch { return consultarTudoCifras(titulo, autor) }
+  catch (error) { erroPrincipal = error }
+  try { return await consultarTudoCifras(titulo, autor) }
+  catch (error) {
+    // Se o Cifra Club estava fora do ar, "não encontrada" seria enganoso: informa a indisponibilidade.
+    if (error.status === 404 && erroPrincipal?.status >= 500) throw erroPrincipal
+    throw error
+  }
 }
 
 export default {
@@ -134,7 +157,7 @@ export default {
       const uid = await autenticar(token, env.FIREBASE_PROJECT)
       const minuto = Math.floor(Date.now() / 60000)
       const limite = limites.get(uid)
-      if (limite?.minuto === minuto && limite.total >= 5) throw falha(429, 'Aguarde um minuto para buscar novamente.')
+      if (limite?.minuto === minuto && limite.total >= 10) throw falha(429, 'Aguarde um minuto para buscar novamente.')
       if (limites.size > 1000) limites.clear()
       limites.set(uid, { minuto, total: limite?.minuto === minuto ? limite.total + 1 : 1 })
       const conteudo = await request.text()
