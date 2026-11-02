@@ -3,7 +3,6 @@ import { collection, doc, getDocs, orderBy, query, runTransaction, serverTimesta
 import { db } from '../services/firebase'
 import './Louvor.css'
 import BuscarLouvor from './BuscarLouvor'
-import BuscarCifra from './BuscarCifra'
 
 const novaMusica = () => ({ titulo: '', autor: '', letra: '', tom: '', notas: '', ministros: '', ativo: true })
 const novaEscala = () => ({ titulo: '', data: '', horario: '', ministro: '', observacoes: '', status: 'Confirmada', equipe: [{ nome: '', funcao: '' }], repertorio: [] })
@@ -27,6 +26,19 @@ export default function Louvor({ user }) {
   const [mensagem, setMensagem] = useState('')
   const [historico, setHistorico] = useState(null)
   const [carregandoHistorico, setCarregandoHistorico] = useState(false)
+  const [gerandoPdf, setGerandoPdf] = useState(false)
+
+  async function imprimirRelatorio(itens, filtro) {
+    if (!itens.length) return
+    setGerandoPdf(true); setErro('')
+    try {
+      const { baixarRelatorioEscalas } = await import('../services/relatorioLouvor')
+      await baixarRelatorioEscalas(itens, { emitidoPor: user.email || '', filtro })
+    } catch (error) {
+      console.error(error)
+      setErro('Não foi possível gerar o PDF. Tente novamente.')
+    } finally { setGerandoPdf(false) }
+  }
 
   async function carregar() {
     setCarregando(true)
@@ -139,7 +151,6 @@ export default function Louvor({ user }) {
           <BuscarLouvor musica={musica} musicas={musicas} musicaId={musicaId} onSelecionar={setMusica} />
           <label>Ministros que cantam este louvor<input maxLength={500} value={musica.ministros} onChange={(e) => setMusica({ ...musica, ministros: e.target.value })} /></label>
           <label>Tom<input maxLength={40} value={musica.tom} onChange={(e) => setMusica({ ...musica, tom: e.target.value })} /></label>
-          <BuscarCifra musica={musica} onSelecionar={setMusica} />
           <label>Letra<textarea rows={10} maxLength={40000} value={musica.letra} onChange={(e) => setMusica({ ...musica, letra: e.target.value })} /></label>
           <label>Notas, cifras e observações<textarea rows={5} maxLength={20000} value={musica.notas} onChange={(e) => setMusica({ ...musica, notas: e.target.value })} /></label>
           <label className="worship-check"><input type="checkbox" checked={musica.ativo} onChange={(e) => setMusica({ ...musica, ativo: e.target.checked })} />Ativo no repertório</label>
@@ -175,6 +186,9 @@ export default function Louvor({ user }) {
           {aba === 'escalas' && <label>Período<select value={periodo} onChange={(e) => setPeriodo(e.target.value)}><option value="proximas">Próximas escalas</option><option value="anteriores">Escalas anteriores</option><option value="todas">Todo o histórico</option></select></label>}
           <button type="button" disabled={carregando || salvando} onClick={carregar}>Atualizar</button>
         </div>
+        {aba === 'escalas' && <div className="worship-report-actions"><button type="button" disabled={gerandoPdf || carregando || !listaEscalas.length}
+          onClick={() => imprimirRelatorio(listaEscalas, `${{ proximas: 'Próximas escalas', anteriores: 'Escalas anteriores', todas: 'Todo o histórico' }[periodo]}${busca.trim() ? ` - Busca: ${busca.trim()}` : ''}`)}>
+          {gerandoPdf ? 'Gerando PDF...' : 'Relatório PDF das escalas'}</button><span>{listaEscalas.length} escala(s)</span></div>}
         {!carregando && (aba === 'escalas' ? listaEscalas : listaMusicas).length === 0 && <p>Nenhum registro encontrado.</p>}
         {aba === 'louvores' ? listaMusicas.map((m) => <article className="admin-card" key={m.id}>
           <h3>{m.titulo}</h3><p>{m.autor} {m.tom && `· Tom: ${m.tom}`} {!m.ativo && '· Arquivado'}</p>
@@ -187,7 +201,7 @@ export default function Louvor({ user }) {
           <ul>{e.equipe.map((p, i) => <li key={i}>{p.nome} · {p.funcao}</li>)}</ul>
           <details><summary>Repertório ({e.repertorio.length})</summary><ol>{e.repertorio.map((m) => <li key={m.id}><strong>{m.titulo}</strong> · {m.tom || 'Tom não informado'}<details><summary>Letra e notas</summary><pre>{m.letra}</pre><pre>{m.notas}</pre></details></li>)}</ol></details>
           {e.observacoes && <p className="worship-prewrap">{e.observacoes}</p>}
-          <div className="admin-actions"><button type="button" disabled={salvando} onClick={() => editarEscala(e)}>Editar escala</button><button type="button" disabled={carregandoHistorico} onClick={() => abrirHistorico(e)}>Histórico de alterações</button></div>
+          <div className="admin-actions"><button type="button" disabled={salvando} onClick={() => editarEscala(e)}>Editar escala</button><button type="button" disabled={carregandoHistorico} onClick={() => abrirHistorico(e)}>Histórico de alterações</button><button type="button" disabled={gerandoPdf} onClick={() => imprimirRelatorio([e], 'Escala individual')}>Imprimir / PDF</button></div>
         </article>)}
         {carregandoHistorico && <p role="status">Carregando histórico...</p>}
         {historico && <section className="worship-history"><h3>Histórico: {historico.titulo}</h3><button type="button" onClick={() => setHistorico(null)}>Fechar histórico</button>
