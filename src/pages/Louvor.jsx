@@ -3,6 +3,7 @@ import { collection, doc, getDocs, orderBy, query, runTransaction, serverTimesta
 import { db } from '../services/firebase'
 import './Louvor.css'
 import BuscarLouvor from './BuscarLouvor'
+import BuscarCifra from './BuscarCifra'
 
 const novaMusica = () => ({ titulo: '', autor: '', letra: '', tom: '', notas: '', ministros: '', ativo: true })
 const novaEscala = () => ({ titulo: '', data: '', horario: '', ministro: '', observacoes: '', status: 'Confirmada', equipe: [{ nome: '', funcao: '' }], repertorio: [] })
@@ -138,6 +139,7 @@ export default function Louvor({ user }) {
           <BuscarLouvor musica={musica} musicas={musicas} musicaId={musicaId} onSelecionar={setMusica} />
           <label>Ministros que cantam este louvor<input maxLength={500} value={musica.ministros} onChange={(e) => setMusica({ ...musica, ministros: e.target.value })} /></label>
           <label>Tom<input maxLength={40} value={musica.tom} onChange={(e) => setMusica({ ...musica, tom: e.target.value })} /></label>
+          <BuscarCifra musica={musica} onSelecionar={setMusica} />
           <label>Letra<textarea rows={10} maxLength={40000} value={musica.letra} onChange={(e) => setMusica({ ...musica, letra: e.target.value })} /></label>
           <label>Notas, cifras e observações<textarea rows={5} maxLength={20000} value={musica.notas} onChange={(e) => setMusica({ ...musica, notas: e.target.value })} /></label>
           <label className="worship-check"><input type="checkbox" checked={musica.ativo} onChange={(e) => setMusica({ ...musica, ativo: e.target.checked })} />Ativo no repertório</label>

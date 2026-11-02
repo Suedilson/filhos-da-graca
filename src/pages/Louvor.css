@@ -26,6 +26,8 @@
 .worship-area label { display: grid; gap: 6px; min-width: 0; font-weight: 700; font-size: .9rem; }
 .worship-area input, .worship-area select, .worship-area textarea { box-sizing: border-box; width: 100%; min-width: 0; border: 1px solid #d5d8e3; border-radius: 6px; background: white; padding: 10px; color: #202438; font: inherit; }
 .worship-area textarea { resize: vertical; }
+.worship-area textarea, .worship-area pre { tab-size: 4; }
+.worship-area textarea[rows="5"], .worship-area pre { font-family: ui-monospace, Consolas, monospace; }
 .worship-area .worship-check { display: flex; align-items: center; gap: 8px; }
 .worship-area .worship-check input { width: auto; }
 .worship-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
