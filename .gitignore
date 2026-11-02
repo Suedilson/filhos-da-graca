@@ -11,6 +11,9 @@ node_modules
 dist
 dist-deploy
 dist-ssr
+tmp-worker-build
+cloudflare/.wrangler
+.wrangler
 *.local
 
 # Editor directories and files

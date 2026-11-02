@@ -59,6 +59,5 @@ export default function BuscarLouvor({ musica, musicas, musicaId, onSelecionar }
     </button>)}
     {atual.itens.length > 0 && <a href="https://lrclib.net" target="_blank" rel="noreferrer">Letras: LRCLIB</a>}
     <a href={`https://www.cifraclub.com.br/?q=${encodeURIComponent(`${musica.titulo} ${musica.autor}`.trim())}`} target="_blank" rel="noreferrer">Consultar cifras no Cifra Club</a>
-    <p>Cifras externas precisam ser inseridas no campo de notas. Cifras já salvas no repertório são preenchidas ao selecionar a música.</p>
   </div>
 }
