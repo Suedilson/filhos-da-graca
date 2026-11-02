@@ -30,6 +30,10 @@ service cloud.firestore {
         (activeUser() && permission in userPermission().permissoes);
     }
 
+    function memberPath(memberId) {
+      return /databases/$(database)/documents/membros/$(memberId);
+    }
+
     function isOwnPermission(uid) {
       return signedIn() && request.auth.uid == uid;
     }
@@ -57,6 +61,12 @@ service cloud.firestore {
         ]) &&
         request.resource.data.uid == uid &&
         request.resource.data.email == request.auth.token.email &&
+        // O membro vinculado precisa ser criado no mesmo lote e pertencer a este usuário,
+        // impedindo o vínculo com o cadastro de outra pessoa.
+        request.resource.data.membroId is string &&
+        !exists(memberPath(request.resource.data.membroId)) &&
+        existsAfter(memberPath(request.resource.data.membroId)) &&
+        getAfter(memberPath(request.resource.data.membroId)).data.usuarioUid == uid &&
         request.resource.data.perfil == 'membro' &&
         request.resource.data.ativo == false &&
         request.resource.data.permissoes == ['meusDados'] &&
@@ -73,6 +83,8 @@ service cloud.firestore {
           'nascimento',
           'endereco',
           'ministerio',
+          'foto',
+          'fotoPublicId',
           'status',
           'origemCadastro',
           'usuarioUid',
@@ -80,6 +92,15 @@ service cloud.firestore {
           'criadoEm',
           'atualizadoEm'
         ]) &&
+        request.resource.data.nome is string &&
+        request.resource.data.nome.size() >= 2 &&
+        request.resource.data.nome.size() <= 140 &&
+        (!('foto' in request.resource.data) ||
+          (request.resource.data.foto is string &&
+            request.resource.data.foto.size() <= 500)) &&
+        (!('fotoPublicId' in request.resource.data) ||
+          (request.resource.data.fotoPublicId is string &&
+            request.resource.data.fotoPublicId.size() <= 300)) &&
         request.resource.data.usuarioUid == request.auth.uid &&
         request.resource.data.email == request.auth.token.email &&
         request.resource.data.status == 'Pendente aprovação' &&

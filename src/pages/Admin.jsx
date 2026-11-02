@@ -29,6 +29,15 @@ import Louvor from './Louvor'
 
 const ADMIN_EMAILS = ['suedilsonfilho@gmail.com']
 
+function escaparHtml(valor) {
+  return String(valor ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
 const PERFIS_USUARIOS = {
   admin: 'Administrador geral',
   presidente: 'Presidente',
@@ -1129,6 +1138,18 @@ async function aprovarUsuarioPendente(usuarioPermissao) {
     const batch = writeBatch(db)
     const permissaoRef = doc(db, 'usuariosPermissoes', usuarioPermissao.id)
     const membroRef = doc(db, 'membros', usuarioPermissao.membroId)
+    const membroSnapshot = await getDoc(membroRef)
+
+    // Só aprova se o cadastro de membro vinculado pertence a este usuário.
+    if (
+      !membroSnapshot.exists() ||
+      membroSnapshot.data().usuarioUid !== usuarioPermissao.id
+    ) {
+      alert(
+        'O cadastro de membro vinculado não pertence a este usuário. Verifique antes de aprovar.',
+      )
+      return
+    }
 
     batch.update(permissaoRef, {
       ativo: true,
@@ -4152,12 +4173,12 @@ function gerarRelatorioAniversariantes() {
     .map(
       (membro) => `
         <tr>
-          <td>${obterDiaNascimento(membro.nascimento)}</td>
-          <td>${membro.nome || ''}</td>
-          <td>${membro.telefone || ''}</td>
-          <td>${calcularIdade(membro.nascimento)} anos</td>
-          <td>${calcularNovaIdade(membro.nascimento)} anos</td>
-          <td>${membro.ministerio || ''}</td>
+          <td>${escaparHtml(obterDiaNascimento(membro.nascimento))}</td>
+          <td>${escaparHtml(membro.nome)}</td>
+          <td>${escaparHtml(membro.telefone)}</td>
+          <td>${escaparHtml(calcularIdade(membro.nascimento))} anos</td>
+          <td>${escaparHtml(calcularNovaIdade(membro.nascimento))} anos</td>
+          <td>${escaparHtml(membro.ministerio)}</td>
         </tr>
       `,
     )
@@ -4207,7 +4228,7 @@ function gerarRelatorioAniversariantes() {
       </head>
 
       <body>
-        <h1>Aniversariantes de ${nomeMes}</h1>
+        <h1>Aniversariantes de ${escaparHtml(nomeMes)}</h1>
         <p>Total de aniversariantes: ${aniversariantesDoMes.length}</p>
 
         <table>
