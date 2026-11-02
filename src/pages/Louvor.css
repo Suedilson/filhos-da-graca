@@ -1,4 +1,4 @@
-.worship-area { color: var(--navy, #1b1464); }
+.worship-area { width: min(1240px, 100%); margin: 0 auto; min-width: 0; color: var(--navy, #1b1464); }
 .worship-toolbar, .worship-filters { display: flex; align-items: end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
 .worship-toolbar h2 { font-size: 1.5rem; margin: 0; }
 .worship-toolbar [role=tablist] { display: flex; gap: 4px; }
@@ -7,7 +7,19 @@
 .worship-area button:disabled { opacity: .55; cursor: wait; }
 .worship-area button:focus-visible, .worship-area summary:focus-visible { outline: 3px solid #6fbd2a; outline-offset: 2px; }
 .worship-layout { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 24px; align-items: start; }
-.worship-area .admin-card { min-width: 0; border-radius: 8px; padding: 22px; margin-bottom: 16px; }
+.worship-area .admin-card { width: 100%; min-width: 0; border-radius: 8px; padding: 22px; margin: 0 0 16px; }
+.worship-records { min-width: 0; }
+.worship-area .worship-filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; }
+.worship-area .worship-filters label:only-of-type { grid-column: span 2; }
+.worship-area h3, .worship-area h4 { margin: 0; }
+.worship-area ul, .worship-area ol { margin: 0; padding-left: 22px; }
+.worship-area .admin-actions { max-width: none; justify-content: flex-start; flex-wrap: wrap; }
+.worship-area .admin-actions button { flex: 0 1 auto; margin: 0; }
+.worship-area .admin-actions button:last-child { background: #fff; color: #1b1464; border: 1px solid #dadce5; }
+.worship-area button { min-height: 42px; line-height: 1.3; white-space: normal; }
+.worship-area input, .worship-area select { height: 44px; }
+.worship-area input[type=checkbox] { height: 18px; width: 18px; }
+.worship-area [role=tablist] button { min-width: 100px; }
 .worship-area h3 { font-size: 1.15rem; overflow-wrap: anywhere; }
 .worship-area h4 { font-size: 1rem; }
 .worship-area fieldset { display: grid; gap: 14px; padding: 0; margin: 0; min-width: 0; border: 0; }
@@ -28,4 +40,10 @@
 .worship-error { color: #a01a24; background: #fff0f1; padding: 14px; border-radius: 6px; }
 .worship-history { border-top: 2px solid #dadce5; padding-top: 20px; }
 @media (max-width: 1000px) { .worship-layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) {
+  .worship-area .worship-filters { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .worship-area .worship-filters label:only-of-type { grid-column: auto; }
+  .worship-toolbar { align-items: start; flex-direction: column; }
+  .worship-area .admin-card { padding: 16px; }
+}
 @media (max-width: 480px) { .worship-pair { grid-template-columns: 1fr; } .worship-person { grid-template-columns: minmax(0, 1fr) 36px; } .worship-person label:first-child { grid-column: 1 / -1; } }

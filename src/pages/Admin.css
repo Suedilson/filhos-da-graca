@@ -5623,7 +5623,35 @@ textarea {
 ========================================================= */
 
 .admin-tabs.admin-tabs-grouped {
+  width: min(1240px, 100%);
   max-width: 100% !important;
+}
+
+@media (min-width: 761px) {
+  .admin-tabs.admin-tabs-grouped {
+    flex-wrap: wrap !important;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    overflow: visible;
+  }
+
+  .admin-tabs.admin-tabs-grouped > button,
+  .admin-tabs.admin-tabs-grouped .admin-tab-group > button {
+    min-height: 44px;
+    padding: 12px 14px;
+    margin: 0;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-tab-group {
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .admin-tabs.admin-tabs-grouped .admin-tab-group:last-of-type .admin-submenu {
+    left: auto;
+    right: 0;
+  }
 }
 
 .admin-tab-group.open .admin-submenu {
