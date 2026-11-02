@@ -22,7 +22,7 @@ test('Worker autentica, extrai cifra, bloqueia acesso externo e reutiliza cache'
       const url = new URL(request.url)
       if (url.hostname === 'www.googleapis.com') return Response.json({ keys: [jwk] })
       if (url.hostname === 'firestore.googleapis.com') return Response.json({ fields: { ativo: { booleanValue: ativo }, permissoes: { arrayValue: { values: [{ stringValue: 'louvor' }] } } } })
-      if (url.hostname === 'tudocifras.com.br') return new Response('<h1>C&acirc;ntico novo (Cifras)</h1><h2>Intérprete Novo</h2><pre id="acorde">&nbsp;&nbsp;<a>D</a>&nbsp;&nbsp;&nbsp;&nbsp;<a>G</a><br>Texto fictício da alternativa &amp; final</pre>', { headers: { 'Content-Type': 'text/html' } })
+      if (url.hostname === 'tudocifras.com.br') return new Response('<h1>C&acirc;ntico novo (Cifras)</h1><h2>Intérprete Novo</h2><pre id="acorde">&amp;nbsp;&amp;nbsp;<a>D</a>&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;<a>G</a><br>Texto fictício da alternativa &amp; final</pre>', { headers: { 'Content-Type': 'text/html' } })
       if (url.hostname === 'www.cifraclub.com.br') {
         chamadasFonte++
         if (bloquearPrincipal) return new Response('Sem acesso', { status: 403 })

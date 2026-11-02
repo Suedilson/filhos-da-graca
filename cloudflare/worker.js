@@ -142,10 +142,11 @@ export default {
       const { titulo, autor } = JSON.parse(conteudo)
       if (typeof titulo !== 'string' || typeof autor !== 'string' || titulo.trim().length < 3 || !autor.trim() || titulo.length > 180 || autor.length > 180) throw falha(400, 'Informe o título e o intérprete.')
       const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${normalizar(titulo)}|${normalizar(autor)}`)))].map((n) => n.toString(16).padStart(2, '0')).join('')
-      const chave = new Request(`${new URL(request.url).origin}/cache/v2/${hash}`)
+      const chave = new Request(`${new URL(request.url).origin}/cache/v3/${hash}`)
       const cache = caches.default
       const anterior = await cache.match(chave)
       const resultado = anterior ? await anterior.json() : await consultarCifra(titulo.trim(), autor.trim())
+      resultado.notas = formatarCifra(resultado.notas)
       if (!anterior) ctx.waitUntil(cache.put(chave, Response.json(resultado, { headers: { 'Cache-Control': 'public, max-age=86400' } })))
       return Response.json(resultado, { headers })
     } catch (error) {

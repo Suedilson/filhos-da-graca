@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { consultarCifraCloudflare } from '../services/cifrasCloudflare'
+import { formatarCifra } from '../services/formatoCifra.js'
 
 export default function BuscarCifra({ musica, onSelecionar }) {
   const [status, setStatus] = useState('')
@@ -26,7 +27,7 @@ export default function BuscarCifra({ musica, onSelecionar }) {
         }
         onSelecionar((atual) => {
           if (atual.titulo !== titulo || atual.autor !== autor || atual.notas !== notas || atual.tom !== tom) return atual
-          return { ...atual, notas: data.notas, tom: data.tom || atual.tom }
+          return { ...atual, notas: formatarCifra(data.notas), tom: data.tom || atual.tom }
         })
         setStatus(data.tom ? 'pronto' : 'sem-tom')
       } catch (error) {

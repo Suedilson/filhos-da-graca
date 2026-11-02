@@ -67,7 +67,7 @@ export default function Louvor({ user }) {
     setSalvando(true); setErro(''); setMensagem('')
     try {
       const ref = musicaId ? doc(db, 'louvorMusicas', musicaId) : doc(collection(db, 'louvorMusicas'))
-      await setDoc(ref, { ...musica, titulo: musica.titulo.trim(), atualizadoEm: serverTimestamp(), atualizadoPor: user.uid }, { merge: true })
+      await setDoc(ref, { ...musica, titulo: musica.titulo.trim(), notas: formatarCifra(musica.notas), atualizadoEm: serverTimestamp(), atualizadoPor: user.uid }, { merge: true })
       setMusica(novaMusica()); setMusicaId(null)
       await carregar()
       setMensagem('Louvor salvo.')
