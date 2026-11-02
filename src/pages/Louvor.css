@@ -39,6 +39,11 @@
 .worship-area p, .worship-area li { overflow-wrap: anywhere; }
 .worship-error { color: #a01a24; background: #fff0f1; padding: 14px; border-radius: 6px; }
 .worship-history { border-top: 2px solid #dadce5; padding-top: 20px; }
+.worship-lookup { display: grid; gap: 10px; padding: 14px; border: 1px solid #d5d8e3; border-radius: 6px; background: #f6f8fb; min-width: 0; }
+.worship-lookup button { display: grid; gap: 5px; width: 100%; text-align: left; box-shadow: none; }
+.worship-lookup span, .worship-lookup small { font-weight: 400; overflow-wrap: anywhere; }
+.worship-lookup a { color: #1b1464; text-decoration: underline; font-size: .8rem; }
+.worship-lookup p:empty { display: none; }
 @media (max-width: 1000px) { .worship-layout { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 600px) {
   .worship-area .worship-filters { grid-template-columns: minmax(0, 1fr); gap: 12px; }

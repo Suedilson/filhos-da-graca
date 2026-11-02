@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { collection, doc, getDocs, orderBy, query, runTransaction, serverTimestamp, setDoc } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import './Louvor.css'
+import BuscarLouvor from './BuscarLouvor'
 
 const novaMusica = () => ({ titulo: '', autor: '', letra: '', tom: '', notas: '', ministros: '', ativo: true })
 const novaEscala = () => ({ titulo: '', data: '', horario: '', ministro: '', observacoes: '', status: 'Confirmada', equipe: [{ nome: '', funcao: '' }], repertorio: [] })
@@ -134,6 +135,7 @@ export default function Louvor({ user }) {
         <fieldset disabled={salvando || carregando}>
           <label>Título<input required maxLength={180} value={musica.titulo} onChange={(e) => setMusica({ ...musica, titulo: e.target.value })} /></label>
           <label>Autor / intérprete<input maxLength={180} value={musica.autor} onChange={(e) => setMusica({ ...musica, autor: e.target.value })} /></label>
+          <BuscarLouvor musica={musica} musicas={musicas} musicaId={musicaId} onSelecionar={setMusica} />
           <label>Ministros que cantam este louvor<input maxLength={500} value={musica.ministros} onChange={(e) => setMusica({ ...musica, ministros: e.target.value })} /></label>
           <label>Tom<input maxLength={40} value={musica.tom} onChange={(e) => setMusica({ ...musica, tom: e.target.value })} /></label>
           <label>Letra<textarea rows={10} maxLength={40000} value={musica.letra} onChange={(e) => setMusica({ ...musica, letra: e.target.value })} /></label>

@@ -18,6 +18,7 @@ function render(aba) {
   const local = { exports: {} }
   const customRequire = (id) => {
     if (id.endsWith('.css') || id.includes('services/firebase')) return {}
+    if (id === './BuscarLouvor') return { __esModule: true, default: () => null }
     if (id === 'react') return { ...React, useEffect: () => {}, useState: (initial) => {
       const index = hook++
       return [index === 0 ? aba : index === 1 ? musicas : index === 2 ? escalas : index === 10 ? false : typeof initial === 'function' ? initial() : initial, () => {}]
