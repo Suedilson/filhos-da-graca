@@ -25,6 +25,7 @@ import {
 import { auth, db, firebaseConfig } from '../services/firebase'
 import { uploadArquivoCloudinary } from '../services/cloudinary'
 import './Admin.css'
+import Louvor from './Louvor'
 
 const ADMIN_EMAILS = ['suedilsonfilho@gmail.com']
 
@@ -39,6 +40,7 @@ const PERFIS_USUARIOS = {
 
 const PERMISSOES_POR_PERFIL = {
   admin: [
+    'louvor',
     'programacao',
     'ensino',
     'eventos',
@@ -53,6 +55,7 @@ const PERMISSOES_POR_PERFIL = {
     'usuarios',
   ],
   presidente: [
+    'louvor',
     'programacao',
     'ensino',
     'eventos',
@@ -307,6 +310,7 @@ function abrirAbaAdmin(aba) {
 }
 function obterPrimeiraAbaPermitida() {
  const ordemAbas = [
+  'louvor',
   'programacao',
   'ensino',
   'oracao',
@@ -5193,6 +5197,7 @@ function renderizarMeusDados() {
 }
 function renderizarUsuariosPermissoes() {
   const todasPermissoes = [
+    { id: 'louvor', nome: 'Louvor: escalas e repertório' },
     { id: 'programacao', nome: 'Programação' },
     { id: 'ensino', nome: 'Ensino' },
     { id: 'eventos', nome: 'Eventos' },
@@ -5896,6 +5901,10 @@ function formatarMoeda(valor) {
       Programação
     </button>
   )}
+{usuarioPodeAcessar('louvor') && (
+  <button type="button" className={abaAtiva === 'louvor' ? 'active' : ''}
+    onClick={() => abrirAbaAdmin('louvor')}>Louvor</button>
+)}
 {usuarioPodeAcessar('ensino') && (
   <button
     type="button"
@@ -6211,6 +6220,7 @@ function formatarMoeda(valor) {
           </section>
         </section>
       )}
+{abaAtiva === 'louvor' && usuarioPodeAcessar('louvor') && <Louvor user={user} />}
 {abaAtiva === 'ensino' &&
   usuarioPodeAcessar('ensino') &&
   renderizarEnsino()}

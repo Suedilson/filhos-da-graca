@@ -1,0 +1,200 @@
+import { useEffect, useState } from 'react'
+import { collection, doc, getDocs, orderBy, query, runTransaction, serverTimestamp, setDoc } from 'firebase/firestore'
+import { db } from '../services/firebase'
+import './Louvor.css'
+
+const novaMusica = () => ({ titulo: '', autor: '', letra: '', tom: '', notas: '', ministros: '', ativo: true })
+const novaEscala = () => ({ titulo: '', data: '', horario: '', ministro: '', observacoes: '', status: 'Confirmada', equipe: [{ nome: '', funcao: '' }], repertorio: [] })
+const hoje = () => new Date().toLocaleDateString('en-CA')
+const dataLegivel = (data) => data?.split('-').reverse().join('/') || ''
+
+export default function Louvor({ user }) {
+  const [aba, setAba] = useState('escalas')
+  const [musicas, setMusicas] = useState([])
+  const [escalas, setEscalas] = useState([])
+  const [musica, setMusica] = useState(novaMusica)
+  const [escala, setEscala] = useState(novaEscala)
+  const [musicaId, setMusicaId] = useState(null)
+  const [escalaId, setEscalaId] = useState(null)
+  const [versao, setVersao] = useState(0)
+  const [busca, setBusca] = useState('')
+  const [periodo, setPeriodo] = useState('proximas')
+  const [carregando, setCarregando] = useState(true)
+  const [salvando, setSalvando] = useState(false)
+  const [erro, setErro] = useState('')
+  const [mensagem, setMensagem] = useState('')
+  const [historico, setHistorico] = useState(null)
+  const [carregandoHistorico, setCarregandoHistorico] = useState(false)
+
+  async function carregar() {
+    setCarregando(true)
+    setErro('')
+    try {
+      const [m, e] = await Promise.all([
+        getDocs(collection(db, 'louvorMusicas')),
+        getDocs(collection(db, 'louvorEscalas')),
+      ])
+      setMusicas(m.docs.map((d) => ({ ...d.data(), id: d.id })).sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR')))
+      setEscalas(e.docs.map((d) => ({ ...d.data(), id: d.id })))
+    } catch (error) {
+      console.error(error)
+      setErro('Não foi possível carregar o ministério de louvor. Tente novamente.')
+    } finally { setCarregando(false) }
+  }
+
+  // Initial loading synchronizes this panel with Firestore.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { carregar() }, [])
+
+  async function salvarMusica(event) {
+    event.preventDefault()
+    setSalvando(true); setErro(''); setMensagem('')
+    try {
+      const ref = musicaId ? doc(db, 'louvorMusicas', musicaId) : doc(collection(db, 'louvorMusicas'))
+      await setDoc(ref, { ...musica, titulo: musica.titulo.trim(), atualizadoEm: serverTimestamp(), atualizadoPor: user.uid }, { merge: true })
+      setMusica(novaMusica()); setMusicaId(null)
+      await carregar()
+      setMensagem('Louvor salvo.')
+    } catch (error) { console.error(error); setErro('Não foi possível salvar o louvor.') }
+    finally { setSalvando(false) }
+  }
+
+  async function salvarEscala(event) {
+    event.preventDefault()
+    if (!escala.equipe.length || escala.equipe.some((p) => !p.nome.trim() || !p.funcao.trim())) {
+      setErro('Preencha o nome e a função de cada integrante da escala.'); return
+    }
+    setSalvando(true); setErro(''); setMensagem('')
+    try {
+      const ref = escalaId ? doc(db, 'louvorEscalas', escalaId) : doc(collection(db, 'louvorEscalas'))
+      await runTransaction(db, async (transaction) => {
+        const atual = await transaction.get(ref)
+        if ((atual.data()?.versao || 0) !== versao) throw new Error('CONFLITO')
+        const dados = { ...escala, titulo: escala.titulo.trim(), versao: versao + 1,
+          atualizadoEm: serverTimestamp(), atualizadoPor: user.uid,
+          responsavel: user.email || user.uid }
+        transaction.set(ref, dados)
+        transaction.set(doc(ref, 'historico', String(dados.versao)), dados)
+      })
+      setEscala(novaEscala()); setEscalaId(null); setVersao(0)
+      await carregar()
+      setMensagem('Escala salva e registrada no histórico.')
+    } catch (error) {
+      console.error(error)
+      setErro(error.message === 'CONFLITO' ? 'Esta escala foi alterada por outra pessoa. Atualize a lista e abra a escala novamente.' : 'Não foi possível salvar a escala.')
+    } finally { setSalvando(false) }
+  }
+
+  async function abrirHistorico(item) {
+    setCarregandoHistorico(true); setErro(''); setHistorico(null)
+    try {
+      const snapshot = await getDocs(query(collection(db, 'louvorEscalas', item.id, 'historico'), orderBy('versao', 'desc')))
+      setHistorico({ titulo: item.titulo, versoes: snapshot.docs.map((d) => d.data()) })
+    } catch (error) { console.error(error); setErro('Não foi possível carregar o histórico.') }
+    finally { setCarregandoHistorico(false) }
+  }
+
+  function editarEscala(item) {
+    setEscala({ titulo: item.titulo, data: item.data, horario: item.horario,
+      ministro: item.ministro, observacoes: item.observacoes, status: item.status,
+      equipe: item.equipe, repertorio: item.repertorio })
+    setEscalaId(item.id); setVersao(item.versao); setHistorico(null)
+    setMensagem(''); setErro('')
+  }
+
+  function selecionarMusica(id) {
+    const item = musicas.find((m) => m.id === id)
+    if (!item || escala.repertorio.some((m) => m.id === id)) return
+    setEscala({ ...escala, repertorio: [...escala.repertorio, {
+      id: item.id, titulo: item.titulo, tom: item.tom, ministros: item.ministros,
+      letra: item.letra, notas: item.notas,
+    }] })
+  }
+
+  const termo = busca.toLocaleLowerCase('pt-BR')
+  const listaMusicas = musicas.filter((m) => `${m.titulo} ${m.autor} ${m.ministros}`.toLocaleLowerCase('pt-BR').includes(termo))
+  const listaEscalas = escalas.filter((e) => (periodo === 'todas' || (periodo === 'proximas' ? e.data >= hoje() : e.data < hoje())) &&
+    `${e.titulo} ${e.ministro} ${e.equipe.map((p) => p.nome).join(' ')}`.toLocaleLowerCase('pt-BR').includes(termo))
+    .sort((a, b) => periodo === 'proximas' ? `${a.data}${a.horario}`.localeCompare(`${b.data}${b.horario}`) : `${b.data}${b.horario}`.localeCompare(`${a.data}${a.horario}`))
+
+  return <section className="worship-area">
+    <header className="worship-toolbar">
+      <h2>Ministério de louvor</h2>
+      <div role="tablist" aria-label="Ministério de louvor">
+        {['escalas', 'louvores'].map((id) => <button key={id} type="button" role="tab" aria-selected={aba === id}
+          className={aba === id ? 'active' : ''} onClick={() => { setAba(id); setBusca(''); setErro(''); setMensagem('') }}>{id === 'escalas' ? 'Escalas' : 'Louvores'}</button>)}
+      </div>
+    </header>
+    {erro && <p role="alert" className="worship-error">{erro}</p>}
+    {mensagem && <p role="status">{mensagem}</p>}
+    {carregando && <p role="status">Carregando...</p>}
+    <div className="worship-layout">
+      {aba === 'louvores' ? <form className="admin-card" onSubmit={salvarMusica}>
+        <h3>{musicaId ? 'Editar louvor' : 'Cadastrar louvor'}</h3>
+        <fieldset disabled={salvando || carregando}>
+          <label>Título<input required maxLength={180} value={musica.titulo} onChange={(e) => setMusica({ ...musica, titulo: e.target.value })} /></label>
+          <label>Autor / intérprete<input maxLength={180} value={musica.autor} onChange={(e) => setMusica({ ...musica, autor: e.target.value })} /></label>
+          <label>Ministros que cantam este louvor<input maxLength={500} value={musica.ministros} onChange={(e) => setMusica({ ...musica, ministros: e.target.value })} /></label>
+          <label>Tom<input maxLength={40} value={musica.tom} onChange={(e) => setMusica({ ...musica, tom: e.target.value })} /></label>
+          <label>Letra<textarea rows={10} maxLength={40000} value={musica.letra} onChange={(e) => setMusica({ ...musica, letra: e.target.value })} /></label>
+          <label>Notas, cifras e observações<textarea rows={5} maxLength={20000} value={musica.notas} onChange={(e) => setMusica({ ...musica, notas: e.target.value })} /></label>
+          <label className="worship-check"><input type="checkbox" checked={musica.ativo} onChange={(e) => setMusica({ ...musica, ativo: e.target.checked })} />Ativo no repertório</label>
+          <button type="submit">{salvando ? 'Salvando...' : 'Salvar louvor'}</button>
+          {musicaId && <button type="button" onClick={() => { setMusica(novaMusica()); setMusicaId(null) }}>Cancelar edição</button>}
+        </fieldset>
+      </form> : <form className="admin-card" onSubmit={salvarEscala}>
+        <h3>{escalaId ? 'Editar escala' : 'Nova escala'}</h3>
+        <fieldset disabled={salvando || carregando}>
+          <label>Culto / evento<input required maxLength={180} value={escala.titulo} onChange={(e) => setEscala({ ...escala, titulo: e.target.value })} /></label>
+          <div className="worship-pair">
+            <label>Data<input type="date" required value={escala.data} onChange={(e) => setEscala({ ...escala, data: e.target.value })} /></label>
+            <label>Horário<input type="time" required value={escala.horario} onChange={(e) => setEscala({ ...escala, horario: e.target.value })} /></label>
+          </div>
+          <label>Ministro de louvor<input required maxLength={180} value={escala.ministro} onChange={(e) => setEscala({ ...escala, ministro: e.target.value })} /></label>
+          <label>Status<select value={escala.status} onChange={(e) => setEscala({ ...escala, status: e.target.value })}>{['Confirmada', 'Rascunho', 'Realizada', 'Cancelada'].map((s) => <option key={s}>{s}</option>)}</select></label>
+          <h4>Músicos e vocalistas</h4>
+          {escala.equipe.map((pessoa, index) => <div className="worship-person" key={index}>
+            <label>Nome<input required maxLength={180} value={pessoa.nome} onChange={(e) => setEscala({ ...escala, equipe: escala.equipe.map((p, i) => i === index ? { ...p, nome: e.target.value } : p) })} /></label>
+            <label>Instrumento / função<input required maxLength={100} value={pessoa.funcao} onChange={(e) => setEscala({ ...escala, equipe: escala.equipe.map((p, i) => i === index ? { ...p, funcao: e.target.value } : p) })} /></label>
+            <button type="button" title="Remover integrante" aria-label="Remover integrante" onClick={() => setEscala({ ...escala, equipe: escala.equipe.filter((_, i) => i !== index) })}>×</button>
+          </div>)}
+          <button type="button" onClick={() => setEscala({ ...escala, equipe: [...escala.equipe, { nome: '', funcao: '' }] })}>Adicionar integrante</button>
+          <label>Repertório<select value="" onChange={(e) => selecionarMusica(e.target.value)}><option value="">Selecionar louvor</option>{musicas.filter((m) => m.ativo && !escala.repertorio.some((r) => r.id === m.id)).map((m) => <option key={m.id} value={m.id}>{m.titulo} {m.tom && `(${m.tom})`}</option>)}</select></label>
+          <ol>{escala.repertorio.map((m, index) => <li key={m.id} className="worship-song-row"><span>{m.titulo}</span><label>Tom<input maxLength={40} value={m.tom} onChange={(e) => setEscala({ ...escala, repertorio: escala.repertorio.map((r, i) => i === index ? { ...r, tom: e.target.value } : r) })} /></label><button type="button" title="Remover louvor" aria-label={`Remover ${m.titulo}`} onClick={() => setEscala({ ...escala, repertorio: escala.repertorio.filter((r) => r.id !== m.id) })}>×</button></li>)}</ol>
+          <label>Observações / ensaio<textarea maxLength={10000} value={escala.observacoes} onChange={(e) => setEscala({ ...escala, observacoes: e.target.value })} /></label>
+          <button type="submit">{salvando ? 'Salvando...' : 'Salvar escala'}</button>
+          {escalaId && <button type="button" onClick={() => { setEscala(novaEscala()); setEscalaId(null); setVersao(0) }}>Cancelar edição</button>}
+        </fieldset>
+      </form>}
+      <section className="worship-records">
+        <div className="worship-filters"><label>Buscar<input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} /></label>
+          {aba === 'escalas' && <label>Período<select value={periodo} onChange={(e) => setPeriodo(e.target.value)}><option value="proximas">Próximas escalas</option><option value="anteriores">Escalas anteriores</option><option value="todas">Todo o histórico</option></select></label>}
+          <button type="button" disabled={carregando || salvando} onClick={carregar}>Atualizar</button>
+        </div>
+        {!carregando && (aba === 'escalas' ? listaEscalas : listaMusicas).length === 0 && <p>Nenhum registro encontrado.</p>}
+        {aba === 'louvores' ? listaMusicas.map((m) => <article className="admin-card" key={m.id}>
+          <h3>{m.titulo}</h3><p>{m.autor} {m.tom && `· Tom: ${m.tom}`} {!m.ativo && '· Arquivado'}</p>
+          <p><strong>Ministros:</strong> {m.ministros || 'Não informado'}</p>
+          <details><summary>Letra e notas</summary><pre>{m.letra || 'Letra não cadastrada.'}</pre><pre>{m.notas}</pre></details>
+          <button type="button" disabled={salvando} onClick={() => { const { id, ...dados } = m; setMusica(dados); setMusicaId(id); setMensagem('') }}>Editar louvor</button>
+        </article>) : listaEscalas.map((e) => <article className="admin-card" key={e.id}>
+          <span>{dataLegivel(e.data)} · {e.horario} · {e.status}</span><h3>{e.titulo}</h3>
+          <p><strong>Ministro:</strong> {e.ministro}</p>
+          <ul>{e.equipe.map((p, i) => <li key={i}>{p.nome} · {p.funcao}</li>)}</ul>
+          <details><summary>Repertório ({e.repertorio.length})</summary><ol>{e.repertorio.map((m) => <li key={m.id}><strong>{m.titulo}</strong> · {m.tom || 'Tom não informado'}<details><summary>Letra e notas</summary><pre>{m.letra}</pre><pre>{m.notas}</pre></details></li>)}</ol></details>
+          {e.observacoes && <p className="worship-prewrap">{e.observacoes}</p>}
+          <div className="admin-actions"><button type="button" disabled={salvando} onClick={() => editarEscala(e)}>Editar escala</button><button type="button" disabled={carregandoHistorico} onClick={() => abrirHistorico(e)}>Histórico de alterações</button></div>
+        </article>)}
+        {carregandoHistorico && <p role="status">Carregando histórico...</p>}
+        {historico && <section className="worship-history"><h3>Histórico: {historico.titulo}</h3><button type="button" onClick={() => setHistorico(null)}>Fechar histórico</button>
+          {historico.versoes.map((v) => <article className="admin-card" key={v.versao}>
+            <h4>Versão {v.versao} · {v.status}</h4><p>{v.atualizadoEm?.toDate().toLocaleString('pt-BR')} · {v.responsavel}</p>
+            <p>{v.titulo} · {dataLegivel(v.data)} · {v.horario} · {v.ministro}</p>
+            <ul>{v.equipe.map((p, i) => <li key={i}>{p.nome} · {p.funcao}</li>)}</ul>
+            <ol>{v.repertorio.map((m) => <li key={m.id}>{m.titulo} · {m.tom}<details><summary>Letra e notas</summary><pre>{m.letra}</pre><pre>{m.notas}</pre></details></li>)}</ol><p className="worship-prewrap">{v.observacoes}</p>
+          </article>)}
+        </section>}
+      </section>
+    </div>
+  </section>
+}
