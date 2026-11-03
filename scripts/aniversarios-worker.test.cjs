@@ -27,6 +27,9 @@ test('Worker de aniversários envia uma vez por ano só para quem faz aniversár
     outboundService: async (request) => {
       const url = new URL(request.url)
       if (url.hostname === 'oauth2.googleapis.com') return Response.json({ access_token: 'token-google' })
+      if (url.hostname === 'firestore.googleapis.com' && url.pathname.endsWith('/configuracoes/emailAniversario')) {
+        return Response.json({ fields: { mensagem: { stringValue: 'Parabéns, {nome}! Texto salvo no painel.' }, assinatura: { stringValue: 'Pastora Teste' } } })
+      }
       if (url.hostname === 'firestore.googleapis.com' && url.pathname.endsWith('/membros')) {
         return Response.json({ documents: membros.map((m) => ({ name: `x/membros/${m.id}`, fields: {
           nome: { stringValue: m.nome }, email: { stringValue: m.email }, nascimento: { stringValue: m.nascimento },
@@ -53,7 +56,9 @@ test('Worker de aniversários envia uma vez por ano só para quem faz aniversár
     assert.equal(enviados.length, 1)
     assert.deepEqual(enviados[0].to, ['maria@exemplo.test'])
     assert.equal(enviados[0].subject, 'Feliz aniversário, Maria! 🎉')
-    assert.ok(enviados[0].html.includes('Pr. Cristiano Ribeiro'))
+    assert.ok(enviados[0].html.includes('Parabéns, Maria! Texto salvo no painel.'))
+    assert.ok(enviados[0].html.includes('Pastora Teste'))
+    assert.ok(enviados[0].html.includes('Números 6:24'))
     // O segundo horário do dia não repete o e-mail
     await worker.scheduled({ cron: '0 14 * * *' })
     assert.equal(enviados.length, 1)

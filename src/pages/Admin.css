@@ -7685,3 +7685,86 @@ textarea {
     white-space: nowrap;
   }
 }
+
+/* Editor do texto do e-mail de aniversário */
+.birthday-email-editor {
+  margin-top: 28px;
+  padding: 22px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+  border-radius: 18px;
+  background: #f7f8fc;
+  border: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.birthday-email-editor .member-field-wide {
+  grid-column: 1 / -1;
+}
+
+.birthday-email-editor-header h3 {
+  margin: 4px 0 6px;
+  color: #17105f;
+  font-size: 1.15rem;
+}
+
+.birthday-email-editor-header p {
+  margin: 0;
+  color: #60708a;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.birthday-email-editor-header code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: #ebe8ff;
+  color: #17105f;
+  font-weight: 800;
+}
+
+.birthday-email-editor textarea {
+  min-height: 190px;
+  line-height: 1.55;
+}
+
+.birthday-email-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.birthday-email-editor-actions button {
+  width: auto !important;
+  min-width: 170px;
+}
+
+@media (max-width: 720px) {
+  .birthday-email-editor {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .birthday-email-editor-actions button {
+    flex: 1 1 100%;
+  }
+}
+
+.birthday-email-editor::before,
+.birthday-email-editor::after {
+  display: none !important;
+}
+
+.birthday-email-editor input,
+.birthday-email-editor textarea {
+  font-weight: 500 !important;
+}
+
+.birthday-email-editor .admin-section-label {
+  display: inline-block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  color: #6fbd2a !important;
+  border-radius: 0 !important;
+}

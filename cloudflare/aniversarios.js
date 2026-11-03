@@ -89,8 +89,19 @@ async function liberarEnvio(env, token, id) {
   })
 }
 
-async function enviarEmail(env, para, nome) {
-  const { assunto, html, texto } = montarEmailAniversario(nome)
+// Texto do e-mail salvo pelo administrador no painel; sem ele, vale o texto padrão.
+async function carregarTextoEmail(env, token) {
+  const r = await fetch(urlFirestore(env, 'configuracoes/emailAniversario'), {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (r.status === 404) return {}
+  if (!r.ok) throw new Error(`Falha ao ler o texto do e-mail (HTTP ${r.status})`)
+  const campos = (await r.json()).fields || {}
+  return Object.fromEntries(Object.entries(campos).map(([chave, valor]) => [chave, valor.stringValue || '']))
+}
+
+async function enviarEmail(env, para, nome, config = {}) {
+  const { assunto, html, texto } = montarEmailAniversario(nome, config)
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
@@ -103,6 +114,7 @@ export async function enviarAniversariantesDoDia(env, agora = new Date()) {
   const hoje = hojeNaBahia(agora)
   const token = await tokenGoogle(env)
   const membros = await listarMembros(env, token)
+  const config = await carregarTextoEmail(env, token)
   const aniversariantes = membros.filter((m) =>
     m.email.includes('@') &&
     m.receberEmailAniversario &&
@@ -114,7 +126,7 @@ export async function enviarAniversariantesDoDia(env, agora = new Date()) {
     const id = `${membro.id}-${hoje.ano}`
     if (!await reservarEnvio(env, token, id)) continue
     try {
-      await enviarEmail(env, membro.email, membro.nome)
+      await enviarEmail(env, membro.email, membro.nome, config)
       enviados++
     } catch (error) {
       console.error('Falha no e-mail de aniversário:', membro.id, error.message)
@@ -154,6 +166,7 @@ export default {
   },
 
   // POST /teste: o administrador geral recebe um exemplo do e-mail no próprio endereço.
+  // O corpo pode trazer um texto ainda não salvo; sem ele, usa o texto salvo no painel.
   async fetch(request, env) {
     const origin = request.headers.get('Origin')
     const headers = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', Vary: 'Origin' }
@@ -174,7 +187,11 @@ export default {
     }
     if (email !== ADMIN_GERAL) return Response.json({ mensagem: 'Somente o administrador geral pode enviar o teste.' }, { status: 403, headers })
     try {
-      await enviarEmail(env, email, 'Suedilson')
+      const corpo = await request.json().catch(() => null)
+      const config = corpo && typeof corpo === 'object' && !Array.isArray(corpo)
+        ? corpo
+        : await carregarTextoEmail(env, await tokenGoogle(env))
+      await enviarEmail(env, email, 'Suedilson', config)
       return Response.json({ mensagem: `E-mail de teste enviado para ${email}.` }, { headers })
     } catch (error) {
       console.error('Falha no e-mail de teste:', error.message)

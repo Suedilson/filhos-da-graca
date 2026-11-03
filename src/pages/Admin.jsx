@@ -28,6 +28,7 @@ import { uploadArquivoCloudinary } from '../services/cloudinary'
 import { mostrarAviso } from '../services/avisos'
 import CampoSenha from '../components/CampoSenha'
 import { enviarEmailAniversarioTeste } from '../services/emailAniversario'
+import { TEXTO_PADRAO as TEXTO_PADRAO_EMAIL_ANIVERSARIO } from '../../cloudflare/emailAniversario.js'
 import './Admin.css'
 import Louvor from './Louvor'
 
@@ -254,6 +255,8 @@ const categoriasGaleria = [
   const [enviandoFotoMembro, setEnviandoFotoMembro] = useState(false)
   const [enviandoFotoFachada, setEnviandoFotoFachada] = useState(false)
   const [enviandoTesteAniversario, setEnviandoTesteAniversario] = useState(false)
+  const [textoEmailAniversario, setTextoEmailAniversario] = useState(TEXTO_PADRAO_EMAIL_ANIVERSARIO)
+  const [salvandoTextoEmail, setSalvandoTextoEmail] = useState(false)
   const [buscaMembro, setBuscaMembro] = useState('')
   const [filtroStatusMembro, setFiltroStatusMembro] = useState('Todos')
   const [filtroMinisterioMembro, setFiltroMinisterioMembro] = useState('Todos')
@@ -4017,17 +4020,66 @@ async function salvarMeusDados(event) {
     }
   }
 
+  async function carregarTextoEmailAniversario() {
+    const snapshot = await getDoc(doc(db, 'configuracoes', 'emailAniversario'))
+    const salvo = snapshot.exists() ? snapshot.data() : {}
+
+    return Object.fromEntries(
+      Object.keys(TEXTO_PADRAO_EMAIL_ANIVERSARIO).map((chave) => [
+        chave,
+        salvo[chave] || TEXTO_PADRAO_EMAIL_ANIVERSARIO[chave],
+      ]),
+    )
+  }
+
+  async function salvarTextoEmailAniversario(event) {
+    event.preventDefault()
+    setSalvandoTextoEmail(true)
+
+    try {
+      await setDoc(doc(db, 'configuracoes', 'emailAniversario'), {
+        ...Object.fromEntries(
+          Object.keys(TEXTO_PADRAO_EMAIL_ANIVERSARIO).map((chave) => [
+            chave,
+            String(textoEmailAniversario[chave] || '').trim(),
+          ]),
+        ),
+        atualizadoEm: serverTimestamp(),
+      })
+
+      mostrarAviso('Texto do e-mail de aniversário salvo com sucesso.', 'sucesso')
+    } catch (error) {
+      mostrarAviso('Erro ao salvar o texto do e-mail.', 'erro')
+      console.error(error)
+    } finally {
+      setSalvandoTextoEmail(false)
+    }
+  }
+
+  function restaurarTextoEmailAniversario() {
+    if (!confirm('Voltar para o texto padrão? A mudança só vale depois de clicar em Salvar texto.')) return
+    setTextoEmailAniversario(TEXTO_PADRAO_EMAIL_ANIVERSARIO)
+  }
+
   async function enviarTesteEmailAniversario() {
     setEnviandoTesteAniversario(true)
 
     try {
-      mostrarAviso(await enviarEmailAniversarioTeste(), 'sucesso')
+      mostrarAviso(await enviarEmailAniversarioTeste(textoEmailAniversario), 'sucesso')
     } catch (error) {
       mostrarAviso(error.message, 'erro')
     } finally {
       setEnviandoTesteAniversario(false)
     }
   }
+
+  useEffect(() => {
+    if (modoMembros === 'aniversariantes' && isPerfilAdministrador) {
+      carregarTextoEmailAniversario()
+        .then(setTextoEmailAniversario)
+        .catch((error) => console.error('Erro ao carregar o texto do e-mail de aniversário.', error))
+    }
+  }, [modoMembros, isPerfilAdministrador])
 
   async function enviarFotoFachada(event) {
     const file = event.target.files?.[0]
@@ -10666,6 +10718,161 @@ function formatarMoeda(valor) {
                   </article>
                 ))}
               </div>
+
+              {isPerfilAdministrador && (
+                <form className="birthday-email-editor" onSubmit={salvarTextoEmailAniversario}>
+                  <div className="birthday-email-editor-header member-field-wide">
+                    <span className="admin-section-label">E-mail automático</span>
+                    <h3>Mensagem do e-mail de aniversário</h3>
+                    <p>
+                      Enviada todo dia às 8h para quem faz aniversário. Escreva{' '}
+                      <code>{'{nome}'}</code> onde deve aparecer o primeiro nome do
+                      aniversariante. A logo e as cores do e-mail são fixas.
+                    </p>
+                  </div>
+
+                  <label className="member-field-wide">
+                    Assunto do e-mail
+                    <input
+                      value={textoEmailAniversario.assunto}
+                      onChange={(event) =>
+                        setTextoEmailAniversario({
+                          ...textoEmailAniversario,
+                          assunto: event.target.value,
+                        })
+                      }
+                      maxLength={300}
+                    />
+                  </label>
+
+                  <label className="member-field-wide">
+                    Título no topo do e-mail
+                    <input
+                      value={textoEmailAniversario.titulo}
+                      onChange={(event) =>
+                        setTextoEmailAniversario({
+                          ...textoEmailAniversario,
+                          titulo: event.target.value,
+                        })
+                      }
+                      maxLength={300}
+                    />
+                  </label>
+
+                  <label className="member-field-wide">
+                    Mensagem
+                    <textarea
+                      rows={9}
+                      value={textoEmailAniversario.mensagem}
+                      onChange={(event) =>
+                        setTextoEmailAniversario({
+                          ...textoEmailAniversario,
+                          mensagem: event.target.value,
+                        })
+                      }
+                      maxLength={4000}
+                    />
+                    <small className="member-field-hint">
+                      Deixe uma linha em branco entre os parágrafos.
+                    </small>
+                  </label>
+
+                  <label>
+                    Versículo
+                    <input
+                      value={textoEmailAniversario.versiculo}
+                      onChange={(event) =>
+                        setTextoEmailAniversario({
+                          ...textoEmailAniversario,
+                          versiculo: event.target.value,
+                        })
+                      }
+                      maxLength={300}
+                    />
+                  </label>
+
+                  <label>
+                    Referência do versículo
+                    <input
+                      value={textoEmailAniversario.referencia}
+                      onChange={(event) =>
+                        setTextoEmailAniversario({
+                          ...textoEmailAniversario,
+                          referencia: event.target.value,
+                        })
+                      }
+                      maxLength={300}
+                    />
+                  </label>
+
+                  <label>
+                    Despedida
+                    <input
+                      value={textoEmailAniversario.despedida}
+                      onChange={(event) =>
+                        setTextoEmailAniversario({
+                          ...textoEmailAniversario,
+                          despedida: event.target.value,
+                        })
+                      }
+                      maxLength={300}
+                    />
+                  </label>
+
+                  <label>
+                    Assinatura
+                    <input
+                      value={textoEmailAniversario.assinatura}
+                      onChange={(event) =>
+                        setTextoEmailAniversario({
+                          ...textoEmailAniversario,
+                          assinatura: event.target.value,
+                        })
+                      }
+                      maxLength={300}
+                    />
+                  </label>
+
+                  <label className="member-field-wide">
+                    Complemento da assinatura
+                    <input
+                      value={textoEmailAniversario.assinaturaComplemento}
+                      onChange={(event) =>
+                        setTextoEmailAniversario({
+                          ...textoEmailAniversario,
+                          assinaturaComplemento: event.target.value,
+                        })
+                      }
+                      maxLength={300}
+                    />
+                  </label>
+
+                  <div className="birthday-email-editor-actions member-field-wide">
+                    <button type="submit" disabled={salvandoTextoEmail}>
+                      {salvandoTextoEmail ? 'Salvando...' : 'Salvar texto'}
+                    </button>
+
+                    {isSuperAdmin && (
+                      <button
+                        type="button"
+                        className="cancel-button"
+                        onClick={enviarTesteEmailAniversario}
+                        disabled={enviandoTesteAniversario}
+                      >
+                        {enviandoTesteAniversario ? 'Enviando...' : 'Testar com este texto'}
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      className="cancel-button"
+                      onClick={restaurarTextoEmailAniversario}
+                    >
+                      Restaurar texto padrão
+                    </button>
+                  </div>
+                </form>
+              )}
             </section>
           )}
         </div>

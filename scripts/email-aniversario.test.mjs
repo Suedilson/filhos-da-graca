@@ -29,3 +29,19 @@ test('usa a data de Vitória da Conquista e trata 29 de fevereiro', () => {
   assert.equal(fazAniversarioHoje('2000-02-29', { ano: 2027, mes: '02', dia: '28' }), true)
   assert.equal(fazAniversarioHoje('2000-02-29', { ano: 2028, mes: '02', dia: '28' }), false)
 })
+
+test('usa o texto salvo no painel e mantém o padrão nos campos vazios', async () => {
+  const { montarEmailAniversario: montar } = await import('../cloudflare/emailAniversario.js')
+  const { assunto, html, texto } = montar('Ana Lima', {
+    assunto: 'Parabéns, {nome}!',
+    mensagem: 'Primeiro parágrafo para {nome}.\n\nSegundo <parágrafo>.',
+    versiculo: '',
+    assinatura: 'Pastora Teste',
+  })
+  assert.equal(assunto, 'Parabéns, Ana!')
+  assert.ok(html.includes('<p style="margin:0 0 16px;">Primeiro parágrafo para Ana.</p>'))
+  assert.ok(html.includes('Segundo &lt;parágrafo&gt;.'))
+  assert.ok(html.includes('O Senhor te abençoe e te guarde.'))
+  assert.ok(html.includes('Pastora Teste'))
+  assert.ok(texto.includes('Pastora Teste'))
+})

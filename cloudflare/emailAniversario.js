@@ -15,9 +15,51 @@ export function primeiroNome(nome) {
   return String(nome || '').trim().split(/\s+/)[0] || 'irmão(ã)'
 }
 
-export function montarEmailAniversario(nome) {
-  const nomeCurto = escapar(primeiroNome(nome))
-  const assunto = `Feliz aniversário, ${primeiroNome(nome)}! 🎉`
+// Texto padrão. O administrador pode trocar pelo painel (configuracoes/emailAniversario).
+export const TEXTO_PADRAO = {
+  assunto: 'Feliz aniversário, {nome}! 🎉',
+  titulo: 'Feliz aniversário, {nome}!',
+  mensagem: `Querido(a) {nome},
+
+Hoje celebramos a sua vida e agradecemos a Deus por cada dia que Ele tem lhe concedido. Você é parte da nossa família, e a sua presença faz diferença na nossa igreja.
+
+Que este novo ano seja cheio da graça, da paz e do cuidado do Senhor. Que cada passo seu seja guiado por Ele, e que não falte alegria, saúde e motivos para agradecer.`,
+  versiculo: 'O Senhor te abençoe e te guarde.',
+  referencia: 'Números 6:24',
+  despedida: 'Com carinho e orações,',
+  assinatura: 'Pr. Cristiano Ribeiro',
+  assinaturaComplemento: 'e toda a Igreja Filhos da Graça',
+}
+
+// Junta o texto salvo com o padrão; campos vazios usam o texto padrão.
+export function textoDoEmail(config = {}) {
+  const texto = { ...TEXTO_PADRAO }
+  for (const chave of Object.keys(TEXTO_PADRAO)) {
+    const valor = typeof config?.[chave] === 'string' ? config[chave].trim() : ''
+    if (valor) texto[chave] = valor.slice(0, chave === 'mensagem' ? 4000 : 300)
+  }
+  return texto
+}
+
+function comNome(texto, nome) {
+  return texto.replaceAll('{nome}', nome)
+}
+
+function paragrafosHtml(texto) {
+  return texto
+    .split(/\n\s*\n/)
+    .map((paragrafo) => paragrafo.trim())
+    .filter(Boolean)
+    .map((paragrafo) => `<p style="margin:0 0 16px;">${escapar(paragrafo).replaceAll('\n', '<br>')}</p>`)
+    .join('\n            ')
+}
+
+export function montarEmailAniversario(nome, config = {}) {
+  const t = textoDoEmail(config)
+  const nomeCurto = primeiroNome(nome)
+  const assunto = comNome(t.assunto, nomeCurto)
+  const titulo = escapar(comNome(t.titulo, nomeCurto))
+  const mensagem = comNome(t.mensagem, nomeCurto)
 
   const html = `<!doctype html>
 <html lang="pt-BR">
@@ -42,15 +84,13 @@ export function montarEmailAniversario(nome) {
         <tr>
           <td align="center" style="padding:16px 32px 0;">
             <div style="font-size:40px;line-height:1;">🎂</div>
-            <h1 style="margin:14px 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:1.2;color:#17105f;">Feliz aniversário, ${nomeCurto}!</h1>
+            <h1 style="margin:14px 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:1.2;color:#17105f;">${titulo}</h1>
             <p style="margin:0;color:#6fbd2a;font-size:13px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;">Hoje é um dia especial</p>
           </td>
         </tr>
         <tr>
           <td style="padding:24px 36px 8px;font-size:16px;line-height:1.7;">
-            <p style="margin:0 0 16px;">Querido(a) ${nomeCurto},</p>
-            <p style="margin:0 0 16px;">Hoje celebramos a sua vida e agradecemos a Deus por cada dia que Ele tem lhe concedido. Você é parte da nossa família, e a sua presença faz diferença na nossa igreja.</p>
-            <p style="margin:0 0 16px;">Que este novo ano seja cheio da graça, da paz e do cuidado do Senhor. Que cada passo seu seja guiado por Ele, e que não falte alegria, saúde e motivos para agradecer.</p>
+            ${paragrafosHtml(mensagem)}
           </td>
         </tr>
         <tr>
@@ -58,8 +98,8 @@ export function montarEmailAniversario(nome) {
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f3ff;border-left:4px solid #6fbd2a;border-radius:10px;">
               <tr>
                 <td style="padding:18px 20px;font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:1.5;color:#17105f;font-style:italic;">
-                  “O Senhor te abençoe e te guarde.”
-                  <div style="margin-top:6px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-style:normal;color:#60708a;">Números 6:24</div>
+                  “${escapar(t.versiculo)}”
+                  <div style="margin-top:6px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-style:normal;color:#60708a;">${escapar(t.referencia)}</div>
                 </td>
               </tr>
             </table>
@@ -67,13 +107,13 @@ export function montarEmailAniversario(nome) {
         </tr>
         <tr>
           <td style="padding:20px 36px 8px;font-size:16px;line-height:1.7;">
-            <p style="margin:0;">Com carinho e orações,</p>
+            <p style="margin:0;">${escapar(t.despedida)}</p>
           </td>
         </tr>
         <tr>
           <td style="padding:6px 36px 32px;">
-            <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:bold;color:#17105f;">Pr. Cristiano Ribeiro</p>
-            <p style="margin:2px 0 0;font-size:15px;color:#2b2f4a;">e toda a Igreja Filhos da Graça</p>
+            <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:bold;color:#17105f;">${escapar(t.assinatura)}</p>
+            <p style="margin:2px 0 0;font-size:15px;color:#2b2f4a;">${escapar(t.assinaturaComplemento)}</p>
             <p style="margin:6px 0 0;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#60708a;">Gerados no coração de Deus</p>
           </td>
         </tr>
@@ -90,17 +130,15 @@ export function montarEmailAniversario(nome) {
 </body>
 </html>`
 
-  const texto = `Feliz aniversário, ${primeiroNome(nome)}!
+  const texto = `${comNome(t.titulo, nomeCurto)}
 
-Hoje celebramos a sua vida e agradecemos a Deus por cada dia que Ele tem lhe concedido. Você é parte da nossa família, e a sua presença faz diferença na nossa igreja.
+${mensagem}
 
-Que este novo ano seja cheio da graça, da paz e do cuidado do Senhor. Que cada passo seu seja guiado por Ele, e que não falte alegria, saúde e motivos para agradecer.
+"${t.versiculo}" (${t.referencia})
 
-"O Senhor te abençoe e te guarde." (Números 6:24)
-
-Com carinho e orações,
-Pr. Cristiano Ribeiro
-e toda a Igreja Filhos da Graça
+${t.despedida}
+${t.assinatura}
+${t.assinaturaComplemento}
 Gerados no coração de Deus
 ${SITE}`
 
