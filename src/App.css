@@ -4793,3 +4793,86 @@ main.site #galeria .section-heading h2 {
     grid-column: 1 / -1;
   }
 }
+
+/* =========================================================
+   Barra de menu com as cores da marca, de forma discreta
+   Linha de destaque azul, verde e dourado + sublinhado verde
+========================================================= */
+
+.header {
+  position: sticky;
+  background:
+    linear-gradient(120deg, #ffffff 0%, #fdfbf6 55%, #f4f9ee 100%) !important;
+  border: 1px solid rgba(23, 16, 95, 0.08) !important;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 28px;
+  right: 28px;
+  height: 4px;
+  border-radius: 0 0 6px 6px;
+  background: linear-gradient(90deg, #17105f 0%, #3b2aa8 35%, #6fbd2a 70%, #d8a526 100%);
+}
+
+.menu a {
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.menu a::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  bottom: 2px;
+  height: 2px;
+  border-radius: 2px;
+  background: #6fbd2a;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
+
+.menu a:hover {
+  color: #2c1a8a !important;
+  background: transparent !important;
+}
+
+.menu a:hover::after,
+.menu a:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.member-link {
+  background: linear-gradient(135deg, #17105f 0%, #2c1a8a 100%) !important;
+  border-bottom: 3px solid #6fbd2a !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.member-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 20px 40px rgba(23, 16, 95, 0.3) !important;
+}
+
+@media (max-width: 1100px) {
+  .header::before {
+    left: 16px;
+    right: 16px;
+    height: 3px;
+  }
+
+  .menu-toggle {
+    background: rgba(111, 189, 42, 0.12);
+    border-color: rgba(111, 189, 42, 0.35);
+  }
+
+  .menu a::after {
+    left: 10px;
+    right: auto;
+    width: 24px;
+    transform-origin: left;
+  }
+}
