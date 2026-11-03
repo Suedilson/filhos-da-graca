@@ -5,8 +5,9 @@
   "compatibility_date": "2026-11-02",
   "workers_dev": true,
   "preview_urls": false,
-  // 08:00 e 11:00 em Vitória da Conquista (UTC-3). O segundo horário reenvia o que falhou no primeiro.
-  "triggers": { "crons": ["0 11 * * *", "0 14 * * *"] },
+  // 08:00 e 11:00 em Vitória da Conquista (UTC-3): e-mails de aniversário; o segundo reenvia o que falhou.
+  // 03:00: cópia de segurança do banco no Google Drive.
+  "triggers": { "crons": ["0 11 * * *", "0 14 * * *", "0 6 * * *"] },
   "vars": {
     "FIREBASE_PROJECT": "filhos-da-graca",
     "REMETENTE": "Igreja Filhos da Graça <contato@filhosdagraca.com.br>"

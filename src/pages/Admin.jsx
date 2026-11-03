@@ -28,6 +28,7 @@ import { uploadArquivoCloudinary } from '../services/cloudinary'
 import { mostrarAviso } from '../services/avisos'
 import CampoSenha from '../components/CampoSenha'
 import { enviarEmailAniversarioTeste } from '../services/emailAniversario'
+import { fazerBackupAgora } from '../services/backup'
 import { TEXTO_PADRAO as TEXTO_PADRAO_EMAIL_ANIVERSARIO } from '../../cloudflare/emailAniversario.js'
 import './Admin.css'
 import Louvor from './Louvor'
@@ -257,6 +258,7 @@ const categoriasGaleria = [
   const [enviandoTesteAniversario, setEnviandoTesteAniversario] = useState(false)
   const [textoEmailAniversario, setTextoEmailAniversario] = useState(TEXTO_PADRAO_EMAIL_ANIVERSARIO)
   const [salvandoTextoEmail, setSalvandoTextoEmail] = useState(false)
+  const [fazendoBackup, setFazendoBackup] = useState(false)
   const [buscaMembro, setBuscaMembro] = useState('')
   const [filtroStatusMembro, setFiltroStatusMembro] = useState('Todos')
   const [filtroMinisterioMembro, setFiltroMinisterioMembro] = useState('Todos')
@@ -4061,6 +4063,18 @@ async function salvarMeusDados(event) {
     setTextoEmailAniversario(TEXTO_PADRAO_EMAIL_ANIVERSARIO)
   }
 
+  async function fazerBackupManual() {
+    setFazendoBackup(true)
+
+    try {
+      mostrarAviso(await fazerBackupAgora(), 'sucesso')
+    } catch (error) {
+      mostrarAviso(error.message, 'erro')
+    } finally {
+      setFazendoBackup(false)
+    }
+  }
+
   async function enviarTesteEmailAniversario() {
     setEnviandoTesteAniversario(true)
 
@@ -5571,6 +5585,18 @@ function renderizarUsuariosPermissoes() {
             painel administrativo.
           </p>
         </div>
+
+        {isSuperAdmin && (
+          <button
+            type="button"
+            className="backup-now-button"
+            onClick={fazerBackupManual}
+            disabled={fazendoBackup}
+            title="Salva agora uma cópia de todos os dados no Google Drive de backup. A cópia automática roda todo dia às 3h."
+          >
+            {fazendoBackup ? 'Salvando backup...' : '💾 Fazer backup agora'}
+          </button>
+        )}
       </div>
 
       <div className="users-permission-grid">

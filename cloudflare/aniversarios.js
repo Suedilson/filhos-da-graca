@@ -1,47 +1,15 @@
 import { fazAniversarioHoje, hojeNaBahia, montarEmailAniversario } from './emailAniversario.js'
+import { decodeBase64url, tokenGoogle, urlFirestore } from './google.js'
+import { fazerBackup } from './backup.js'
 
-// Worker agendado: todo dia de manhã envia o e-mail de aniversário aos membros.
-// Segredos (wrangler secret put): FIREBASE_SERVICE_ACCOUNT (JSON da conta de serviço) e RESEND_API_KEY.
+// Worker agendado: todo dia de manhã envia o e-mail de aniversário aos membros
+// e, de madrugada, salva uma cópia de segurança do banco no Google Drive (backup.js).
+// Segredos (wrangler secret put): FIREBASE_SERVICE_ACCOUNT (JSON da conta de serviço), RESEND_API_KEY
+// e os GOOGLE_DRIVE_* do backup.
 
 const ADMIN_GERAL = 'suedilsonfilho@gmail.com'
+const CRON_BACKUP = '0 6 * * *'
 const dominios = new Set(['https://filhosdagraca.com.br', 'https://www.filhosdagraca.com.br', 'https://filhos-da-graca.web.app', 'https://filhos-da-graca.firebaseapp.com', 'http://localhost:5173'])
-
-function base64url(bytes) {
-  return btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-}
-
-function decodeBase64url(texto) {
-  return Uint8Array.from(atob(texto.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))
-}
-
-// Token de acesso do Google a partir da conta de serviço do Firebase.
-async function tokenGoogle(env) {
-  const conta = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT)
-  const agora = Math.floor(Date.now() / 1000)
-  const cabecalho = base64url(new TextEncoder().encode(JSON.stringify({ alg: 'RS256', typ: 'JWT' })))
-  const dados = base64url(new TextEncoder().encode(JSON.stringify({
-    iss: conta.client_email,
-    scope: 'https://www.googleapis.com/auth/datastore',
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: agora,
-    exp: agora + 3600,
-  })))
-  const pem = conta.private_key.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '')
-  const chave = await crypto.subtle.importKey('pkcs8', Uint8Array.from(atob(pem), (c) => c.charCodeAt(0)),
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign'])
-  const assinatura = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', chave, new TextEncoder().encode(`${cabecalho}.${dados}`))
-  const r = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=${encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer')}&assertion=${cabecalho}.${dados}.${base64url(assinatura)}`,
-  })
-  if (!r.ok) throw new Error(`Falha ao autenticar no Google (HTTP ${r.status})`)
-  return (await r.json()).access_token
-}
-
-function urlFirestore(env, caminho) {
-  return `https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT}/databases/(default)/documents/${caminho}`
-}
 
 async function listarMembros(env, token) {
   const membros = []
@@ -161,10 +129,11 @@ async function emailDoToken(token, projeto) {
 }
 
 export default {
-  async scheduled(_evento, env, ctx) {
-    ctx.waitUntil(enviarAniversariantesDoDia(env))
+  async scheduled(evento, env, ctx) {
+    ctx.waitUntil(evento.cron === CRON_BACKUP ? fazerBackup(env) : enviarAniversariantesDoDia(env))
   },
 
+  // POST /backup: o administrador geral faz uma cópia de segurança na hora.
   // POST /teste: o administrador geral recebe um exemplo do e-mail no próprio endereço.
   // O corpo pode trazer um texto ainda não salvo; sem ele, usa o texto salvo no painel.
   async fetch(request, env) {
@@ -175,7 +144,8 @@ export default {
     headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type'
     headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers })
-    if (new URL(request.url).pathname !== '/teste' || request.method !== 'POST') {
+    const rota = new URL(request.url).pathname
+    if (!['/teste', '/backup'].includes(rota) || request.method !== 'POST') {
       return Response.json({ mensagem: 'Rota não encontrada.' }, { status: 404, headers })
     }
     let email
@@ -185,7 +155,16 @@ export default {
     } catch {
       return Response.json({ mensagem: 'Entre novamente na sua conta.' }, { status: 401, headers })
     }
-    if (email !== ADMIN_GERAL) return Response.json({ mensagem: 'Somente o administrador geral pode enviar o teste.' }, { status: 403, headers })
+    if (email !== ADMIN_GERAL) return Response.json({ mensagem: 'Somente o administrador geral pode fazer isso.' }, { status: 403, headers })
+    if (rota === '/backup') {
+      try {
+        const resultado = await fazerBackup(env)
+        return Response.json({ mensagem: `Backup salvo no Google Drive: ${resultado.arquivo} (${resultado.totalDocumentos} registros).` }, { headers })
+      } catch (error) {
+        console.error('Falha no backup manual:', error.message)
+        return Response.json({ mensagem: 'Não foi possível salvar o backup no Google Drive. Confira a autorização da conta de backup.' }, { status: 502, headers })
+      }
+    }
     try {
       const corpo = await request.json().catch(() => null)
       const config = corpo && typeof corpo === 'object' && !Array.isArray(corpo)

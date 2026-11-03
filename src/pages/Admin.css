@@ -7768,3 +7768,29 @@ textarea {
   color: #6fbd2a !important;
   border-radius: 0 !important;
 }
+
+/* Botão de backup manual na aba Permissões */
+.users-permission-area .finance-report-toolbar {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.users-permission-area .backup-now-button {
+  width: auto !important;
+  min-height: 40px;
+  padding: 10px 18px;
+  border-radius: 11px;
+  background: #ffffff;
+  color: #17105f;
+  border: 0;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.users-permission-area .backup-now-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
