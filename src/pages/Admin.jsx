@@ -10594,7 +10594,7 @@ function formatarMoeda(valor) {
                     {isSuperAdmin && (
                       <button
                         type="button"
-                        className="excel-button"
+                        className="email-test-button"
                         onClick={enviarTesteEmailAniversario}
                         disabled={enviandoTesteAniversario}
                         title="Envia um exemplo do e-mail de aniversário para o seu e-mail"

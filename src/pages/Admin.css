@@ -7638,3 +7638,50 @@ textarea {
   height: 100% !important;
   object-fit: cover;
 }
+
+/* Botão de e-mail de teste na mesma linha de Relatório e Exportar Excel */
+.member-birthday-card .birthday-buttons:has(.email-test-button) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.member-birthday-card .birthday-buttons:has(.email-test-button) button {
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.member-birthday-card .email-test-button {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+}
+
+.member-birthday-card .email-test-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.member-birthday-card .email-test-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+@media (max-width: 720px) {
+  .member-birthday-card .birthday-buttons:has(.email-test-button) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .member-birthday-card .email-test-button {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Coluna das ações mais larga para os três botões caberem em uma linha */
+@media (min-width: 1000px) {
+  .member-birthday-card .birthday-page-header:has(.email-test-button) {
+    grid-template-columns: minmax(0, 1fr) 470px;
+  }
+
+  .member-birthday-card .birthday-buttons:has(.email-test-button) button {
+    white-space: nowrap;
+  }
+}
