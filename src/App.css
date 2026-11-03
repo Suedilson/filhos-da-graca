@@ -4876,3 +4876,27 @@ main.site #galeria .section-heading h2 {
     transform-origin: left;
   }
 }
+
+/* =========================================================
+   Fundo da página levemente acinzentado-lilás para o menu
+   e os cartões brancos se destacarem, sem exagero
+========================================================= */
+
+main.site {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(111, 189, 42, 0.09), transparent 30rem),
+    radial-gradient(circle at 100% 0%, rgba(44, 26, 138, 0.07), transparent 34rem),
+    linear-gradient(180deg, #edeef6 0%, #f2f3f8 45%, #f5f5f9 100%) !important;
+}
+
+.top-strip {
+  background: transparent !important;
+}
+
+.header {
+  background: #ffffff !important;
+  border: 1px solid rgba(23, 16, 95, 0.07) !important;
+  box-shadow:
+    0 14px 34px rgba(23, 16, 95, 0.1),
+    0 2px 6px rgba(23, 16, 95, 0.04) !important;
+}
