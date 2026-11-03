@@ -7098,3 +7098,316 @@ textarea {
     font-size: 1rem !important;
   }
 }
+
+/* =========================================================
+   Cadastro de membros: ficha organizada em blocos
+========================================================= */
+
+.member-form-panel > * {
+  grid-column: 1 / -1 !important;
+}
+
+.member-form-header {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  gap: 22px;
+  align-items: center;
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.member-form-avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #17105f, #2c1a8a);
+  border: 4px solid #ffffff;
+  box-shadow: 0 12px 28px rgba(23, 16, 95, 0.18);
+}
+
+.member-form-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.member-form-avatar span {
+  color: #ffffff;
+  font-size: 2.2rem;
+  font-weight: 900;
+}
+
+.member-form-heading h2 {
+  margin: 2px 0 4px !important;
+}
+
+.member-form-heading p {
+  margin: 0 0 12px !important;
+}
+
+/* Botão de foto no lugar do campo de arquivo padrão do navegador */
+.member-form-panel .member-photo-button {
+  display: inline-flex !important;
+  align-items: center;
+  width: fit-content !important;
+  min-height: 38px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: #f1f3f9;
+  border: 1px solid rgba(23, 16, 95, 0.14);
+  color: #17105f;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.member-form-panel .member-photo-button:hover {
+  background: #e7eaf5;
+}
+
+.member-form-panel .member-photo-button:focus-within {
+  outline: 3px solid rgba(111, 189, 42, 0.45);
+  outline-offset: 2px;
+}
+
+.member-form-panel .member-photo-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.member-form-status {
+  align-self: start;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #eaf6df;
+  color: #2f7417;
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.member-form-section {
+  margin: 0;
+  padding: 20px 0 4px;
+  border: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+}
+
+.member-form-section + .member-form-section {
+  border-top: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.member-form-section legend {
+  float: left;
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-bottom: 2px;
+  padding: 0;
+  color: #6fbd2a;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.member-form-section .member-field-wide {
+  grid-column: 1 / -1;
+}
+
+.member-field-hint {
+  color: #60708a;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.member-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.member-form-section textarea {
+  min-height: 110px;
+}
+
+.member-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.member-form-actions button {
+  width: auto !important;
+  min-width: 180px;
+}
+
+@media (max-width: 720px) {
+  .member-form-header {
+    grid-template-columns: 84px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .member-form-avatar {
+    width: 84px;
+    height: 84px;
+  }
+
+  .member-form-status {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .member-form-section {
+    grid-template-columns: 1fr;
+  }
+
+  .member-form-actions button {
+    flex: 1 1 100%;
+  }
+}
+
+/* =========================================================
+   Usuário logado no cabeçalho do painel
+   Computador: marca | resumo | usuário | Sair
+   Celular: marca e Sair na primeira linha, usuário e resumo abaixo
+========================================================= */
+
+.admin-header {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 18px !important;
+}
+
+.admin-header .admin-brand-link {
+  flex: 1 1 auto;
+  min-width: 180px;
+  order: 0;
+}
+
+.admin-header .header-members-summary {
+  flex: 0 1 520px;
+  order: 1;
+}
+
+.admin-header > button {
+  order: 3;
+}
+
+.admin-user-chip {
+  order: 2;
+  flex: 0 1 auto;
+  max-width: 320px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 6px 14px 6px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.admin-user-avatar {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #6fbd2a;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.admin-user-chip > div {
+  min-width: 0;
+  display: grid;
+  line-height: 1.2;
+}
+
+.admin-user-chip strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.admin-user-chip small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.74rem;
+}
+
+@media (max-width: 1100px) {
+  .admin-header .header-members-summary {
+    order: 5;
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-header > button {
+    order: 1;
+  }
+
+  .admin-user-chip {
+    order: 4;
+    flex: 1 1 100%;
+    max-width: none;
+  }
+}
+
+/* Cabeçalho da ficha de membro sobre a faixa azul do cartão */
+.member-form-panel::before {
+  display: none !important;
+}
+
+.member-form-panel .member-form-header {
+  margin: -22px -22px 4px;
+  padding: 26px 26px 24px;
+  border-bottom: 0;
+  background:
+    radial-gradient(circle at top left, rgba(111, 189, 42, 0.2), transparent 40%),
+    linear-gradient(135deg, #17105f, #27137a);
+}
+
+.member-form-panel .member-form-heading .admin-section-label {
+  color: #9fe06a !important;
+}
+
+.member-form-panel .member-form-heading h2 {
+  color: #ffffff !important;
+}
+
+.member-form-panel .member-form-heading p {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.member-form-panel .member-form-avatar {
+  border-color: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(135deg, #6fbd2a, #4f9f18);
+}
+
+.member-form-panel .member-photo-button {
+  background: #ffffff;
+  border-color: transparent;
+}

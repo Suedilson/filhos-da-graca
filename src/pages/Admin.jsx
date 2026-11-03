@@ -42,6 +42,16 @@ function campoCsv(valor) {
   return `"${texto.replaceAll('"', '""')}"`
 }
 
+function obterIniciais(nome) {
+  return String(nome || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((_, indice, partes) => indice === 0 || indice === partes.length - 1)
+    .map((parte) => parte[0].toUpperCase())
+    .join('')
+}
+
 function escaparHtml(valor) {
   return String(valor ?? '')
     .replaceAll('&', '&amp;')
@@ -320,6 +330,14 @@ const isAdmin = Boolean(
       permissaoUsuario?.ativo === true
     ),
 )
+
+const nomeUsuarioLogado =
+  (permissaoUsuario?.nome && permissaoUsuario.nome !== 'Administrador geral'
+    ? permissaoUsuario.nome
+    : user?.displayName) ||
+  permissaoUsuario?.nome ||
+  user?.email ||
+  ''
 
 function usuarioPodeAcessar(permissao) {
   if (isSuperAdmin) return true
@@ -6015,6 +6033,20 @@ function formatarMoeda(valor) {
     </div>
   )}
 
+  <div className="admin-user-chip" title={user?.email || ''}>
+    <span className="admin-user-avatar" aria-hidden="true">
+      {obterIniciais(nomeUsuarioLogado) || '?'}
+    </span>
+
+    <div>
+      <strong>{nomeUsuarioLogado}</strong>
+      <small>
+        {PERFIS_USUARIOS[perfilUsuario] || 'Usuário'}
+        {user?.email && nomeUsuarioLogado !== user.email ? ` · ${user.email}` : ''}
+      </small>
+    </div>
+  </div>
+
   <button onClick={sair}>Sair</button>
 </header>
 
@@ -9829,151 +9861,184 @@ function formatarMoeda(valor) {
   }`}
   onSubmit={salvarMembro}
 >
-   
-            <span className="admin-section-label">Membros</span>
+  <div className="member-form-header">
+    <div className="member-form-avatar">
+      {membroForm.foto ? (
+        <img src={membroForm.foto} alt={membroForm.nome || 'Foto do membro'} />
+      ) : (
+        <span>{obterIniciais(membroForm.nome) || '?'}</span>
+      )}
+    </div>
 
-            <h2>
-  {editandoMembroId
-    ? 'Editar membro'
-    : modoMembros === 'pastoral'
-      ? 'Acompanhamento pastoral'
-      : 'Cadastrar membro'}
-</h2>
+    <div className="member-form-heading">
+      <span className="admin-section-label">
+        {modoMembros === 'pastoral' ? 'Cuidado pastoral' : 'Membros'}
+      </span>
 
-<p>
-  {modoMembros === 'pastoral'
-    ? 'Registre informações de cuidado, contato, próxima ação e acompanhamento.'
-    : 'Cadastre membros, visitantes e pessoas acompanhadas pela igreja.'}
-</p>
+      <h2>
+        {editandoMembroId
+          ? membroForm.nome || 'Editar membro'
+          : modoMembros === 'pastoral'
+            ? 'Acompanhamento pastoral'
+            : 'Cadastrar membro'}
+      </h2>
 
-            <label>
-              Nome completo
-              <input
-                value={membroForm.nome}
-                onChange={(event) =>
-                  setMembroForm({
-                    ...membroForm,
-                    nome: event.target.value,
-                  })
-                }
-                placeholder="Nome do membro"
-              />
-            </label>
+      <p>
+        {modoMembros === 'pastoral'
+          ? 'Registre informações de cuidado, contato, próxima ação e acompanhamento.'
+          : editandoMembroId
+            ? 'Atualize os dados do cadastro e salve as alterações.'
+            : 'Cadastre membros, visitantes e pessoas acompanhadas pela igreja.'}
+      </p>
 
-            <label>
-              Telefone / WhatsApp
-              <input
-                value={membroForm.telefone}
-                onChange={(event) =>
-                  setMembroForm({
-                    ...membroForm,
-                    telefone: event.target.value,
-                  })
-                }
-                placeholder="(00) 00000-0000"
-              />
-            </label>
+      {modoMembros !== 'pastoral' && (
+        <label className="member-photo-button">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={enviarFotoMembro}
+            disabled={enviandoFotoMembro}
+          />
+          {enviandoFotoMembro
+            ? 'Enviando foto...'
+            : membroForm.foto
+              ? 'Trocar foto'
+              : 'Adicionar foto'}
+        </label>
+      )}
+    </div>
 
-            <label>
-              Data de nascimento
-              <input
-                type="date"
-                value={membroForm.nascimento}
-                onChange={(event) =>
-                  setMembroForm({
-                    ...membroForm,
-                    nascimento: event.target.value,
-                  })
-                }
-              />
-            </label>
-{membroForm.nascimento && (
-  <p className="member-age-note">
-    Idade calculada automaticamente: {calcularIdade(membroForm.nascimento)} anos
-  </p>
-)}
+    {editandoMembroId && membroForm.status && (
+      <em className="member-form-status">{membroForm.status}</em>
+    )}
+  </div>
 
-            <label>
-              Endereço
-              <input
-                value={membroForm.endereco}
-                onChange={(event) =>
-                  setMembroForm({
-                    ...membroForm,
-                    endereco: event.target.value,
-                  })
-                }
-                placeholder="Endereço completo"
-              />
-            </label>
+  <fieldset className="member-form-section">
+    <legend>{modoMembros === 'pastoral' ? 'Contato' : 'Dados pessoais'}</legend>
 
-            <label>
-              Ministério
-              <input
-                value={membroForm.ministerio}
-                onChange={(event) =>
-                  setMembroForm({
-                    ...membroForm,
-                    ministerio: event.target.value,
-                  })
-                }
-                placeholder="Ex: Louvor, Infantil, Recepção"
-              />
-            </label>
+    <label className="member-field-wide">
+      Nome completo
+      <input
+        value={membroForm.nome}
+        onChange={(event) =>
+          setMembroForm({
+            ...membroForm,
+            nome: event.target.value,
+          })
+        }
+        placeholder="Nome do membro"
+      />
+    </label>
 
-            <label>
-              Status
-              <select
-                value={membroForm.status}
-                onChange={(event) =>
-                  setMembroForm({
-                    ...membroForm,
-                    status: event.target.value,
-                  })
-                }
-              >
-                <option value="Ativo">Ativo</option>
-                <option value="Pendente aprovação">Pendente aprovação</option>
-                <option value="Visitante">Visitante</option>
-                <option value="Afastado">Afastado</option>
-                <option value="Inativo">Inativo</option>
-              </select>
-            </label>
+    <label>
+      Telefone / WhatsApp
+      <input
+        value={membroForm.telefone}
+        onChange={(event) =>
+          setMembroForm({
+            ...membroForm,
+            telefone: event.target.value,
+          })
+        }
+        placeholder="(00) 00000-0000"
+      />
+    </label>
 
-            <label>
-              Foto do membro
-              <input
-                type="file"
-                accept="image/*"
-                onChange={enviarFotoMembro}
-                disabled={enviandoFotoMembro}
-              />
-            </label>
+    {modoMembros !== 'pastoral' && (
+      <label>
+        Data de nascimento
+        <input
+          type="date"
+          value={membroForm.nascimento}
+          onChange={(event) =>
+            setMembroForm({
+              ...membroForm,
+              nascimento: event.target.value,
+            })
+          }
+        />
+        {membroForm.nascimento && (
+          <small className="member-field-hint">
+            {calcularIdade(membroForm.nascimento)} anos
+          </small>
+        )}
+      </label>
+    )}
+  </fieldset>
 
-            {enviandoFotoMembro && <p>Enviando foto...</p>}
+  {modoMembros !== 'pastoral' && (
+    <>
+      <fieldset className="member-form-section">
+        <legend>Endereço e igreja</legend>
 
-            {membroForm.foto && (
-              <div className="member-photo-preview">
-                <img
-                  src={membroForm.foto}
-                  alt={membroForm.nome || 'Foto do membro'}
-                />
-              </div>
-            )}
+        <label className="member-field-wide">
+          Endereço
+          <input
+            value={membroForm.endereco}
+            onChange={(event) =>
+              setMembroForm({
+                ...membroForm,
+                endereco: event.target.value,
+              })
+            }
+            placeholder="Rua, número, bairro e cidade"
+          />
+        </label>
 
-            <label>
-              Observações internas
-              <textarea
-                value={membroForm.observacoes}
-                onChange={(event) =>
-                  setMembroForm({
-                    ...membroForm,
-                    observacoes: event.target.value,
-                  })
-                }
-                placeholder="Observações internas sobre acompanhamento, família ou integração"
-              />
-            </label>
+        <label>
+          Ministério
+          <input
+            value={membroForm.ministerio}
+            onChange={(event) =>
+              setMembroForm({
+                ...membroForm,
+                ministerio: event.target.value,
+              })
+            }
+            placeholder="Ex: Louvor, Infantil, Recepção"
+          />
+        </label>
+
+        <label>
+          Status
+          <select
+            value={membroForm.status}
+            onChange={(event) =>
+              setMembroForm({
+                ...membroForm,
+                status: event.target.value,
+              })
+            }
+          >
+            <option value="Ativo">Ativo</option>
+            <option value="Pendente aprovação">Pendente aprovação</option>
+            <option value="Visitante">Visitante</option>
+            <option value="Afastado">Afastado</option>
+            <option value="Inativo">Inativo</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <fieldset className="member-form-section">
+        <legend>Observações internas</legend>
+
+        <label className="member-field-wide">
+          <span className="member-sr-only">Observações internas</span>
+          <textarea
+            value={membroForm.observacoes}
+            onChange={(event) =>
+              setMembroForm({
+                ...membroForm,
+                observacoes: event.target.value,
+              })
+            }
+            placeholder="Acompanhamento, família ou integração. Visível apenas para a liderança."
+          />
+        </label>
+      </fieldset>
+    </>
+  )}
+
 <div className="pastoral-form-section">
   <span>Acompanhamento pastoral</span>
 
@@ -10068,23 +10133,25 @@ function formatarMoeda(valor) {
   </label>
 </div>
 
-            <button type="submit" disabled={loading || enviandoFotoMembro}>
-              {loading
-                ? 'Salvando...'
-                : editandoMembroId
-                  ? 'Salvar alterações'
-                  : 'Salvar membro'}
-            </button>
+  <div className="member-form-actions">
+    <button type="submit" disabled={loading || enviandoFotoMembro}>
+      {loading
+        ? 'Salvando...'
+        : editandoMembroId
+          ? 'Salvar alterações'
+          : 'Salvar membro'}
+    </button>
 
-            {editandoMembroId && (
-              <button
-                type="button"
-                className="cancel-button"
-                onClick={cancelarEdicaoMembro}
-              >
-                Cancelar edição
-              </button>
-            )}
+    {editandoMembroId && (
+      <button
+        type="button"
+        className="cancel-button"
+        onClick={cancelarEdicaoMembro}
+      >
+        Cancelar edição
+      </button>
+    )}
+  </div>
                              </form>
 
           <section
