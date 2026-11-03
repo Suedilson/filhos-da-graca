@@ -10,6 +10,7 @@ import {
 import { auth, db } from '../services/firebase'
 import { uploadArquivoCloudinary } from '../services/cloudinary'
 import { mostrarAviso } from '../services/avisos'
+import CampoSenha from '../components/CampoSenha'
 import './Admin.css'
 
 const PERMISSOES_MEMBRO = ['meusDados']
@@ -334,8 +335,7 @@ async function enviarFotoCadastroMembro(event) {
 
           <label>
             Senha
-            <input
-              type="password"
+            <CampoSenha
               value={cadastroMembroForm.senha}
               onChange={(event) =>
                 setCadastroMembroForm({
@@ -349,8 +349,7 @@ async function enviarFotoCadastroMembro(event) {
 
           <label>
             Confirmar senha
-            <input
-              type="password"
+            <CampoSenha
               value={cadastroMembroForm.confirmarSenha}
               onChange={(event) =>
                 setCadastroMembroForm({

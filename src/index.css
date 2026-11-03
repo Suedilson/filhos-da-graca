@@ -18,3 +18,42 @@ textarea::placeholder {
   font-weight: 400 !important;
   opacity: 1;
 }
+
+/* Campo de senha com botão de olho */
+.campo-senha {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.campo-senha > input {
+  width: 100%;
+  padding-right: 48px !important;
+}
+
+.campo-senha > .campo-senha-olho {
+  position: absolute !important;
+  top: 50% !important;
+  right: 6px !important;
+  transform: translateY(-50%) !important;
+  width: 38px !important;
+  min-width: 0 !important;
+  height: 38px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  color: #60708a !important;
+  cursor: pointer;
+}
+
+.campo-senha > .campo-senha-olho:hover,
+.campo-senha > .campo-senha-olho:focus-visible {
+  color: #17105f !important;
+  background: rgba(23, 16, 95, 0.06) !important;
+}

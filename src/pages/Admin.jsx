@@ -26,6 +26,7 @@ import {
 import { auth, db, firebaseConfig } from '../services/firebase'
 import { uploadArquivoCloudinary } from '../services/cloudinary'
 import { mostrarAviso } from '../services/avisos'
+import CampoSenha from '../components/CampoSenha'
 import './Admin.css'
 import Louvor from './Louvor'
 
@@ -5641,8 +5642,7 @@ function renderizarUsuariosPermissoes() {
             !usuarioPermissaoForm.usuarioExistente && (
               <label>
                 Senha inicial
-                <input
-                  type="password"
+                <CampoSenha
                   name="permissaoSenhaInicial"
                   autoComplete="new-password"
                   value={usuarioPermissaoForm.senha}
@@ -5939,8 +5939,7 @@ function formatarMoeda(valor) {
 
               <label>
                 Senha
-                <input
-                  type="password"
+                <CampoSenha
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Digite sua senha"
@@ -6048,8 +6047,7 @@ function formatarMoeda(valor) {
 
               <label>
                 Senha
-                <input
-                  type="password"
+                <CampoSenha
                   value={cadastroMembroForm.senha}
                   onChange={(event) =>
                     setCadastroMembroForm({
@@ -6063,8 +6061,7 @@ function formatarMoeda(valor) {
 
               <label>
                 Confirmar senha
-                <input
-                  type="password"
+                <CampoSenha
                   value={cadastroMembroForm.confirmarSenha}
                   onChange={(event) =>
                     setCadastroMembroForm({

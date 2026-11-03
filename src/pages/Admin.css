@@ -7623,3 +7623,18 @@ textarea {
   letter-spacing: 0.02em !important;
   text-transform: none !important;
 }
+
+/* Fotos redondas e quadradas preenchendo o quadro inteiro (corrige o corte no iPhone) */
+.my-data-photo,
+.member-form-avatar {
+  position: relative;
+}
+
+.my-data-photo img,
+.member-form-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
