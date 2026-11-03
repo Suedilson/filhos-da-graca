@@ -16,12 +16,15 @@ test('Worker autentica, extrai cifra, bloqueia acesso externo e reutiliza cache'
   let chamadasFonte = 0
   let bloquearPrincipal = false
   let ativo = true
+  let comPermissaoLouvor = true
+  let ministerioMembro = 'Infantil'
   const bundle = buildSync({ entryPoints: [path.resolve(__dirname, '../cloudflare/worker.js')], bundle: true, write: false, format: 'esm', platform: 'browser' }).outputFiles[0].text
   const mf = new Miniflare(convertV4MiniflareOptions({ workers: [{ modules: true, script: bundle, compatibilityDate: '2026-11-02', bindings: { FIREBASE_PROJECT: 'filhos-da-graca' },
     outboundService: async (request) => {
       const url = new URL(request.url)
       if (url.hostname === 'www.googleapis.com') return Response.json({ keys: [jwk] })
-      if (url.hostname === 'firestore.googleapis.com') return Response.json({ fields: { ativo: { booleanValue: ativo }, permissoes: { arrayValue: { values: [{ stringValue: 'louvor' }] } } } })
+      if (url.hostname === 'firestore.googleapis.com' && url.pathname.includes('/membros/')) return Response.json({ fields: { ministerio: { stringValue: ministerioMembro } } })
+      if (url.hostname === 'firestore.googleapis.com') return Response.json({ fields: { ativo: { booleanValue: ativo }, membroId: { stringValue: 'membro-1' }, permissoes: { arrayValue: { values: comPermissaoLouvor ? [{ stringValue: 'louvor' }] : [] } } } })
       if (url.hostname === 'tudocifras.com.br' && url.pathname.includes('desconhecida')) return new Response('', { status: 404 })
       if (url.hostname === 'tudocifras.com.br') return new Response('<h1>C&acirc;ntico novo (Cifras)</h1><h2>Intérprete Novo</h2><pre id="acorde">&amp;nbsp;&amp;nbsp;<a>D</a>&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;<a>G</a><br>Texto fictício da alternativa &amp; final</pre>', { headers: { 'Content-Type': 'text/html' } })
       if (url.hostname === 'www.cifraclub.com.br') {
@@ -65,6 +68,13 @@ test('Worker autentica, extrai cifra, bloqueia acesso externo e reutiliza cache'
     const recusado = await mf.dispatchFetch(url, { method: 'POST', headers, body: JSON.stringify({ titulo: 'Música desconhecida', autor: 'Intérprete Novo' }) })
     assert.equal(recusado.status, 503)
     assert.match((await recusado.json()).mensagem, /recusou a consulta/)
+    comPermissaoLouvor = false
+    const semMinisterio = await mf.dispatchFetch(url, { method: 'POST', headers, body })
+    assert.equal(semMinisterio.status, 403)
+    ministerioMembro = 'Ministério de Louvor'
+    const peloMinisterio = await mf.dispatchFetch(url, { method: 'POST', headers, body })
+    assert.equal(peloMinisterio.status, 200, await peloMinisterio.clone().text())
+    comPermissaoLouvor = true
     ativo = false
     const semPermissao = await mf.dispatchFetch(url, { method: 'POST', headers, body })
     assert.equal(semPermissao.status, 403)

@@ -34,6 +34,32 @@ service cloud.firestore {
       return /databases/$(database)/documents/membros/$(memberId);
     }
 
+    // Perfil Administrador: único que configura o conteúdo do site e as permissões.
+    function adminProfile() {
+      return superAdmin() ||
+        (activeUser() && userPermission().get('perfil', '') == 'admin');
+    }
+
+    // Louvor: quem tem a permissão ou cujo cadastro de membro tem "Louvor" no ministério.
+    function louvorAccess() {
+      return hasPermission('louvor') ||
+        (activeUser() &&
+          userPermission().get('membroId', '') is string &&
+          userPermission().get('membroId', '') != '' &&
+          exists(memberPath(userPermission().membroId)) &&
+          get(memberPath(userPermission().membroId)).data.get('ministerio', '')
+            .lower().matches('.*louvor.*'));
+    }
+
+    // A permissão Financeiro só pode ser concedida ou retirada pelo administrador geral.
+    function grantsFinance(data) {
+      return 'financeiro' in data.get('permissoes', []);
+    }
+
+    function financeUnchanged() {
+      return grantsFinance(resource.data) == grantsFinance(request.resource.data);
+    }
+
     function isOwnPermission(uid) {
       return signedIn() && request.auth.uid == uid;
     }
@@ -172,37 +198,37 @@ service cloud.firestore {
 
     match /programacao/{id} {
       allow read: if true;
-      allow write: if hasPermission('programacao');
+      allow write: if adminProfile();
     }
 
     match /eventos/{id} {
       allow read: if true;
-      allow write: if hasPermission('eventos');
+      allow write: if adminProfile();
     }
 
     match /videos/{id} {
       allow read: if true;
-      allow write: if hasPermission('midia');
+      allow write: if adminProfile();
     }
 
     match /documentos/{id} {
       allow read: if true;
-      allow write: if hasPermission('documentos');
+      allow write: if adminProfile();
     }
 
     match /galeria/{id} {
       allow read: if true;
-      allow write: if hasPermission('galeria');
+      allow write: if adminProfile();
     }
 
     match /aniversariantesPublicos/{id} {
       allow read: if true;
       allow create, update: if (hasPermission('membros') ||
-        hasPermission('usuarios') ||
+        adminProfile() ||
         (activeUser() && isOwnMember(id))) &&
         validPublicBirthday(id);
       allow delete: if hasPermission('membros') ||
-        hasPermission('usuarios') ||
+        adminProfile() ||
         (activeUser() && isOwnMember(id));
     }
 
@@ -213,17 +239,17 @@ service cloud.firestore {
 
     match /configuracoes/localizacao {
       allow read: if true;
-      allow write: if hasPermission('localizacao');
+      allow write: if adminProfile();
     }
 
     match /configuracoes/contribuicao {
       allow read: if true;
-      allow write: if hasPermission('contribuicao');
+      allow write: if adminProfile();
     }
 
     match /configuracoes/youtube {
       allow read: if true;
-      allow write: if hasPermission('midia');
+      allow write: if adminProfile();
     }
 
     match /pedidosOracao/{id} {
@@ -232,20 +258,24 @@ service cloud.firestore {
     }
 
     match /usuariosPermissoes/{uid} {
-      allow get: if superAdmin() || isOwnPermission(uid) || hasPermission('usuarios');
-      allow list: if hasPermission('usuarios');
-      allow create: if hasPermission('usuarios') || validPendingPermission(uid);
-      allow update, delete: if hasPermission('usuarios');
+      allow get: if isOwnPermission(uid) || adminProfile();
+      allow list: if adminProfile();
+      allow create: if (adminProfile() &&
+          (superAdmin() || !grantsFinance(request.resource.data))) ||
+        validPendingPermission(uid);
+      allow update: if adminProfile() && (superAdmin() || financeUnchanged());
+      allow delete: if superAdmin() ||
+        (adminProfile() && !grantsFinance(resource.data));
     }
 
     match /membros/{id} {
       allow get: if hasPermission('membros') ||
-        hasPermission('usuarios') ||
+        adminProfile() ||
         (activeUser() && isOwnMember(id));
-      allow list: if hasPermission('membros') || hasPermission('usuarios');
+      allow list: if hasPermission('membros') || adminProfile();
       allow create: if hasPermission('membros') || validPendingMember(id);
       allow update: if hasPermission('membros') ||
-        hasPermission('usuarios') ||
+        adminProfile() ||
         (activeUser() && isOwnMember(id) && memberSelfUpdate());
       allow delete: if hasPermission('membros');
     }
@@ -268,8 +298,8 @@ service cloud.firestore {
     }
 
     match /louvorMusicas/{id} {
-      allow read: if hasPermission('louvor');
-      allow create, update: if hasPermission('louvor') &&
+      allow read: if louvorAccess();
+      allow create, update: if louvorAccess() &&
         request.resource.data.keys().hasOnly(['titulo', 'autor', 'letra', 'tom',
           'notas', 'ministros', 'ativo', 'atualizadoEm', 'atualizadoPor']) &&
         request.resource.data.titulo is string && request.resource.data.titulo.size() > 0 &&
@@ -286,18 +316,18 @@ service cloud.firestore {
     }
 
     match /louvorEscalas/{id} {
-      allow read: if hasPermission('louvor');
-      allow create: if hasPermission('louvor') && validWorshipSchedule(request.resource.data) &&
+      allow read: if louvorAccess();
+      allow create: if louvorAccess() && validWorshipSchedule(request.resource.data) &&
         request.resource.data.versao == 1 &&
         getAfter(/databases/$(database)/documents/louvorEscalas/$(id)/historico/1).data == request.resource.data;
-      allow update: if hasPermission('louvor') && validWorshipSchedule(request.resource.data) &&
+      allow update: if louvorAccess() && validWorshipSchedule(request.resource.data) &&
         request.resource.data.versao == resource.data.versao + 1 &&
         getAfter(/databases/$(database)/documents/louvorEscalas/$(id)/historico/$(string(request.resource.data.versao))).data == request.resource.data;
       allow delete: if false;
 
       match /historico/{versao} {
-        allow read: if hasPermission('louvor');
-        allow create: if hasPermission('louvor') && validWorshipSchedule(request.resource.data) &&
+        allow read: if louvorAccess();
+        allow create: if louvorAccess() && validWorshipSchedule(request.resource.data) &&
           getAfter(/databases/$(database)/documents/louvorEscalas/$(id)).data == request.resource.data;
         allow update, delete: if false;
       }

@@ -106,6 +106,26 @@ const PERMISSOES_POR_PERFIL = {
   midia: ['midia', 'documentos', 'galeria', 'ensino'],
   membro: ['meusDados'],
 }
+// Áreas que configuram o site: só o perfil Administrador acessa.
+const ABAS_SO_ADMINISTRADOR = [
+  'programacao',
+  'localizacao',
+  'midia',
+  'galeria',
+  'eventos',
+  'documentos',
+  'contribuicao',
+  'usuarios',
+]
+
+function ministerioIncluiLouvor(ministerio) {
+  return String(ministerio || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .includes('louvor')
+}
+
 function Admin() {
   const [user, setUser] = useState(null)
 const [checkingAuth, setCheckingAuth] = useState(true)
@@ -134,6 +154,7 @@ const [grupoMenuAberto, setGrupoMenuAberto] = useState(null)
 const [menuAdminMobileAberto, setMenuAdminMobileAberto] = useState(false)
 
 const [permissaoUsuario, setPermissaoUsuario] = useState(null)
+const [ministerioUsuario, setMinisterioUsuario] = useState('')
 const [carregandoPermissoes, setCarregandoPermissoes] = useState(false)
 
 const [ensinoMateriais, setEnsinoMateriais] = useState([])
@@ -339,8 +360,20 @@ const nomeUsuarioLogado =
   user?.email ||
   ''
 
+const isPerfilAdministrador =
+  isSuperAdmin || (permissaoUsuario?.ativo === true && perfilUsuario === 'admin')
+
 function usuarioPodeAcessar(permissao) {
   if (isSuperAdmin) return true
+
+  if (ABAS_SO_ADMINISTRADOR.includes(permissao)) return isPerfilAdministrador
+
+  if (permissao === 'louvor') {
+    return (
+      permissoesUsuario.includes('louvor') ||
+      (permissaoUsuario?.ativo === true && ministerioIncluiLouvor(ministerioUsuario))
+    )
+  }
 
   return permissoesUsuario.includes(permissao)
 }
@@ -413,10 +446,26 @@ function obterPrimeiraAbaPermitida() {
       const snapshotPermissao = await getDoc(refPermissao)
 
       if (snapshotPermissao.exists()) {
+        const dadosPermissao = snapshotPermissao.data()
+
         setPermissaoUsuario({
           id: snapshotPermissao.id,
-          ...snapshotPermissao.data(),
+          ...dadosPermissao,
         })
+
+        setMinisterioUsuario('')
+
+        if (dadosPermissao.ativo === true && dadosPermissao.membroId) {
+          try {
+            const snapshotMembro = await getDoc(doc(db, 'membros', dadosPermissao.membroId))
+
+            if (snapshotMembro.exists()) {
+              setMinisterioUsuario(snapshotMembro.data().ministerio || '')
+            }
+          } catch (error) {
+            console.error('Erro ao carregar ministério do usuário.', error)
+          }
+        }
       } else {
         setPermissaoUsuario(null)
       }
@@ -916,14 +965,27 @@ async function carregarUsuariosPermissoes() {
 }
 
 function atualizarPerfilUsuarioPermissao(perfil) {
-  setUsuarioPermissaoForm((formAtual) => ({
-    ...formAtual,
-    perfil,
-    permissoes: PERMISSOES_POR_PERFIL[perfil] || [],
-  }))
+  setUsuarioPermissaoForm((formAtual) => {
+    let permissoes = PERMISSOES_POR_PERFIL[perfil] || []
+
+    // Só o administrador geral concede ou retira o Financeiro.
+    if (!isSuperAdmin) {
+      const tinhaFinanceiro = (formAtual.permissoes || []).includes('financeiro')
+      permissoes = permissoes.filter((item) => item !== 'financeiro')
+      if (tinhaFinanceiro) permissoes = [...permissoes, 'financeiro']
+    }
+
+    return {
+      ...formAtual,
+      perfil,
+      permissoes,
+    }
+  })
 }
 
 function alternarPermissaoUsuario(permissao) {
+  if (permissao === 'financeiro' && !isSuperAdmin) return
+
   setUsuarioPermissaoForm((formAtual) => {
     const permissoesAtuais = formAtual.permissoes || []
 
@@ -5609,18 +5671,40 @@ function renderizarUsuariosPermissoes() {
           <div className="users-permission-options">
             <strong>Permissões liberadas</strong>
 
+            <p className="users-permission-hint">
+              Áreas marcadas como (Administrador) só abrem para o perfil
+              Administrador. A aba Louvor também abre automaticamente para
+              quem tem "Louvor" no ministério do cadastro.
+              {!isSuperAdmin &&
+                ' A permissão Financeiro só pode ser alterada pelo administrador geral.'}
+            </p>
+
             <div>
               {todasPermissoes.map((permissao) => (
-                <label key={permissao.id}>
+                <label
+                  key={permissao.id}
+                  title={
+                    permissao.id === 'financeiro' && !isSuperAdmin
+                      ? 'Somente o administrador geral pode conceder ou retirar o Financeiro.'
+                      : ABAS_SO_ADMINISTRADOR.includes(permissao.id)
+                        ? 'Esta área só fica disponível para o perfil Administrador.'
+                        : undefined
+                  }
+                >
                   <input
                     type="checkbox"
                     checked={usuarioPermissaoForm.permissoes.includes(
                       permissao.id,
                     )}
+                    disabled={permissao.id === 'financeiro' && !isSuperAdmin}
                     onChange={() => alternarPermissaoUsuario(permissao.id)}
                   />
 
-                  <span>{permissao.nome}</span>
+                  <span>
+                    {permissao.nome}
+                    {ABAS_SO_ADMINISTRADOR.includes(permissao.id) && ' (Administrador)'}
+                    {permissao.id === 'financeiro' && !isSuperAdmin && ' 🔒'}
+                  </span>
                 </label>
               ))}
             </div>

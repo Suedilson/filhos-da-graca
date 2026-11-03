@@ -37,7 +37,16 @@ export async function autenticar(token, projeto) {
     })
     if (!r.ok) throw falha(403, 'Sem permissão para consultar cifras.')
     const campos = (await r.json()).fields
-    if (campos?.ativo?.booleanValue !== true || !campos?.permissoes?.arrayValue?.values?.some((v) => v.stringValue === 'louvor')) throw falha(403, 'Sem permissão para consultar cifras.')
+    if (campos?.ativo?.booleanValue !== true) throw falha(403, 'Sem permissão para consultar cifras.')
+    if (campos?.permissoes?.arrayValue?.values?.some((v) => v.stringValue === 'louvor')) return payload.sub
+    // Sem a permissão marcada, libera quem tem "Louvor" no ministério do cadastro de membro.
+    const membroId = campos?.membroId?.stringValue
+    if (!membroId) throw falha(403, 'Sem permissão para consultar cifras.')
+    const m = await fetch(`https://firestore.googleapis.com/v1/projects/${projeto}/databases/(default)/documents/membros/${encodeURIComponent(membroId)}`, {
+      headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(5000),
+    })
+    const ministerio = m.ok ? (await m.json()).fields?.ministerio?.stringValue || '' : ''
+    if (!normalizar(ministerio).includes('louvor')) throw falha(403, 'Sem permissão para consultar cifras.')
     return payload.sub
   } catch (error) {
     if (error.status === 403) throw error
