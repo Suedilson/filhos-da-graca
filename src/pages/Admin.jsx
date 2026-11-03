@@ -10243,97 +10243,113 @@ function formatarMoeda(valor) {
                     />
                   ) : (
                     <div className="member-list-placeholder">
-                      {membro.nome?.charAt(0) || '?'}
+                      {obterIniciais(membro.nome) || '?'}
                     </div>
                   )}
 
-                 <div className="member-info">
- <span className="member-status-line">
-  {membro.status || 'Ativo'}
+                  <div className="member-info">
+                    <div className="member-card-title">
+                      <strong>{membro.nome}</strong>
 
-  {temAcompanhamentoPastoral(membro) && (
-    <em title="Possui acompanhamento pastoral">💚</em>
-  )}
-</span>
+                      <span
+                        className={`member-status-pill status-${String(
+                          membro.status || 'Ativo',
+                        )
+                          .normalize('NFD')
+                          .replace(/[\u0300-\u036f]/g, '')
+                          .toLowerCase()
+                          .replace(/\s+/g, '-')}`}
+                      >
+                        {membro.status || 'Ativo'}
+                      </span>
 
-<strong>{membro.nome}</strong>
+                      {temAcompanhamentoPastoral(membro) && (
+                        <span
+                          className="member-pastoral-pill"
+                          title="Possui acompanhamento pastoral"
+                        >
+                          💚 Acompanhamento
+                        </span>
+                      )}
+                    </div>
 
-  <div className="member-details">
-    {membro.telefone && (
-      <small>
-        <b>Telefone:</b> {membro.telefone}
-      </small>
-    )}
+                    <div className="member-card-meta">
+                      {membro.telefone && <span>📞 {membro.telefone}</span>}
 
-    {membro.nascimento && (
-      <small>
-        <b>Nascimento:</b> {formatarData(membro.nascimento)}
-      </small>
-    )}
+                      {membro.nascimento && (
+                        <span>
+                          🎂 {formatarData(membro.nascimento)} ·{' '}
+                          {calcularIdade(membro.nascimento)} anos
+                        </span>
+                      )}
 
-    {membro.nascimento && (
-      <small>
-        <b>Idade:</b> {calcularIdade(membro.nascimento)} anos
-      </small>
-    )}
+                      {membro.ministerio && <span>⛪ {membro.ministerio}</span>}
+                    </div>
 
-    {membro.endereco && (
-      <small>
-        <b>Endereço:</b> {membro.endereco}
-      </small>
-    )}
+                    {membro.endereco && (
+                      <p className="member-card-address">📍 {membro.endereco}</p>
+                    )}
 
-    {membro.ministerio && (
-      <small>
-        <b>Ministério:</b> {membro.ministerio}
-      </small>
-    )}
+                    {(membro.observacoes ||
+                      membro.situacaoPastoral ||
+                      membro.responsavelAcompanhamento ||
+                      membro.ultimoContato ||
+                      membro.proximaAcao ||
+                      membro.dataProximaAcao ||
+                      membro.observacaoAcompanhamento) && (
+                      <details className="member-card-details">
+                        <summary>Observações e acompanhamento</summary>
 
-    {membro.observacoes && (
-      <small>
-        <b>Observações:</b> {membro.observacoes}
-      </small>
-    )}
+                        <div className="member-details">
+                          {membro.observacoes && (
+                            <small>
+                              <b>Observações:</b> {membro.observacoes}
+                            </small>
+                          )}
 
-    {membro.situacaoPastoral && (
-      <small>
-        <b>Situação pastoral:</b> {membro.situacaoPastoral}
-      </small>
-    )}
+                          {membro.situacaoPastoral && (
+                            <small>
+                              <b>Situação pastoral:</b> {membro.situacaoPastoral}
+                            </small>
+                          )}
 
-    {membro.responsavelAcompanhamento && (
-      <small>
-        <b>Responsável:</b> {membro.responsavelAcompanhamento}
-      </small>
-    )}
+                          {membro.responsavelAcompanhamento && (
+                            <small>
+                              <b>Responsável:</b> {membro.responsavelAcompanhamento}
+                            </small>
+                          )}
 
-    {membro.ultimoContato && (
-      <small>
-        <b>Último contato:</b> {formatarData(membro.ultimoContato)}
-      </small>
-    )}
+                          {membro.ultimoContato && (
+                            <small>
+                              <b>Último contato:</b> {formatarData(membro.ultimoContato)}
+                            </small>
+                          )}
 
-    {membro.proximaAcao && (
-      <small>
-        <b>Próxima ação:</b> {membro.proximaAcao}
-      </small>
-    )}
+                          {membro.proximaAcao && (
+                            <small>
+                              <b>Próxima ação:</b> {membro.proximaAcao}
+                            </small>
+                          )}
 
-    {membro.dataProximaAcao && (
-      <small>
-        <b>Data da próxima ação:</b> {formatarData(membro.dataProximaAcao)}
-      </small>
-    )}
+                          {membro.dataProximaAcao && (
+                            <small>
+                              <b>Data da próxima ação:</b>{' '}
+                              {formatarData(membro.dataProximaAcao)}
+                            </small>
+                          )}
 
-    {membro.observacaoAcompanhamento && (
-      <small>
-        <b>Obs. acompanhamento:</b> {membro.observacaoAcompanhamento}
-      </small>
-    )}
-  </div>
-</div>
+                          {membro.observacaoAcompanhamento && (
+                            <small>
+                              <b>Obs. acompanhamento:</b>{' '}
+                              {membro.observacaoAcompanhamento}
+                            </small>
+                          )}
+                        </div>
+                      </details>
+                    )}
+                  </div>
 
-                  <div className="admin-actions">
+                  <div className="admin-actions member-card-actions">
                     <button
                       type="button"
                       className="edit-button"

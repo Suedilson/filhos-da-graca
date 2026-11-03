@@ -7010,7 +7010,7 @@ textarea {
   container-type: inline-size;
 }
 
-.admin-list-item {
+.admin-list-item:not(.member-list-item) {
   grid-template-columns: minmax(0, 1fr) auto !important;
 }
 
@@ -7023,7 +7023,7 @@ textarea {
 }
 
 @container (max-width: 560px) {
-  .admin-list-item {
+  .admin-list-item:not(.member-list-item) {
     grid-template-columns: 1fr !important;
   }
 
@@ -7410,4 +7410,216 @@ textarea {
 .member-form-panel .member-photo-button {
   background: #ffffff;
   border-color: transparent;
+}
+
+/* =========================================================
+   Lista de membros: cartões compactos
+   Foto | nome, status e dados principais | ações
+========================================================= */
+
+.members-list-header h2 {
+  color: #ffffff !important;
+}
+
+.members-list-header p {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.members-admin-area .member-list-item {
+  display: grid !important;
+  grid-template-columns: 64px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 18px !important;
+  padding: 16px 18px !important;
+  border-radius: 16px !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.members-admin-area .member-list-item:hover {
+  border-color: rgba(23, 16, 95, 0.16) !important;
+  box-shadow: 0 14px 30px rgba(23, 16, 95, 0.08) !important;
+}
+
+.members-admin-area .member-list-photo,
+.members-admin-area .member-list-placeholder {
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 50% !important;
+  object-fit: cover;
+}
+
+.members-admin-area .member-list-placeholder {
+  display: grid !important;
+  place-items: center !important;
+  background: linear-gradient(135deg, #17105f, #2c1a8a) !important;
+  border: 0 !important;
+  color: #ffffff !important;
+  font-size: 1.15rem !important;
+  font-weight: 900 !important;
+}
+
+.members-admin-area .member-list-item.inactive-item .member-list-photo,
+.members-admin-area .member-list-item.inactive-item .member-list-placeholder {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+.members-admin-area .member-info {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.member-card-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.members-admin-area .member-card-title strong {
+  margin: 0 !important;
+  color: #17105f;
+  font-size: 1.05rem !important;
+  line-height: 1.25;
+}
+
+.member-status-pill,
+.member-pastoral-pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.member-status-pill {
+  background: #eaf6df;
+  color: #2f7417;
+}
+
+.member-status-pill.status-pendente-aprovacao {
+  background: #fff4dc;
+  color: #8a5a00;
+}
+
+.member-status-pill.status-visitante {
+  background: #e8f0ff;
+  color: #1f4fa8;
+}
+
+.member-status-pill.status-afastado {
+  background: #fdecec;
+  color: #a12a2a;
+}
+
+.member-status-pill.status-inativo {
+  background: #eceff3;
+  color: #5a6475;
+}
+
+.member-pastoral-pill {
+  background: #f1f9ec;
+  color: #2f7417;
+  border: 1px solid rgba(111, 189, 42, 0.25);
+}
+
+.member-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  color: #3d4760;
+  font-size: 0.88rem;
+}
+
+.member-card-address {
+  margin: 0 !important;
+  color: #60708a !important;
+  font-size: 0.86rem !important;
+  overflow-wrap: anywhere;
+}
+
+.member-card-details summary {
+  width: fit-content;
+  color: #17105f;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.member-card-details .member-details {
+  margin-top: 8px;
+  padding: 10px 12px;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 18px;
+  border-radius: 12px;
+  background: #f7f8fc;
+}
+
+.member-card-details .member-details small {
+  margin: 0 !important;
+  color: #4b5568;
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+
+.members-admin-area .member-card-actions {
+  max-width: none !important;
+  flex-wrap: nowrap !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+.members-admin-area .member-card-actions button {
+  min-height: 36px !important;
+  padding: 8px 14px !important;
+  border-radius: 10px !important;
+  font-size: 0.84rem !important;
+}
+
+@media (max-width: 900px) {
+  .members-admin-area .member-list-item {
+    grid-template-columns: 56px minmax(0, 1fr) !important;
+    align-items: start !important;
+  }
+
+  .members-admin-area .member-list-photo,
+  .members-admin-area .member-list-placeholder {
+    width: 56px !important;
+    height: 56px !important;
+  }
+
+  .members-admin-area .member-card-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    padding-top: 10px;
+    border-top: 1px solid rgba(23, 16, 95, 0.07);
+  }
+
+  .member-card-details .member-details {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dados do cartão em texto normal (sem herdar o estilo de rótulo verde) */
+.members-admin-area .member-card-meta span {
+  margin: 0 !important;
+  color: #3d4760 !important;
+  font-size: 0.88rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.members-admin-area .member-card-address {
+  font-weight: 400 !important;
+}
+
+.members-admin-area .member-status-pill,
+.members-admin-area .member-pastoral-pill {
+  margin: 0 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
 }
