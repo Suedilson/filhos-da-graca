@@ -131,6 +131,7 @@ const [editandoEnsinoId, setEditandoEnsinoId] = useState(null)
 const [enviandoCapaEnsino, setEnviandoCapaEnsino] = useState(false)
 const [enviandoPdfEnsino, setEnviandoPdfEnsino] = useState(false)
 const [progressoPdfEnsino, setProgressoPdfEnsino] = useState(0)
+const [descricoesEnsinoAbertas, setDescricoesEnsinoAbertas] = useState({})
 
 const [ensinoForm, setEnsinoForm] = useState({
   titulo: '',
@@ -4860,8 +4861,8 @@ function renderizarEnsino() {
           <h2>{editandoEnsinoId ? 'Editar material' : 'Cadastrar material'}</h2>
 
           <p>
-            Envie a capa e o PDF do material. Na próxima etapa, criaremos o
-            leitor com efeito de revista.
+            Envie a capa e o PDF. O material aparece no site como revista
+            digital.
           </p>
 
           <label>
@@ -5023,7 +5024,14 @@ function renderizarEnsino() {
 
           <h2>Materiais cadastrados</h2>
 
-          <p>Lista dos materiais que ficarão disponíveis no módulo Ensino.</p>
+          <p>
+            {ensinoMateriais.length === 1
+              ? '1 material cadastrado'
+              : `${ensinoMateriais.length} materiais cadastrados`}
+            {' · '}
+            {ensinoMateriais.filter((material) => material.ativo !== false).length}{' '}
+            visíveis no site
+          </p>
 
           <div className="teaching-admin-list">
             {ensinoMateriais.length === 0 && (
@@ -5046,58 +5054,94 @@ function renderizarEnsino() {
                   <div className="teaching-cover-placeholder">PDF</div>
                 )}
 
-                <div>
-                  <span>{material.categoria || 'Material'}</span>
+                <div className="teaching-item-body">
+                  <div className="teaching-item-top">
+                    <span className="teaching-item-category">
+                      {material.categoria || 'Material'}
+                    </span>
 
-                  <strong>{material.titulo}</strong>
-
-                  {material.periodo && <p>{material.periodo}</p>}
-
-                  {material.autor && <small>{material.autor}</small>}
-
-                  {material.descricao && <small>{material.descricao}</small>}
-
-                  <em>{material.ativo === false ? 'Inativo' : 'Ativo'}</em>
-                </div>
-
-                <div className="admin-actions">
-                  {material.pdfUrl && (
-                    <a
-                      className="teaching-open-pdf"
-                      href={material.pdfUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                    <em
+                      className={`teaching-item-status ${
+                        material.ativo === false ? 'is-inactive' : ''
+                      }`}
                     >
-                      PDF
-                    </a>
+                      {material.ativo === false ? 'Inativo' : 'Visível no site'}
+                    </em>
+                  </div>
+
+                  <strong className="teaching-item-title">{material.titulo}</strong>
+
+                  {(material.periodo || material.autor) && (
+                    <p className="teaching-item-meta">
+                      {[material.periodo, material.autor].filter(Boolean).join(' · ')}
+                    </p>
                   )}
 
-                  <button
-                    type="button"
-                    className="edit-button"
-                    onClick={() => editarEnsinoMaterial(material)}
-                  >
-                    Editar
-                  </button>
+                  {material.descricao && (
+                    <p
+                      className={`teaching-item-description ${
+                        descricoesEnsinoAbertas[material.id] ? 'is-open' : ''
+                      }`}
+                    >
+                      {material.descricao}
+                    </p>
+                  )}
 
-                  <button
-                    type="button"
-                    className={
-                      material.ativo === false
-                        ? 'activate-button'
-                        : 'deactivate-button'
-                    }
-                    onClick={() => alternarStatusEnsinoMaterial(material)}
-                  >
-                    {material.ativo === false ? 'Ativar' : 'Inativar'}
-                  </button>
+                  {material.descricao?.length > 180 && (
+                    <button
+                      type="button"
+                      className="teaching-item-more"
+                      onClick={() =>
+                        setDescricoesEnsinoAbertas((abertas) => ({
+                          ...abertas,
+                          [material.id]: !abertas[material.id],
+                        }))
+                      }
+                    >
+                      {descricoesEnsinoAbertas[material.id] ? 'Ver menos' : 'Ver mais'}
+                    </button>
+                  )}
 
-                  <button
-                    type="button"
-                    onClick={() => excluirEnsinoMaterial(material.id)}
-                  >
-                    Excluir
-                  </button>
+                  <div className="admin-actions teaching-item-actions">
+                    {material.pdfUrl && (
+                      <a
+                        className="teaching-open-pdf"
+                        href={material.pdfUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Abrir PDF
+                      </a>
+                    )}
+
+                    <button
+                      type="button"
+                      className="edit-button"
+                      onClick={() => editarEnsinoMaterial(material)}
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      type="button"
+                      className={
+                        material.ativo === false
+                          ? 'activate-button'
+                          : 'deactivate-button'
+                      }
+                      onClick={() => alternarStatusEnsinoMaterial(material)}
+                    >
+                      {material.ativo === false ? 'Ativar' : 'Inativar'}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="teaching-item-delete"
+                      onClick={() => excluirEnsinoMaterial(material.id)}
+                    >
+                      Excluir
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}

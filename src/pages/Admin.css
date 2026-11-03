@@ -6790,3 +6790,196 @@ textarea {
   background: transparent;
   transform: none;
 }
+
+/* =========================================================
+   Ensino: cards da biblioteca mais compactos
+   Capa à esquerda, informações e ações empilhadas à direita
+========================================================= */
+
+.teaching-admin-area .teaching-admin-item {
+  grid-template-columns: 112px minmax(0, 1fr) !important;
+  align-items: start !important;
+  gap: 20px !important;
+  padding: 18px !important;
+  border-radius: 18px !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.teaching-admin-area .teaching-admin-item:hover {
+  border-color: rgba(23, 16, 95, 0.16) !important;
+  box-shadow: 0 16px 34px rgba(23, 16, 95, 0.09) !important;
+}
+
+.teaching-admin-area .teaching-admin-item.inactive-item {
+  opacity: 1 !important;
+  background: #f7f8fa !important;
+}
+
+.teaching-admin-area .teaching-admin-item.inactive-item > img,
+.teaching-admin-area .teaching-admin-item.inactive-item > .teaching-cover-placeholder {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+.teaching-admin-area .teaching-admin-item > img,
+.teaching-admin-area .teaching-admin-item > .teaching-cover-placeholder {
+  width: 112px !important;
+  height: 150px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 22px rgba(23, 16, 95, 0.16);
+}
+
+.teaching-item-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.teaching-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.teaching-admin-area .teaching-admin-item .teaching-item-category {
+  margin: 0 !important;
+}
+
+.teaching-admin-area .teaching-admin-item .teaching-item-status {
+  margin: 0 !important;
+  padding: 4px 10px !important;
+  background: #eaf6df !important;
+  color: #2f7417 !important;
+}
+
+.teaching-admin-area .teaching-admin-item .teaching-item-status.is-inactive {
+  background: #eceff3 !important;
+  color: #5a6475 !important;
+}
+
+.teaching-admin-area .teaching-admin-item .teaching-item-title {
+  font-size: 1.08rem !important;
+  line-height: 1.3 !important;
+}
+
+.teaching-admin-area .teaching-admin-item .teaching-item-meta {
+  margin: 0 !important;
+  color: #4b5568 !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+}
+
+.teaching-admin-area .teaching-admin-item .teaching-item-description {
+  margin: 2px 0 0 !important;
+  color: #60708a !important;
+  font-size: 0.9rem !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.teaching-admin-area .teaching-admin-item .teaching-item-description.is-open {
+  display: block;
+  -webkit-line-clamp: unset;
+}
+
+.teaching-admin-area .teaching-item-more {
+  align-self: flex-start;
+  width: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 2px 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #17105f !important;
+  font-size: 0.86rem !important;
+  font-weight: 800 !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.teaching-admin-area .teaching-item-actions {
+  max-width: none !important;
+  justify-content: flex-start !important;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(23, 16, 95, 0.07);
+}
+
+.teaching-admin-area .teaching-item-actions > a,
+.teaching-admin-area .teaching-item-actions > button {
+  min-height: 36px !important;
+  padding: 8px 14px !important;
+  border-radius: 10px !important;
+  font-size: 0.84rem !important;
+}
+
+.teaching-admin-area .teaching-item-actions .teaching-item-delete {
+  margin-left: auto;
+}
+
+@media (max-width: 620px) {
+  .teaching-admin-area .teaching-admin-item {
+    grid-template-columns: 64px minmax(0, 1fr) !important;
+    gap: 12px !important;
+    padding: 14px !important;
+  }
+
+  .teaching-admin-area .teaching-admin-item > img,
+  .teaching-admin-area .teaching-admin-item > .teaching-cover-placeholder {
+    width: 64px !important;
+    height: 86px !important;
+    border-radius: 9px !important;
+  }
+
+  .teaching-admin-area .teaching-admin-item .teaching-item-title {
+    font-size: 0.98rem !important;
+    overflow-wrap: anywhere;
+  }
+
+  .teaching-admin-area .teaching-item-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .teaching-admin-area .teaching-item-actions > a,
+  .teaching-admin-area .teaching-item-actions > button {
+    flex: 1 1 auto;
+    padding: 8px 10px !important;
+  }
+
+  .teaching-admin-area .teaching-item-actions .teaching-item-delete {
+    margin-left: 0;
+  }
+}
+
+/* Campos de arquivo com botão no estilo do painel */
+.teaching-form-card input[type='file'] {
+  padding: 10px !important;
+  background: #f8f9fc !important;
+  border: 1px dashed rgba(23, 16, 95, 0.22) !important;
+  border-radius: 12px !important;
+  font-size: 0.88rem !important;
+  font-weight: 500 !important;
+  cursor: pointer;
+}
+
+.teaching-form-card input[type='file']::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 14px;
+  background: #17105f;
+  color: #ffffff;
+  border: 0;
+  border-radius: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
