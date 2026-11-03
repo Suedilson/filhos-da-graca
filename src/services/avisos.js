@@ -80,7 +80,11 @@ export function mostrarAviso(mensagem, tipo) {
   }
 
   aviso.addEventListener('click', fechar)
-  obterContainer().appendChild(aviso)
+  const container = obterContainer()
+  container.appendChild(aviso)
+
+  // Mostra no máximo três avisos ao mesmo tempo; os mais antigos saem primeiro.
+  while (container.children.length > 3) container.firstElementChild.remove()
 
   requestAnimationFrame(() => {
     aviso.style.opacity = '1'

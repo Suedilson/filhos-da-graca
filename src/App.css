@@ -4652,3 +4652,144 @@ main.site [id] {
 .welcome-note {
   min-height: 380px !important;
 }
+
+/* =========================================================
+   Refinamento visual da página inicial
+   Mesma largura e mesmo ritmo entre as seções
+========================================================= */
+
+/* Todas as seções alinhadas na mesma coluna de 1180px */
+.location-section,
+.media-section,
+.documents-section,
+.events-section,
+.gallery-section,
+.footer {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Espaço uniforme entre as seções */
+main.site > .welcome,
+main.site > .services,
+main.site > .birthdays-section,
+main.site > .events-section,
+main.site > .gallery-section,
+main.site > .location-section,
+main.site > .media-section,
+main.site > .documents-section,
+main.site > .prayer {
+  margin-top: clamp(56px, 7vw, 88px) !important;
+}
+
+main.site > .services,
+main.site > .location-section,
+main.site > .media-section,
+main.site > .documents-section,
+main.site > .events-section,
+main.site > .gallery-section {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+main.site > .contribution-section {
+  margin-top: clamp(56px, 7vw, 88px) !important;
+}
+
+/* Títulos das seções com tamanho consistente */
+main.site .section-heading h2,
+main.site .section-copy h2,
+main.site .prayer h2,
+main.site .location-section > .section-heading h2,
+main.site .media-section > .section-heading h2,
+main.site .documents-section > .section-heading h2,
+main.site #galeria .section-heading h2 {
+  font-size: clamp(1.9rem, 3.2vw, 2.7rem) !important;
+  line-height: 1.12 !important;
+}
+
+/* Banner: cartão dentro da foto, centralizado na altura */
+@media (min-width: 641px) {
+  .home-jesus-banner {
+    height: clamp(500px, 64vh, 620px);
+    min-height: 0;
+    border-radius: 8px;
+  }
+
+  .home-jesus-banner-image {
+    inset: 0;
+  }
+
+  .home-jesus-banner-card {
+    top: 50%;
+    transform: translateY(-50%);
+    min-height: 0;
+    padding: clamp(30px, 4vw, 48px);
+  }
+
+  .home-jesus-banner-logo {
+    margin: 0 0 18px;
+  }
+}
+
+/* Foto da fachada ocupa o cartão inteiro, sem sobra branca */
+.location-grid {
+  align-items: stretch !important;
+}
+
+.location-card {
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.location-card img {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 260px;
+  max-height: none !important;
+  object-fit: cover !important;
+}
+
+@media (max-width: 900px) {
+  .location-card img {
+    height: 260px !important;
+  }
+}
+
+/* Rodapé com linha superior e mesma largura das seções */
+.footer {
+  margin-bottom: 32px !important;
+  border-top: 1px solid rgba(23, 16, 95, 0.1);
+}
+
+/* Atalhos no celular: duas colunas compactas em vez de sete cartões altos */
+@media (max-width: 520px) {
+  .quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .quick-card {
+    min-height: 0 !important;
+    padding: 14px !important;
+  }
+
+  .quick-card-icon {
+    width: 40px !important;
+    height: 40px !important;
+    margin-bottom: 8px !important;
+    border-radius: 12px !important;
+  }
+
+  .quick-card h3 {
+    font-size: 0.95rem !important;
+  }
+
+  .quick-card p {
+    font-size: 0.76rem !important;
+  }
+
+  .quick-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}

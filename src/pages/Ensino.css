@@ -1857,3 +1857,119 @@
     width: 100% !important;
   }
 }
+/* =========================================================
+   Refinamento da Biblioteca
+   Livros maiores, etiquetas legíveis e fileiras sem sobreposição
+========================================================= */
+
+.teaching-hero.bookshelf-hero h1 {
+  letter-spacing: -0.03em !important;
+}
+
+/* O botão "Voltar para a página inicial" do topo já cumpre essa função */
+.bookshelf-back-link {
+  display: none !important;
+}
+
+.digital-bookshelf-grid {
+  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)) !important;
+  gap: 0 16px !important;
+  padding: 20px 22px 8px !important;
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0 160px,
+      rgba(23, 16, 95, 0.075) 160px 162px,
+      rgba(23, 16, 95, 0.13) 162px 172px,
+      rgba(255, 255, 255, 0.56) 172px 175px,
+      transparent 175px 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(23, 16, 95, 0.035),
+      transparent 10%,
+      transparent 90%,
+      rgba(23, 16, 95, 0.035)
+    ) !important;
+  background-size: 100% 284px, 100% 100% !important;
+}
+
+.digital-book {
+  height: 284px !important;
+}
+
+.digital-book-cover {
+  width: 98px !important;
+  height: 140px !important;
+}
+
+.digital-book-label {
+  width: 100% !important;
+  max-width: 132px !important;
+  margin-top: 22px !important;
+  padding: 7px 8px !important;
+}
+
+.digital-book-label span {
+  font-size: 0.58rem !important;
+}
+
+.digital-book-label strong {
+  font-size: 0.74rem !important;
+  line-height: 1.2 !important;
+}
+
+.digital-book-label small {
+  font-size: 0.66rem !important;
+}
+
+.digital-book-actions {
+  margin-top: 8px !important;
+}
+
+.digital-book-actions a {
+  min-height: 28px !important;
+  padding: 6px 10px !important;
+  font-size: 0.7rem !important;
+}
+
+@media (max-width: 720px) {
+  .digital-bookshelf-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0 10px !important;
+    padding: 18px 12px 8px !important;
+    background-size: 100% 270px, 100% 100% !important;
+  }
+
+  .digital-book {
+    height: 270px !important;
+  }
+
+  .digital-book-cover {
+    width: 90px !important;
+    height: 128px !important;
+  }
+
+  .digital-bookshelf-grid {
+    background:
+      linear-gradient(
+        180deg,
+        transparent 0 146px,
+        rgba(23, 16, 95, 0.075) 146px 148px,
+        rgba(23, 16, 95, 0.13) 148px 158px,
+        rgba(255, 255, 255, 0.56) 158px 161px,
+        transparent 161px 100%
+      ) !important;
+    background-size: 100% 270px !important;
+  }
+
+  .digital-book-label {
+    margin-top: 20px !important;
+  }
+}
+
+@media (max-width: 460px) {
+  .digital-bookshelf-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}

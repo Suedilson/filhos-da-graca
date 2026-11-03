@@ -6824,7 +6824,7 @@ function formatarMoeda(valor) {
             </button>
           </form>
 
-          <section className="admin-card">
+          <section className="admin-card admin-span-full">
             <span className="admin-section-label">Página inicial</span>
             <h2>Vídeos cadastrados</h2>
             <p>
@@ -7347,15 +7347,16 @@ function formatarMoeda(valor) {
             <h2>Visão geral</h2>
 
             <p>
-              Este painel será ampliado nas próximas etapas com entradas,
-              saídas, contas vencidas, contas pagas e aprovisionamentos.
+              Os números acima são atualizados automaticamente com as contas
+              bancárias, arrecadações, contas a pagar e aprovisionamentos
+              cadastrados.
             </p>
 
             <div className="finance-empty-state">
-              <strong>Próximo passo</strong>
+              <strong>Como usar</strong>
               <p>
-                Depois das contas bancárias, vamos cadastrar arrecadações,
-                contas a pagar e reservas financeiras.
+                Use os botões acima para registrar cada movimentação. Em
+                Relatórios, você gera o resumo do período em PDF.
               </p>
             </div>
           </section>

@@ -6983,3 +6983,118 @@ textarea {
   font-weight: 800;
   cursor: pointer;
 }
+
+/* =========================================================
+   Refinamento geral do painel
+   Mesma largura em todas as abas e listas que se adaptam ao espaço
+========================================================= */
+
+/* Todas as abas alinhadas com o cabeçalho e o menu (1240px) */
+.admin-page > section:not(.login-card),
+.admin-page > form,
+.admin-page > div {
+  width: 100% !important;
+  max-width: 1240px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box;
+}
+
+/* Cartão que deve ocupar a linha inteira da grade */
+.admin-grid > .admin-span-full {
+  grid-column: 1 / -1;
+}
+
+/* Listas: o conteúdo nunca fica embaixo dos botões */
+.admin-card {
+  container-type: inline-size;
+}
+
+.admin-list-item {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+}
+
+.admin-list-item > div:first-child {
+  min-width: 0;
+}
+
+.admin-list-item small {
+  overflow-wrap: anywhere;
+}
+
+@container (max-width: 560px) {
+  .admin-list-item {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-list-item .admin-actions {
+    justify-content: flex-start !important;
+    max-width: none !important;
+  }
+}
+
+/* Campos de arquivo com o mesmo estilo em todo o painel */
+.admin-page input[type='file'] {
+  padding: 10px !important;
+  background: #f8f9fc !important;
+  border: 1px dashed rgba(23, 16, 95, 0.22) !important;
+  border-radius: 12px !important;
+  font-size: 0.88rem !important;
+  font-weight: 500 !important;
+  cursor: pointer;
+}
+
+.admin-page input[type='file']::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 14px;
+  background: #17105f;
+  color: #ffffff;
+  border: 0;
+  border-radius: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* Caixas de seleção alinhadas ao texto */
+.admin-page .checkbox-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.admin-page .checkbox-label input[type='checkbox'] {
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+  flex: 0 0 auto;
+}
+
+/* Tela de carregamento centralizada */
+.admin-page > p:only-child {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+  color: #17105f;
+  font-weight: 700;
+}
+
+/* Resumo de membros mais compacto no celular */
+@media (max-width: 640px) {
+  .header-members-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .header-members-summary article {
+    min-height: 0 !important;
+    padding: 6px 8px !important;
+  }
+
+  .header-members-summary span {
+    font-size: 0.6rem !important;
+  }
+
+  .header-members-summary strong {
+    font-size: 1rem !important;
+  }
+}

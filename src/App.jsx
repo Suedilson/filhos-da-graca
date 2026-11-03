@@ -556,8 +556,8 @@ async function carregarVideosYoutube(configYoutube) {
     <a href="#inicio">Início</a>
     <a href="#cultos">Cultos</a>
     <a href="/ensino">Biblioteca</a>
-    <a href="#eventos">Eventos</a>
-    <a href="#galeria">Galeria</a>
+    {eventosHome.length > 0 && <a href="#eventos">Eventos</a>}
+    {albunsGaleria.length > 0 && <a href="#galeria">Galeria</a>}
     <a href="#contribuicao">Contribuição</a>
     <a href="#localizacao">Como chegar</a>
     <a href="#midia">Vídeos</a>
@@ -1114,8 +1114,8 @@ async function carregarVideosYoutube(configYoutube) {
 
         <nav>
           <a href="#cultos">Cultos</a>
-          <a href="#eventos">Eventos</a>
-          <a href="#galeria">Galeria</a>
+          {eventosHome.length > 0 && <a href="#eventos">Eventos</a>}
+          {albunsGaleria.length > 0 && <a href="#galeria">Galeria</a>}
           <a href="#contribuicao">Contribuição</a>
           <a href="#oracao">Oração</a>
           <a href="#midia">Vídeos</a>
