@@ -250,6 +250,7 @@ const categoriasGaleria = [
   const [membros, setMembros] = useState([])
   const [editandoMembroId, setEditandoMembroId] = useState(null)
   const [enviandoFotoMembro, setEnviandoFotoMembro] = useState(false)
+  const [enviandoFotoFachada, setEnviandoFotoFachada] = useState(false)
   const [buscaMembro, setBuscaMembro] = useState('')
   const [filtroStatusMembro, setFiltroStatusMembro] = useState('Todos')
   const [filtroMinisterioMembro, setFiltroMinisterioMembro] = useState('Todos')
@@ -4008,6 +4009,31 @@ async function salvarMeusDados(event) {
     } catch (error) {
       mostrarAviso('Erro ao carregar membros.')
       console.error(error)
+    }
+  }
+
+  async function enviarFotoFachada(event) {
+    const file = event.target.files?.[0]
+
+    if (!file) return
+
+    setEnviandoFotoFachada(true)
+
+    try {
+      const arquivo = await uploadArquivoCloudinary(file)
+
+      setLocalizacaoForm((formAtual) => ({
+        ...formAtual,
+        fotoFachada: arquivo.url,
+      }))
+
+      mostrarAviso('Foto enviada! Clique em "Salvar localização" para publicar.')
+    } catch (error) {
+      mostrarAviso('Erro ao enviar a foto da fachada.')
+      console.error(error)
+    } finally {
+      setEnviandoFotoFachada(false)
+      event.target.value = ''
     }
   }
 
@@ -10671,6 +10697,18 @@ function formatarMoeda(valor) {
             <label>
               Foto da fachada
               <input
+                type="file"
+                accept="image/*"
+                onChange={enviarFotoFachada}
+                disabled={enviandoFotoFachada}
+              />
+            </label>
+
+            {enviandoFotoFachada && <p>Enviando foto...</p>}
+
+            <label>
+              Ou cole o link de uma imagem
+              <input
                 value={localizacaoForm.fotoFachada}
                 onChange={(event) =>
                   setLocalizacaoForm({
@@ -10690,7 +10728,7 @@ function formatarMoeda(valor) {
               />
             )}
 
-            <button type="submit" disabled={loading}>
+            <button type="submit" disabled={loading || enviandoFotoFachada}>
               {loading ? 'Salvando...' : 'Salvar localização'}
             </button>
           </form>
