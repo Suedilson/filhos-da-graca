@@ -27,6 +27,7 @@ import { auth, db, firebaseConfig } from '../services/firebase'
 import { uploadArquivoCloudinary } from '../services/cloudinary'
 import { mostrarAviso } from '../services/avisos'
 import CampoSenha from '../components/CampoSenha'
+import { enviarEmailAniversarioTeste } from '../services/emailAniversario'
 import './Admin.css'
 import Louvor from './Louvor'
 
@@ -252,6 +253,7 @@ const categoriasGaleria = [
   const [editandoMembroId, setEditandoMembroId] = useState(null)
   const [enviandoFotoMembro, setEnviandoFotoMembro] = useState(false)
   const [enviandoFotoFachada, setEnviandoFotoFachada] = useState(false)
+  const [enviandoTesteAniversario, setEnviandoTesteAniversario] = useState(false)
   const [buscaMembro, setBuscaMembro] = useState('')
   const [filtroStatusMembro, setFiltroStatusMembro] = useState('Todos')
   const [filtroMinisterioMembro, setFiltroMinisterioMembro] = useState('Todos')
@@ -299,6 +301,8 @@ const categoriasGaleria = [
   proximaAcao: '',
   dataProximaAcao: '',
   observacaoAcompanhamento: '',
+  email: '',
+  receberEmailAniversario: true,
 })
 const [meusDadosMembro, setMeusDadosMembro] = useState(null)
 const [enviandoFotoMeusDados, setEnviandoFotoMeusDados] = useState(false)
@@ -4013,6 +4017,18 @@ async function salvarMeusDados(event) {
     }
   }
 
+  async function enviarTesteEmailAniversario() {
+    setEnviandoTesteAniversario(true)
+
+    try {
+      mostrarAviso(await enviarEmailAniversarioTeste(), 'sucesso')
+    } catch (error) {
+      mostrarAviso(error.message, 'erro')
+    } finally {
+      setEnviandoTesteAniversario(false)
+    }
+  }
+
   async function enviarFotoFachada(event) {
     const file = event.target.files?.[0]
 
@@ -4090,6 +4106,8 @@ async function salvarMeusDados(event) {
   proximaAcao: membroForm.proximaAcao,
   dataProximaAcao: membroForm.dataProximaAcao,
   observacaoAcompanhamento: membroForm.observacaoAcompanhamento,
+  email: membroForm.email.trim().toLowerCase(),
+  receberEmailAniversario: membroForm.receberEmailAniversario !== false,
   ativo: membroForm.status !== 'Inativo',
   atualizadoEm: serverTimestamp(),
 }
@@ -4124,6 +4142,8 @@ async function salvarMeusDados(event) {
   proximaAcao: '',
   dataProximaAcao: '',
   observacaoAcompanhamento: '',
+  email: '',
+  receberEmailAniversario: true,
 })
 
       setEditandoMembroId(null)
@@ -4158,6 +4178,8 @@ async function salvarMeusDados(event) {
       proximaAcao: membro.proximaAcao || '',
       dataProximaAcao: membro.dataProximaAcao || '',
       observacaoAcompanhamento: membro.observacaoAcompanhamento || '',
+      email: membro.email || '',
+      receberEmailAniversario: membro.receberEmailAniversario !== false,
     })
 
     window.scrollTo({
@@ -4185,6 +4207,8 @@ async function salvarMeusDados(event) {
       proximaAcao: '',
       dataProximaAcao: '',
       observacaoAcompanhamento: '',
+      email: '',
+      receberEmailAniversario: true,
     })
 
     setModoMembros('lista')
@@ -10053,6 +10077,23 @@ function formatarMoeda(valor) {
 
     {modoMembros !== 'pastoral' && (
       <label>
+        E-mail
+        <input
+          type="email"
+          value={membroForm.email}
+          onChange={(event) =>
+            setMembroForm({
+              ...membroForm,
+              email: event.target.value,
+            })
+          }
+          placeholder="email@exemplo.com"
+        />
+      </label>
+    )}
+
+    {modoMembros !== 'pastoral' && (
+      <label>
         Data de nascimento
         <input
           type="date"
@@ -10123,6 +10164,20 @@ function formatarMoeda(valor) {
             <option value="Afastado">Afastado</option>
             <option value="Inativo">Inativo</option>
           </select>
+        </label>
+
+        <label className="checkbox-label member-field-wide">
+          <input
+            type="checkbox"
+            checked={membroForm.receberEmailAniversario !== false}
+            onChange={(event) =>
+              setMembroForm({
+                ...membroForm,
+                receberEmailAniversario: event.target.checked,
+              })
+            }
+          />
+          Enviar e-mail de felicitações no aniversário
         </label>
       </fieldset>
 
@@ -10535,6 +10590,18 @@ function formatarMoeda(valor) {
                     >
                       📊 Exportar Excel
                     </button>
+
+                    {isSuperAdmin && (
+                      <button
+                        type="button"
+                        className="excel-button"
+                        onClick={enviarTesteEmailAniversario}
+                        disabled={enviandoTesteAniversario}
+                        title="Envia um exemplo do e-mail de aniversário para o seu e-mail"
+                      >
+                        {enviandoTesteAniversario ? 'Enviando...' : '✉️ E-mail de teste'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

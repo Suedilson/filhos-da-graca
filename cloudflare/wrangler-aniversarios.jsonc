@@ -1,0 +1,15 @@
+{
+  "name": "filhos-da-graca-aniversarios",
+  "main": "aniversarios.js",
+  "account_id": "38d5c21445e37eb565c1d2355bee36a4",
+  "compatibility_date": "2026-11-02",
+  "workers_dev": true,
+  "preview_urls": false,
+  // 08:00 e 11:00 em Vitória da Conquista (UTC-3). O segundo horário reenvia o que falhou no primeiro.
+  "triggers": { "crons": ["0 11 * * *", "0 14 * * *"] },
+  "vars": {
+    "FIREBASE_PROJECT": "filhos-da-graca",
+    "REMETENTE": "Igreja Filhos da Graça <contato@filhosdagraca.com.br>"
+  },
+  "observability": { "enabled": true }
+}
