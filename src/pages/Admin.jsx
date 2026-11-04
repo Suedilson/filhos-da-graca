@@ -1225,6 +1225,21 @@ async function removerUsuarioPermissao(usuarioPermissao) {
   }
 }
 
+// Acesso de login do membro que ainda espera aprovação (só para quem administra as permissões).
+function acessoPendenteDoMembro(membro) {
+  if (!membro.usuarioUid || !usuarioPodeAcessar('usuarios')) return null
+
+  return (
+    usuariosPermissoes.find(
+      (usuarioPermissao) =>
+        usuarioPermissao.id === membro.usuarioUid &&
+        (usuarioPermissao.aguardandoAprovacao ||
+          (usuarioPermissao.ativo === false &&
+            usuarioPermissao.origemCadastro === 'autoCadastro')),
+    ) || null
+  )
+}
+
 async function aprovarUsuarioPendente(usuarioPermissao) {
   if (!usuarioPermissao.membroId) {
     mostrarAviso('Este usuário não está vinculado a um cadastro de membro.')
@@ -2183,30 +2198,40 @@ function cancelarEdicaoArrecadacao() {
 }
 
 async function alternarStatusArrecadacao(arrecadacao) {
+  if (!arrecadacao || loading) return
+  setLoading(true)
   try {
     await updateDoc(doc(db, 'arrecadacoes', arrecadacao.id), {
       ativo: arrecadacao.ativo === false ? true : false,
       atualizadoEm: serverTimestamp(),
     })
 
+    fecharFormularioArrecadacao()
     await carregarArrecadacoes()
   } catch (error) {
     mostrarAviso('Erro ao alterar status da arrecadação.')
     console.error(error)
+  } finally {
+    setLoading(false)
   }
 }
 
 async function excluirArrecadacao(id) {
+  if (loading) return
   const confirmar = confirm('Deseja realmente excluir esta arrecadação?')
 
   if (!confirmar) return
 
   try {
+    setLoading(true)
     await deleteDoc(doc(db, 'arrecadacoes', id))
+    fecharFormularioArrecadacao()
     await carregarArrecadacoes()
   } catch (error) {
     mostrarAviso('Erro ao excluir arrecadação.')
     console.error(error)
+  } finally {
+    setLoading(false)
   }
 }
 async function carregarContasPagar() {
@@ -7981,14 +8006,13 @@ function formatarMoeda(valor) {
               <th>Responsável</th>
               <th>Status</th>
               <th className="finance-money-column">Valor</th>
-              <th>Ações</th>
             </tr>
           </thead>
 
           <tbody>
            {arrecadacoesFiltradasFinanceiro.length === 0 && (
               <tr>
-                <td colSpan="9" className="finance-empty-table">
+                <td colSpan="8" className="finance-empty-table">
                   Nenhuma arrecadação cadastrada ainda.
                 </td>
               </tr>
@@ -7999,6 +8023,14 @@ function formatarMoeda(valor) {
                 key={arrecadacao.id}
                 className={arrecadacao.ativo === false ? 'finance-row-canceled' : ''}
                 onClick={() => editarArrecadacao(arrecadacao)}
+                tabIndex={0}
+                aria-label={`Abrir arrecadação: ${arrecadacao.descricao}`}
+                onKeyDown={(event) => {
+                  if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault()
+                    editarArrecadacao(arrecadacao)
+                  }
+                }}
               >
                 <td>{formatarData(arrecadacao.data)}</td>
                 <td>{arrecadacao.tipo}</td>
@@ -8038,45 +8070,6 @@ function formatarMoeda(valor) {
                 </td>
                 <td className="finance-money-column">
                   {formatarMoeda(arrecadacao.valor)}
-                </td>
-                <td>
-                  <div className="finance-table-actions">
-                    <button
-                      type="button"
-                      className="edit-button"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        editarArrecadacao(arrecadacao)
-                      }}
-                    >
-                      Editar
-                    </button>
-
-                    <button
-                      type="button"
-                      className={
-                        arrecadacao.ativo === false
-                          ? 'activate-button'
-                          : 'deactivate-button'
-                      }
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        alternarStatusArrecadacao(arrecadacao)
-                      }}
-                    >
-                      {arrecadacao.ativo === false ? 'Reativar' : 'Cancelar'}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        excluirArrecadacao(arrecadacao.id)
-                      }}
-                    >
-                      Excluir
-                    </button>
-                  </div>
                 </td>
               </tr>
             ))}
@@ -8282,7 +8275,7 @@ function formatarMoeda(valor) {
               </label>
             </div>
 
-            <div className="finance-modal-actions">
+            <div className="finance-modal-actions" style={{ flexWrap: 'wrap' }}>
               <button
                 type="submit"
                 disabled={loading || enviandoComprovanteArrecadacao}
@@ -8294,12 +8287,36 @@ function formatarMoeda(valor) {
                     : 'Salvar arrecadação'}
               </button>
 
+              {editandoArrecadacaoId && (
+                <>
+                  <button
+                    type="button"
+                    className={arrecadacaoForm.ativo ? 'deactivate-button' : 'activate-button'}
+                    disabled={loading || enviandoComprovanteArrecadacao}
+                    onClick={() => alternarStatusArrecadacao(
+                      arrecadacoes.find((item) => item.id === editandoArrecadacaoId),
+                    )}
+                  >
+                    {arrecadacoes.find((item) => item.id === editandoArrecadacaoId)?.ativo === false
+                      ? 'Reativar arrecadação'
+                      : 'Cancelar arrecadação'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={loading || enviandoComprovanteArrecadacao}
+                    onClick={() => excluirArrecadacao(editandoArrecadacaoId)}
+                  >
+                    Excluir
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 className="cancel-button"
+                disabled={loading}
                 onClick={cancelarEdicaoArrecadacao}
               >
-                Cancelar
+                Fechar
               </button>
             </div>
           </form>
@@ -10503,6 +10520,12 @@ function formatarMoeda(valor) {
                         {membro.status || 'Ativo'}
                       </span>
 
+                      {acessoPendenteDoMembro(membro) && (
+                        <span className="member-status-pill status-pendente-aprovacao">
+                          Login aguardando aprovação
+                        </span>
+                      )}
+
                       {temAcompanhamentoPastoral(membro) && (
                         <span
                           className="member-pastoral-pill"
@@ -10590,6 +10613,17 @@ function formatarMoeda(valor) {
                   </div>
 
                   <div className="admin-actions member-card-actions">
+                    {acessoPendenteDoMembro(membro) && (
+                      <button
+                        type="button"
+                        className="approve-button"
+                        onClick={() => aprovarUsuarioPendente(acessoPendenteDoMembro(membro))}
+                        disabled={criandoUsuarioAuth}
+                      >
+                        Aprovar acesso
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       className="edit-button"
