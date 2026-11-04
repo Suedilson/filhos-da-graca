@@ -10555,13 +10555,7 @@ function formatarMoeda(valor) {
                       <p className="member-card-address">📍 {membro.endereco}</p>
                     )}
 
-                    {(membro.observacoes ||
-                      membro.situacaoPastoral ||
-                      membro.responsavelAcompanhamento ||
-                      membro.ultimoContato ||
-                      membro.proximaAcao ||
-                      membro.dataProximaAcao ||
-                      membro.observacaoAcompanhamento) && (
+                    {(membro.observacoes || temAcompanhamentoPastoral(membro)) && (
                       <details className="member-card-details">
                         <summary>Observações e acompanhamento</summary>
 
@@ -10572,7 +10566,7 @@ function formatarMoeda(valor) {
                             </small>
                           )}
 
-                          {membro.situacaoPastoral && (
+                          {temAcompanhamentoPastoral(membro) && membro.situacaoPastoral && (
                             <small>
                               <b>Situação pastoral:</b> {membro.situacaoPastoral}
                             </small>
