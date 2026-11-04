@@ -4110,10 +4110,75 @@ async function salvarMeusDados(event) {
       }))
 
       setMembros(lista)
+
+      // Mantém a lista pública de aniversariantes (página inicial) igual ao cadastro de membros.
+      reconciliarAniversariantesPublicos(lista).catch((error) =>
+        console.error('Erro ao atualizar os aniversariantes da página inicial.', error),
+      )
     } catch (error) {
       mostrarAviso('Erro ao carregar membros.')
       console.error(error)
     }
+  }
+
+  // Membros cadastrados pelo site, aprovados ou antigos podem não estar na lista pública;
+  // aqui cada membro ativo com data de nascimento entra, e quem saiu ou ficou inativo é removido.
+  async function reconciliarAniversariantesPublicos(listaMembros) {
+    const snapshot = await getDocs(collection(db, 'aniversariantesPublicos'))
+    const publicados = new Map(snapshot.docs.map((item) => [item.id, item.data()]))
+    const operacoes = []
+
+    for (const membro of listaMembros) {
+      const { mes, dia } = obterMesDiaNascimento(membro.nascimento)
+      const nome = String(membro.nome || '').trim()
+      const devePublicar =
+        nome.length >= 2 &&
+        mes >= 1 && mes <= 12 &&
+        dia >= 1 && dia <= 31 &&
+        membro.status !== 'Inativo' &&
+        membro.ativo !== false
+      const atual = publicados.get(membro.id)
+      publicados.delete(membro.id)
+
+      if (!devePublicar) {
+        if (atual) operacoes.push((batch) => batch.delete(doc(db, 'aniversariantesPublicos', membro.id)))
+        continue
+      }
+
+      const dados = {
+        membroId: membro.id,
+        nome: nome.slice(0, 140),
+        mes,
+        dia,
+        ministerio: membro.ministerio || '',
+        foto: membro.foto || '',
+        ativo: true,
+      }
+      const igual =
+        atual && Object.keys(dados).every((chave) => atual[chave] === dados[chave])
+
+      if (!igual) {
+        operacoes.push((batch) =>
+          batch.set(doc(db, 'aniversariantesPublicos', membro.id), {
+            ...dados,
+            atualizadoEm: serverTimestamp(),
+          }),
+        )
+      }
+    }
+
+    // O que sobrou não corresponde a nenhum membro cadastrado.
+    for (const id of publicados.keys()) {
+      operacoes.push((batch) => batch.delete(doc(db, 'aniversariantesPublicos', id)))
+    }
+
+    for (let inicio = 0; inicio < operacoes.length; inicio += 400) {
+      const batch = writeBatch(db)
+      operacoes.slice(inicio, inicio + 400).forEach((aplicar) => aplicar(batch))
+      await batch.commit()
+    }
+
+    return operacoes.length
   }
 
   async function carregarTextoEmailAniversario() {
