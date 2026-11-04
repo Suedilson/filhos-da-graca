@@ -333,7 +333,9 @@ service cloud.firestore {
       allow update: if louvorAccess() && validWorshipSchedule(request.resource.data) &&
         request.resource.data.versao == resource.data.versao + 1 &&
         getAfter(/databases/$(database)/documents/louvorEscalas/$(id)/historico/$(string(request.resource.data.versao))).data == request.resource.data;
-      allow delete: if false;
+      // Excluir a escala exige a permissão Louvor marcada (ou perfil Administrador).
+      // O histórico de versões fica guardado, sem poder ser apagado.
+      allow delete: if hasPermission('louvor') || adminProfile();
 
       match /historico/{versao} {
         allow read: if louvorAccess();

@@ -927,3 +927,15 @@
   background: linear-gradient(160deg, #f1f0fb, #f7f6fd) !important;
   border-color: rgba(44, 26, 138, 0.18) !important;
 }
+
+.worship-area .worship-danger {
+  margin-left: auto;
+  border: 1px solid #f3d2d2;
+  background: #fff6f6;
+  color: #a12a2a;
+}
+
+.worship-area .worship-danger:hover:not(:disabled) {
+  background: #fdecec;
+  border-color: #e5a9a9;
+}

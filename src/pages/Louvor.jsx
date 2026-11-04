@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { collection, doc, getDocs, orderBy, query, runTransaction, serverTimestamp, setDoc } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDocs, orderBy, query, runTransaction, serverTimestamp, setDoc } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import './Louvor.css'
 import BuscarLouvor from './BuscarLouvor'
@@ -88,7 +88,7 @@ export default function Louvor({ user }) {
 
   async function salvarEscala(event) {
     event.preventDefault()
-    const comNoite = noite.ativo && !escalaId
+    const comNoite = noite.ativo
     const equipeNoite = noite.mesmaEquipe ? escala.equipe : noite.equipe
     const equipeIncompleta = (equipe) => !equipe.length || equipe.some((p) => !p.nome.trim() || !p.funcao.trim())
     if (equipeIncompleta(escala.equipe) || (comNoite && equipeIncompleta(equipeNoite))) {
@@ -121,6 +121,21 @@ export default function Louvor({ user }) {
     } catch (error) {
       console.error(error)
       setErro(error.message === 'CONFLITO' ? 'Esta escala foi alterada por outra pessoa. Atualize a lista e abra a escala novamente.' : 'Não foi possível salvar a escala.')
+    } finally { setSalvando(false) }
+  }
+
+  async function excluirEscala(item) {
+    if (!window.confirm(`Excluir a escala "${item.titulo}" de ${dataLegivel(item.data)} às ${item.horario}? O histórico de alterações continua guardado.`)) return
+    setSalvando(true); setErro(''); setMensagem('')
+    try {
+      await deleteDoc(doc(db, 'louvorEscalas', item.id))
+      if (escalaId === item.id) { setEscala(novaEscala()); setEscalaId(null); setVersao(0); setNoite(novaNoite()) }
+      if (historico?.titulo === item.titulo) setHistorico(null)
+      await carregar()
+      setMensagem('Escala excluída.')
+    } catch (error) {
+      console.error(error)
+      setErro(error.code === 'permission-denied' ? 'Só quem tem a permissão Louvor marcada pode excluir escalas.' : 'Não foi possível excluir a escala.')
     } finally { setSalvando(false) }
   }
 
@@ -249,7 +264,7 @@ export default function Louvor({ user }) {
             <label>Culto / evento<input required maxLength={180} value={escala.titulo} onChange={(e) => setEscala({ ...escala, titulo: e.target.value })} placeholder="Ex: Culto da Família" /></label>
             <div className="worship-pair">
               <label>Data<input type="date" required value={escala.data} onChange={(e) => setEscala({ ...escala, data: e.target.value })} /></label>
-              <label>{noite.ativo && !escalaId ? 'Horário da manhã' : 'Horário'}<input type="time" required value={escala.horario} onChange={(e) => setEscala({ ...escala, horario: e.target.value })} /></label>
+              <label>{noite.ativo ? 'Horário da manhã' : 'Horário'}<input type="time" required value={escala.horario} onChange={(e) => setEscala({ ...escala, horario: e.target.value })} /></label>
             </div>
             <div className="worship-pair">
               <label>Ministro de louvor<input required maxLength={180} value={escala.ministro} onChange={(e) => setEscala({ ...escala, ministro: e.target.value })} /></label>
@@ -257,22 +272,22 @@ export default function Louvor({ user }) {
             </div>
           </div>
 
-          {!escalaId && <label className="worship-check worship-night-toggle">
+          <label className="worship-check worship-night-toggle">
             <input type="checkbox" checked={noite.ativo} onChange={(e) => setNoite({ ...noite, ativo: e.target.checked })} />
-            <span>🌙 Também há culto à noite com o mesmo ministro</span>
-          </label>}
+            <span>{escalaId ? '🌙 Criar também o culto da noite com o mesmo ministro' : '🌙 Também há culto à noite com o mesmo ministro'}</span>
+          </label>
 
           <div className="worship-section">
-            <span className="worship-section-title">{noite.ativo && !escalaId ? 'Equipe da manhã' : 'Músicos e vocalistas'}</span>
+            <span className="worship-section-title">{noite.ativo ? 'Equipe da manhã' : 'Músicos e vocalistas'}</span>
             {editorEquipe(escala.equipe, (equipe) => setEscala({ ...escala, equipe }))}
           </div>
 
           <div className="worship-section">
-            <span className="worship-section-title">{noite.ativo && !escalaId ? '☀️ Louvores da manhã' : 'Repertório'}</span>
+            <span className="worship-section-title">{noite.ativo ? '☀️ Louvores da manhã' : 'Repertório'}</span>
             {editorRepertorio(escala.repertorio, (repertorio) => setEscala({ ...escala, repertorio }), selecionarMusica)}
           </div>
 
-          {noite.ativo && !escalaId && <div className="worship-section worship-night">
+          {noite.ativo && <div className="worship-section worship-night">
             <span className="worship-section-title">🌙 Culto da noite</span>
             <div className="worship-pair">
               <label>Culto / evento da noite<input maxLength={180} value={noite.titulo} onChange={(e) => setNoite({ ...noite, titulo: e.target.value })} placeholder={escala.titulo ? `${escala.titulo} (noite)` : 'Ex: Culto da Família'} /></label>
@@ -286,7 +301,7 @@ export default function Louvor({ user }) {
 
           <label>Observações / ensaio<textarea maxLength={10000} value={escala.observacoes} onChange={(e) => setEscala({ ...escala, observacoes: e.target.value })} placeholder="Horário do ensaio, recados para a equipe..." /></label>
           <div className="worship-form-actions">
-            <button type="submit" className="worship-primary">{salvando ? 'Salvando...' : noite.ativo && !escalaId ? 'Salvar escalas da manhã e da noite' : 'Salvar escala'}</button>
+            <button type="submit" className="worship-primary">{salvando ? 'Salvando...' : noite.ativo ? 'Salvar escalas da manhã e da noite' : 'Salvar escala'}</button>
             {escalaId && <button type="button" className="worship-ghost" onClick={() => { setEscala(novaEscala()); setEscalaId(null); setVersao(0); setNoite(novaNoite()) }}>Cancelar edição</button>}
           </div>
         </fieldset>
@@ -354,6 +369,7 @@ export default function Louvor({ user }) {
               <button type="button" className="worship-outline" disabled={salvando} onClick={() => editarEscala(e)}>Editar escala</button>
               <button type="button" className="worship-ghost" disabled={carregandoHistorico} onClick={() => abrirHistorico(e)}>Histórico</button>
               <button type="button" className="worship-ghost" disabled={gerandoPdf} onClick={() => imprimirRelatorio([e], 'Escala individual')}>Imprimir / PDF</button>
+              <button type="button" className="worship-danger" disabled={salvando} onClick={() => excluirEscala(e)}>Excluir</button>
             </div>
           </article>
         })}
