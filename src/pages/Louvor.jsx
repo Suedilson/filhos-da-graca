@@ -10,6 +10,14 @@ const novaMusica = () => ({ titulo: '', autor: '', letra: '', tom: '', notas: ''
 const novaEscala = () => ({ titulo: '', data: '', horario: '', ministro: '', observacoes: '', status: 'Confirmada', equipe: [{ nome: '', funcao: '' }], repertorio: [] })
 const hoje = () => new Date().toLocaleDateString('en-CA')
 const dataLegivel = (data) => data?.split('-').reverse().join('/') || ''
+const MESES = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ']
+const SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+function partesData(data) {
+  const [ano, mes, dia] = String(data || '').split('-').map(Number)
+  if (!ano || !mes || !dia) return { dia: '--', mes: '', semana: '' }
+  return { dia: String(dia).padStart(2, '0'), mes: MESES[mes - 1], semana: SEMANA[new Date(ano, mes - 1, dia).getDay()] }
+}
+const classeStatus = (status) => `worship-status status-${String(status || '').toLowerCase()}`
 
 export default function Louvor({ user }) {
   const [aba, setAba] = useState('escalas')
@@ -133,86 +141,175 @@ export default function Louvor({ user }) {
     `${e.titulo} ${e.ministro} ${e.equipe.map((p) => p.nome).join(' ')}`.toLocaleLowerCase('pt-BR').includes(termo))
     .sort((a, b) => periodo === 'proximas' ? `${a.data}${a.horario}`.localeCompare(`${b.data}${b.horario}`) : `${b.data}${b.horario}`.localeCompare(`${a.data}${a.horario}`))
 
+  const proximas = escalas.filter((e) => e.data >= hoje() && e.status !== 'Cancelada').length
+  const ativos = musicas.filter((m) => m.ativo).length
+
   return <section className="worship-area">
-    <header className="worship-toolbar">
-      <h2>Ministério de louvor</h2>
-      <div role="tablist" aria-label="Ministério de louvor">
-        {['escalas', 'louvores'].map((id) => <button key={id} type="button" role="tab" aria-selected={aba === id}
-          className={aba === id ? 'active' : ''} onClick={() => { setAba(id); setBusca(''); setErro(''); setMensagem('') }}>{id === 'escalas' ? 'Escalas' : 'Louvores'}</button>)}
+    <header className="worship-hero">
+      <div className="worship-hero-text">
+        <span className="worship-eyebrow">Ministério de louvor</span>
+        <h2>Escalas e repertório</h2>
+        <p>Organize quem toca e canta em cada culto e mantenha as letras e cifras do ministério em um só lugar.</p>
+      </div>
+      <div className="worship-hero-stats">
+        <div><strong>{proximas}</strong><span>próximas escalas</span></div>
+        <div><strong>{ativos}</strong><span>louvores no repertório</span></div>
+      </div>
+      <div className="worship-tabs" role="tablist" aria-label="Ministério de louvor">
+        {[['escalas', '📅', 'Escalas'], ['louvores', '🎵', 'Louvores']].map(([id, icone, nome]) => <button key={id} type="button" role="tab" aria-selected={aba === id}
+          className={aba === id ? 'active' : ''} onClick={() => { setAba(id); setBusca(''); setErro(''); setMensagem('') }}><span aria-hidden="true">{icone}</span>{nome}</button>)}
       </div>
     </header>
-    {erro && <p role="alert" className="worship-error">{erro}</p>}
-    {mensagem && <p role="status">{mensagem}</p>}
-    {carregando && <p role="status">Carregando...</p>}
+
+    {erro && <p role="alert" className="worship-banner worship-banner-erro">{erro}</p>}
+    {mensagem && <p role="status" className="worship-banner worship-banner-ok">{mensagem}</p>}
+
     <div className="worship-layout">
-      {aba === 'louvores' ? <form className="admin-card" onSubmit={salvarMusica}>
-        <h3>{musicaId ? 'Editar louvor' : 'Cadastrar louvor'}</h3>
+      {aba === 'louvores' ? <form className="admin-card worship-form" onSubmit={salvarMusica}>
+        <div className="worship-form-head">
+          <span className="worship-eyebrow">{musicaId ? 'Editando' : 'Novo louvor'}</span>
+          <h3>{musicaId ? musica.titulo || 'Editar louvor' : 'Cadastrar louvor'}</h3>
+        </div>
         <fieldset disabled={salvando || carregando}>
-          <label>Título<input required maxLength={180} value={musica.titulo} onChange={(e) => setMusica({ ...musica, titulo: e.target.value })} /></label>
-          <label>Autor / intérprete<input maxLength={180} value={musica.autor} onChange={(e) => setMusica({ ...musica, autor: e.target.value })} /></label>
-          <BuscarLouvor musica={musica} musicas={musicas} musicaId={musicaId} onSelecionar={setMusica} />
-          <label>Ministros que cantam este louvor<input maxLength={500} value={musica.ministros} onChange={(e) => setMusica({ ...musica, ministros: e.target.value })} /></label>
-          <label>Tom<input maxLength={40} value={musica.tom} onChange={(e) => setMusica({ ...musica, tom: e.target.value })} /></label>
+          <div className="worship-section">
+            <label>Título<input required maxLength={180} value={musica.titulo} onChange={(e) => setMusica({ ...musica, titulo: e.target.value })} placeholder="Ex: Grande é o Senhor" /></label>
+            <label>Autor / intérprete<input maxLength={180} value={musica.autor} onChange={(e) => setMusica({ ...musica, autor: e.target.value })} placeholder="Ex: Adhemar de Campos" /></label>
+            <BuscarLouvor musica={musica} musicas={musicas} musicaId={musicaId} onSelecionar={setMusica} />
+          </div>
+          <div className="worship-section worship-pair">
+            <label>Tom<input maxLength={40} value={musica.tom} onChange={(e) => setMusica({ ...musica, tom: e.target.value })} placeholder="Ex: G" /></label>
+            <label>Ministros que cantam<input maxLength={500} value={musica.ministros} onChange={(e) => setMusica({ ...musica, ministros: e.target.value })} placeholder="Nomes" /></label>
+          </div>
           <BuscarCifra musica={musica} onSelecionar={setMusica} />
           <label>Letra<textarea rows={10} maxLength={40000} value={musica.letra} onChange={(e) => setMusica({ ...musica, letra: e.target.value })} /></label>
           <label>Notas, cifras e observações<textarea className="worship-chord-input" wrap="off" rows={12} maxLength={20000} value={musica.notas} onChange={(e) => setMusica({ ...musica, notas: e.target.value })} /></label>
           <label className="worship-check"><input type="checkbox" checked={musica.ativo} onChange={(e) => setMusica({ ...musica, ativo: e.target.checked })} />Ativo no repertório</label>
-          <button type="submit">{salvando ? 'Salvando...' : 'Salvar louvor'}</button>
-          {musicaId && <button type="button" onClick={() => { setMusica(novaMusica()); setMusicaId(null) }}>Cancelar edição</button>}
-        </fieldset>
-      </form> : <form className="admin-card" onSubmit={salvarEscala}>
-        <h3>{escalaId ? 'Editar escala' : 'Nova escala'}</h3>
-        <fieldset disabled={salvando || carregando}>
-          <label>Culto / evento<input required maxLength={180} value={escala.titulo} onChange={(e) => setEscala({ ...escala, titulo: e.target.value })} /></label>
-          <div className="worship-pair">
-            <label>Data<input type="date" required value={escala.data} onChange={(e) => setEscala({ ...escala, data: e.target.value })} /></label>
-            <label>Horário<input type="time" required value={escala.horario} onChange={(e) => setEscala({ ...escala, horario: e.target.value })} /></label>
+          <div className="worship-form-actions">
+            <button type="submit" className="worship-primary">{salvando ? 'Salvando...' : 'Salvar louvor'}</button>
+            {musicaId && <button type="button" className="worship-ghost" onClick={() => { setMusica(novaMusica()); setMusicaId(null) }}>Cancelar edição</button>}
           </div>
-          <label>Ministro de louvor<input required maxLength={180} value={escala.ministro} onChange={(e) => setEscala({ ...escala, ministro: e.target.value })} /></label>
-          <label>Status<select value={escala.status} onChange={(e) => setEscala({ ...escala, status: e.target.value })}>{['Confirmada', 'Rascunho', 'Realizada', 'Cancelada'].map((s) => <option key={s}>{s}</option>)}</select></label>
-          <h4>Músicos e vocalistas</h4>
-          {escala.equipe.map((pessoa, index) => <div className="worship-person" key={index}>
-            <label>Nome<input required maxLength={180} value={pessoa.nome} onChange={(e) => setEscala({ ...escala, equipe: escala.equipe.map((p, i) => i === index ? { ...p, nome: e.target.value } : p) })} /></label>
-            <label>Instrumento / função<input required maxLength={100} value={pessoa.funcao} onChange={(e) => setEscala({ ...escala, equipe: escala.equipe.map((p, i) => i === index ? { ...p, funcao: e.target.value } : p) })} /></label>
-            <button type="button" title="Remover integrante" aria-label="Remover integrante" onClick={() => setEscala({ ...escala, equipe: escala.equipe.filter((_, i) => i !== index) })}>×</button>
-          </div>)}
-          <button type="button" onClick={() => setEscala({ ...escala, equipe: [...escala.equipe, { nome: '', funcao: '' }] })}>Adicionar integrante</button>
-          <label>Repertório<select value="" onChange={(e) => selecionarMusica(e.target.value)}><option value="">Selecionar louvor</option>{musicas.filter((m) => m.ativo && !escala.repertorio.some((r) => r.id === m.id)).map((m) => <option key={m.id} value={m.id}>{m.titulo} {m.tom && `(${m.tom})`}</option>)}</select></label>
-          <ol>{escala.repertorio.map((m, index) => <li key={m.id} className="worship-song-row"><span>{m.titulo}</span><label>Tom<input maxLength={40} value={m.tom} onChange={(e) => setEscala({ ...escala, repertorio: escala.repertorio.map((r, i) => i === index ? { ...r, tom: e.target.value } : r) })} /></label><button type="button" title="Remover louvor" aria-label={`Remover ${m.titulo}`} onClick={() => setEscala({ ...escala, repertorio: escala.repertorio.filter((r) => r.id !== m.id) })}>×</button></li>)}</ol>
-          <label>Observações / ensaio<textarea maxLength={10000} value={escala.observacoes} onChange={(e) => setEscala({ ...escala, observacoes: e.target.value })} /></label>
-          <button type="submit">{salvando ? 'Salvando...' : 'Salvar escala'}</button>
-          {escalaId && <button type="button" onClick={() => { setEscala(novaEscala()); setEscalaId(null); setVersao(0) }}>Cancelar edição</button>}
+        </fieldset>
+      </form> : <form className="admin-card worship-form" onSubmit={salvarEscala}>
+        <div className="worship-form-head">
+          <span className="worship-eyebrow">{escalaId ? 'Editando escala' : 'Nova escala'}</span>
+          <h3>{escalaId ? escala.titulo || 'Editar escala' : 'Montar escala'}</h3>
+        </div>
+        <fieldset disabled={salvando || carregando}>
+          <div className="worship-section">
+            <span className="worship-section-title">Culto</span>
+            <label>Culto / evento<input required maxLength={180} value={escala.titulo} onChange={(e) => setEscala({ ...escala, titulo: e.target.value })} placeholder="Ex: Culto da Família" /></label>
+            <div className="worship-pair">
+              <label>Data<input type="date" required value={escala.data} onChange={(e) => setEscala({ ...escala, data: e.target.value })} /></label>
+              <label>Horário<input type="time" required value={escala.horario} onChange={(e) => setEscala({ ...escala, horario: e.target.value })} /></label>
+            </div>
+            <div className="worship-pair">
+              <label>Ministro de louvor<input required maxLength={180} value={escala.ministro} onChange={(e) => setEscala({ ...escala, ministro: e.target.value })} /></label>
+              <label>Status<select value={escala.status} onChange={(e) => setEscala({ ...escala, status: e.target.value })}>{['Confirmada', 'Rascunho', 'Realizada', 'Cancelada'].map((st) => <option key={st}>{st}</option>)}</select></label>
+            </div>
+          </div>
+
+          <div className="worship-section">
+            <span className="worship-section-title">Músicos e vocalistas</span>
+            {escala.equipe.map((pessoa, index) => <div className="worship-person" key={index}>
+              <label>Nome<input required maxLength={180} value={pessoa.nome} onChange={(e) => setEscala({ ...escala, equipe: escala.equipe.map((p, i) => i === index ? { ...p, nome: e.target.value } : p) })} /></label>
+              <label>Instrumento / função<input required maxLength={100} value={pessoa.funcao} onChange={(e) => setEscala({ ...escala, equipe: escala.equipe.map((p, i) => i === index ? { ...p, funcao: e.target.value } : p) })} placeholder="Ex: Teclado, Voz" /></label>
+              <button type="button" className="worship-icon-button" title="Remover integrante" aria-label="Remover integrante" onClick={() => setEscala({ ...escala, equipe: escala.equipe.filter((_, i) => i !== index) })}>×</button>
+            </div>)}
+            <button type="button" className="worship-add" onClick={() => setEscala({ ...escala, equipe: [...escala.equipe, { nome: '', funcao: '' }] })}>+ Adicionar integrante</button>
+          </div>
+
+          <div className="worship-section">
+            <span className="worship-section-title">Repertório</span>
+            <label className="worship-sr-label">Adicionar louvor<select value="" onChange={(e) => selecionarMusica(e.target.value)}><option value="">+ Adicionar louvor ao repertório</option>{musicas.filter((m) => m.ativo && !escala.repertorio.some((r) => r.id === m.id)).map((m) => <option key={m.id} value={m.id}>{m.titulo} {m.tom && `(${m.tom})`}</option>)}</select></label>
+            {escala.repertorio.length > 0 && <ol className="worship-setlist">{escala.repertorio.map((m, index) => <li key={m.id} className="worship-song-row">
+              <span className="worship-song-number">{index + 1}</span>
+              <span className="worship-song-title">{m.titulo}</span>
+              <label>Tom<input maxLength={40} value={m.tom} onChange={(e) => setEscala({ ...escala, repertorio: escala.repertorio.map((r, i) => i === index ? { ...r, tom: e.target.value } : r) })} /></label>
+              <button type="button" className="worship-icon-button" title="Remover louvor" aria-label={`Remover ${m.titulo}`} onClick={() => setEscala({ ...escala, repertorio: escala.repertorio.filter((r) => r.id !== m.id) })}>×</button>
+            </li>)}</ol>}
+          </div>
+
+          <label>Observações / ensaio<textarea maxLength={10000} value={escala.observacoes} onChange={(e) => setEscala({ ...escala, observacoes: e.target.value })} placeholder="Horário do ensaio, recados para a equipe..." /></label>
+          <div className="worship-form-actions">
+            <button type="submit" className="worship-primary">{salvando ? 'Salvando...' : 'Salvar escala'}</button>
+            {escalaId && <button type="button" className="worship-ghost" onClick={() => { setEscala(novaEscala()); setEscalaId(null); setVersao(0) }}>Cancelar edição</button>}
+          </div>
         </fieldset>
       </form>}
+
       <section className="worship-records">
-        <div className="worship-filters"><label>Buscar<input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} /></label>
+        <div className="worship-filters">
+          <label className="worship-search">Buscar<input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder={aba === 'escalas' ? 'Culto, ministro ou integrante' : 'Título, autor ou ministro'} /></label>
           {aba === 'escalas' && <label>Período<select value={periodo} onChange={(e) => setPeriodo(e.target.value)}><option value="proximas">Próximas escalas</option><option value="anteriores">Escalas anteriores</option><option value="todas">Todo o histórico</option></select></label>}
-          <button type="button" disabled={carregando || salvando} onClick={carregar}>Atualizar</button>
+          <button type="button" className="worship-ghost" disabled={carregando || salvando} onClick={carregar}>↻ Atualizar</button>
         </div>
-        {aba === 'escalas' && <div className="worship-report-actions"><button type="button" disabled={gerandoPdf || carregando || !listaEscalas.length}
-          onClick={() => imprimirRelatorio(listaEscalas, `${{ proximas: 'Próximas escalas', anteriores: 'Escalas anteriores', todas: 'Todo o histórico' }[periodo]}${busca.trim() ? ` - Busca: ${busca.trim()}` : ''}`)}>
-          {gerandoPdf ? 'Gerando PDF...' : 'Relatório PDF das escalas'}</button><span>{listaEscalas.length} escala(s)</span></div>}
-        {!carregando && (aba === 'escalas' ? listaEscalas : listaMusicas).length === 0 && <p>Nenhum registro encontrado.</p>}
-        {aba === 'louvores' ? listaMusicas.map((m) => <article className="admin-card" key={m.id}>
-          <h3>{m.titulo}</h3><p>{m.autor} {m.tom && `· Tom: ${m.tom}`} {!m.ativo && '· Arquivado'}</p>
-          <p><strong>Ministros:</strong> {m.ministros || 'Não informado'}</p>
-          <details><summary>Letra e notas</summary><pre>{m.letra || 'Letra não cadastrada.'}</pre><pre className="worship-chord-display">{formatarCifra(m.notas)}</pre></details>
-          <button type="button" disabled={salvando} onClick={() => { const { id, ...dados } = m; setMusica({ ...dados, notas: formatarCifra(dados.notas) }); setMusicaId(id); setMensagem('') }}>Editar louvor</button>
-        </article>) : listaEscalas.map((e) => <article className="admin-card" key={e.id}>
-          <span>{dataLegivel(e.data)} · {e.horario} · {e.status}</span><h3>{e.titulo}</h3>
-          <p><strong>Ministro:</strong> {e.ministro}</p>
-          <ul>{e.equipe.map((p, i) => <li key={i}>{p.nome} · {p.funcao}</li>)}</ul>
-          <details><summary>Repertório ({e.repertorio.length})</summary><ol>{e.repertorio.map((m) => <li key={m.id}><strong>{m.titulo}</strong> · {m.tom || 'Tom não informado'}<details><summary>Letra e notas</summary><pre>{m.letra}</pre><pre className="worship-chord-display">{formatarCifra(m.notas)}</pre></details></li>)}</ol></details>
-          {e.observacoes && <p className="worship-prewrap">{e.observacoes}</p>}
-          <div className="admin-actions"><button type="button" disabled={salvando} onClick={() => editarEscala(e)}>Editar escala</button><button type="button" disabled={carregandoHistorico} onClick={() => abrirHistorico(e)}>Histórico de alterações</button><button type="button" disabled={gerandoPdf} onClick={() => imprimirRelatorio([e], 'Escala individual')}>Imprimir / PDF</button></div>
-        </article>)}
-        {carregandoHistorico && <p role="status">Carregando histórico...</p>}
-        {historico && <section className="worship-history"><h3>Histórico: {historico.titulo}</h3><button type="button" onClick={() => setHistorico(null)}>Fechar histórico</button>
-          {historico.versoes.map((v) => <article className="admin-card" key={v.versao}>
-            <h4>Versão {v.versao} · {v.status}</h4><p>{v.atualizadoEm?.toDate().toLocaleString('pt-BR')} · {v.responsavel}</p>
+        {aba === 'escalas' && <div className="worship-report-actions">
+          <span>{listaEscalas.length} escala(s)</span>
+          <button type="button" className="worship-ghost" disabled={gerandoPdf || carregando || !listaEscalas.length}
+            onClick={() => imprimirRelatorio(listaEscalas, `${{ proximas: 'Próximas escalas', anteriores: 'Escalas anteriores', todas: 'Todo o histórico' }[periodo]}${busca.trim() ? ` - Busca: ${busca.trim()}` : ''}`)}>
+            {gerandoPdf ? 'Gerando PDF...' : '📄 Relatório PDF'}</button>
+        </div>}
+        {carregando && <p role="status" className="worship-empty">Carregando...</p>}
+        {!carregando && (aba === 'escalas' ? listaEscalas : listaMusicas).length === 0 && <div className="worship-empty">
+          <strong>{aba === 'escalas' ? 'Nenhuma escala encontrada' : 'Nenhum louvor encontrado'}</strong>
+          <span>{busca ? 'Tente outra busca.' : aba === 'escalas' ? 'Monte a primeira escala pelo formulário ao lado.' : 'Cadastre o primeiro louvor pelo formulário ao lado.'}</span>
+        </div>}
+
+        {aba === 'louvores' ? listaMusicas.map((m) => <article className={`admin-card worship-song-card ${m.ativo ? '' : 'is-archived'}`} key={m.id}>
+          <div className="worship-song-card-head">
+            <span className="worship-song-icon" aria-hidden="true">🎵</span>
+            <div>
+              <h3>{m.titulo}</h3>
+              <p className="worship-meta">{m.autor || 'Autor não informado'}</p>
+            </div>
+            <div className="worship-badges">
+              {m.tom && <span className="worship-key">{m.tom}</span>}
+              {!m.ativo && <span className="worship-status status-cancelada">Arquivado</span>}
+            </div>
+          </div>
+          <p className="worship-meta">🎤 {m.ministros || 'Ministros não informados'}</p>
+          <details><summary>Letra e cifra</summary><pre>{m.letra || 'Letra não cadastrada.'}</pre><pre className="worship-chord-display">{formatarCifra(m.notas)}</pre></details>
+          <div className="worship-card-actions">
+            <button type="button" className="worship-outline" disabled={salvando} onClick={() => { const { id, ...dados } = m; setMusica({ ...dados, notas: formatarCifra(dados.notas) }); setMusicaId(id); setMensagem('') }}>Editar louvor</button>
+          </div>
+        </article>) : listaEscalas.map((e) => {
+          const d = partesData(e.data)
+          return <article className={`admin-card worship-event-card ${e.status === 'Cancelada' ? 'is-cancelled' : ''}`} key={e.id}>
+            <div className="worship-event-head">
+              <div className="worship-date" aria-hidden="true"><strong>{d.dia}</strong><span>{d.mes}</span></div>
+              <div className="worship-event-info">
+                <span className="worship-meta">{d.semana} · {dataLegivel(e.data)} · {e.horario}</span>
+                <h3>{e.titulo}</h3>
+                <p className="worship-meta">🎤 Ministro: <strong>{e.ministro}</strong></p>
+              </div>
+              <span className={classeStatus(e.status)}>{e.status}</span>
+            </div>
+            <ul className="worship-team">{e.equipe.map((p, i) => <li key={i}><strong>{p.nome}</strong><span>{p.funcao}</span></li>)}</ul>
+            <details className="worship-setlist-details"><summary>🎶 Repertório ({e.repertorio.length})</summary>
+              <ol className="worship-setlist">{e.repertorio.map((m, index) => <li key={m.id} className="worship-song-row is-readonly">
+                <span className="worship-song-number">{index + 1}</span>
+                <div className="worship-song-title"><strong>{m.titulo}</strong>
+                  <details><summary>Letra e cifra</summary><pre>{m.letra}</pre><pre className="worship-chord-display">{formatarCifra(m.notas)}</pre></details>
+                </div>
+                <span className="worship-key">{m.tom || '—'}</span>
+              </li>)}</ol>
+            </details>
+            {e.observacoes && <p className="worship-prewrap worship-notes">{e.observacoes}</p>}
+            <div className="worship-card-actions">
+              <button type="button" className="worship-outline" disabled={salvando} onClick={() => editarEscala(e)}>Editar escala</button>
+              <button type="button" className="worship-ghost" disabled={carregandoHistorico} onClick={() => abrirHistorico(e)}>Histórico</button>
+              <button type="button" className="worship-ghost" disabled={gerandoPdf} onClick={() => imprimirRelatorio([e], 'Escala individual')}>Imprimir / PDF</button>
+            </div>
+          </article>
+        })}
+        {carregandoHistorico && <p role="status" className="worship-empty">Carregando histórico...</p>}
+        {historico && <section className="worship-history">
+          <div className="worship-history-head"><h3>Histórico: {historico.titulo}</h3><button type="button" className="worship-ghost" onClick={() => setHistorico(null)}>Fechar histórico</button></div>
+          {historico.versoes.map((v) => <article className="admin-card worship-history-item" key={v.versao}>
+            <h4>Versão {v.versao} · <span className={classeStatus(v.status)}>{v.status}</span></h4><p className="worship-meta">{v.atualizadoEm?.toDate().toLocaleString('pt-BR')} · {v.responsavel}</p>
             <p>{v.titulo} · {dataLegivel(v.data)} · {v.horario} · {v.ministro}</p>
-            <ul>{v.equipe.map((p, i) => <li key={i}>{p.nome} · {p.funcao}</li>)}</ul>
-            <ol>{v.repertorio.map((m) => <li key={m.id}>{m.titulo} · {m.tom}<details><summary>Letra e notas</summary><pre>{m.letra}</pre><pre className="worship-chord-display">{formatarCifra(m.notas)}</pre></details></li>)}</ol><p className="worship-prewrap">{v.observacoes}</p>
+            <ul className="worship-team">{v.equipe.map((p, i) => <li key={i}><strong>{p.nome}</strong><span>{p.funcao}</span></li>)}</ul>
+            <ol>{v.repertorio.map((m) => <li key={m.id}>{m.titulo} · {m.tom}<details><summary>Letra e cifra</summary><pre>{m.letra}</pre><pre className="worship-chord-display">{formatarCifra(m.notas)}</pre></details></li>)}</ol><p className="worship-prewrap">{v.observacoes}</p>
           </article>)}
         </section>}
       </section>
