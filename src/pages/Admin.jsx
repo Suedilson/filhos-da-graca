@@ -301,7 +301,7 @@ const categoriasGaleria = [
   fotoPublicId: '',
   observacoes: '',
   responsavelAcompanhamento: '',
-  situacaoPastoral: 'Em acompanhamento',
+  situacaoPastoral: 'Sem acompanhamento',
   ultimoContato: '',
   proximaAcao: '',
   dataProximaAcao: '',
@@ -4228,7 +4228,7 @@ async function salvarMeusDados(event) {
   fotoPublicId: '',
   observacoes: '',
   responsavelAcompanhamento: '',
-  situacaoPastoral: 'Em acompanhamento',
+  situacaoPastoral: 'Sem acompanhamento',
   ultimoContato: '',
   proximaAcao: '',
   dataProximaAcao: '',
@@ -4264,7 +4264,7 @@ async function salvarMeusDados(event) {
       fotoPublicId: membro.fotoPublicId || '',
       observacoes: membro.observacoes || '',
       responsavelAcompanhamento: membro.responsavelAcompanhamento || '',
-      situacaoPastoral: membro.situacaoPastoral || 'Em acompanhamento',
+      situacaoPastoral: membro.situacaoPastoral || 'Sem acompanhamento',
       ultimoContato: membro.ultimoContato || '',
       proximaAcao: membro.proximaAcao || '',
       dataProximaAcao: membro.dataProximaAcao || '',
@@ -4293,7 +4293,7 @@ async function salvarMeusDados(event) {
       fotoPublicId: '',
       observacoes: '',
       responsavelAcompanhamento: '',
-      situacaoPastoral: 'Em acompanhamento',
+      situacaoPastoral: 'Sem acompanhamento',
       ultimoContato: '',
       proximaAcao: '',
       dataProximaAcao: '',
@@ -4402,7 +4402,9 @@ function ehAniversarianteHoje(dataNascimento) {
 function temAcompanhamentoPastoral(membro) {
   return Boolean(
     membro.responsavelAcompanhamento ||
-      (membro.situacaoPastoral && membro.situacaoPastoral !== 'Sem acompanhamento') ||
+      // "Em acompanhamento" era o valor padrão da ficha; sozinho, não indica acompanhamento real.
+      (membro.situacaoPastoral &&
+        !['Sem acompanhamento', 'Em acompanhamento'].includes(membro.situacaoPastoral)) ||
       membro.ultimoContato ||
       membro.proximaAcao ||
       membro.dataProximaAcao ||
