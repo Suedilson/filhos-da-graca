@@ -1,4 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
+
+const MODOS_MEMBROS = ['lista', 'cadastro', 'pastoral', 'aniversariantes', 'boasVindas']
+
+// A aba aberta fica no endereço (/admin#membros, /admin#membros/cadastro), assim o botão
+// Voltar do navegador ou do celular volta para a aba anterior em vez de sair do painel.
+function lerNavegacaoAdmin() {
+  const [aba, modo] = decodeURIComponent(window.location.hash.slice(1)).split('/')
+  return {
+    aba: /^[a-zA-Z]+$/.test(aba || '') ? aba : 'programacao',
+    modo: MODOS_MEMBROS.includes(modo) ? modo : 'lista',
+  }
+}
+
+function enderecoDaNavegacao(aba, modo) {
+  return `#${aba}${aba === 'membros' && modo !== 'lista' ? `/${modo}` : ''}`
+}
 import {
   createUserWithEmailAndPassword,
   getAuth,
@@ -155,7 +171,8 @@ const [cadastroMembroForm, setCadastroMembroForm] = useState({
   confirmarSenha: '',
 })
 const [loading, setLoading] = useState(false)
-const [abaAtiva, setAbaAtiva] = useState('programacao')
+const [abaAtiva, setAbaAtiva] = useState(() => lerNavegacaoAdmin().aba)
+const substituirHistorico = useRef(false)
 const [grupoMenuAberto, setGrupoMenuAberto] = useState(null)
 const [menuAdminMobileAberto, setMenuAdminMobileAberto] = useState(false)
 
@@ -269,7 +286,7 @@ const categoriasGaleria = [
   const [buscaMembro, setBuscaMembro] = useState('')
   const [filtroStatusMembro, setFiltroStatusMembro] = useState('Todos')
   const [filtroMinisterioMembro, setFiltroMinisterioMembro] = useState('Todos')
-  const [modoMembros, setModoMembros] = useState('lista')
+  const [modoMembros, setModoMembros] = useState(() => lerNavegacaoAdmin().modo)
   const [mesAniversariantes, setMesAniversariantes] = useState(
   String(new Date().getMonth() + 1),
 )
@@ -644,9 +661,41 @@ useEffect(() => {
   if (!isAdmin) return
 
   if (!usuarioPodeAcessar(abaAtiva)) {
+    substituirHistorico.current = true
     setAbaAtiva(obterPrimeiraAbaPermitida())
   }
 }, [isAdmin, permissaoUsuario, abaAtiva])
+
+// Cada troca de aba vira um passo no histórico do navegador.
+useEffect(() => {
+  if (!isAdmin) return
+
+  const endereco = enderecoDaNavegacao(abaAtiva, modoMembros)
+  if (window.location.hash === endereco) return
+
+  const substituir = substituirHistorico.current || !window.location.hash
+  substituirHistorico.current = false
+  window.history[substituir ? 'replaceState' : 'pushState'](
+    null,
+    '',
+    `${window.location.pathname}${window.location.search}${endereco}`,
+  )
+}, [isAdmin, abaAtiva, modoMembros])
+
+// Botão Voltar/Avançar: abre a aba que está no endereço.
+useEffect(() => {
+  function aoVoltar() {
+    const { aba, modo } = lerNavegacaoAdmin()
+    setAbaAtiva(aba)
+    setModoMembros(modo)
+    setGrupoMenuAberto(null)
+    setMenuAdminMobileAberto(false)
+    window.scrollTo({ top: 0 })
+  }
+
+  window.addEventListener('popstate', aoVoltar)
+  return () => window.removeEventListener('popstate', aoVoltar)
+}, [])
 useEffect(() => {
   if (!isAdmin) return
 
