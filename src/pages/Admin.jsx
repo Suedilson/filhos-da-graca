@@ -29,6 +29,7 @@ import { mostrarAviso } from '../services/avisos'
 import CampoSenha from '../components/CampoSenha'
 import { enviarEmailAniversarioTeste } from '../services/emailAniversario'
 import { fazerBackupAgora } from '../services/backup'
+import { enviarBoasVindas } from '../services/boasVindas'
 import { TEXTO_PADRAO as TEXTO_PADRAO_EMAIL_ANIVERSARIO } from '../../cloudflare/emailAniversario.js'
 import './Admin.css'
 import Louvor from './Louvor'
@@ -1284,13 +1285,26 @@ async function aprovarUsuarioPendente(usuarioPermissao) {
     })
 
     await batch.commit()
+
+    // Quem se cadastrou pelo site recebe o e-mail de boas-vindas; uma falha aqui não desfaz a aprovação.
+    let avisoBoasVindas = ''
+    if (usuarioPermissao.origemCadastro === 'autoCadastro') {
+      try {
+        const resultado = await enviarBoasVindas(usuarioPermissao.id)
+        if (resultado.enviado) avisoBoasVindas = ' E-mail de boas-vindas enviado.'
+      } catch (error) {
+        console.error('Erro no e-mail de boas-vindas.', error)
+        avisoBoasVindas = ' Não foi possível enviar o e-mail de boas-vindas agora.'
+      }
+    }
+
     await carregarUsuariosPermissoes()
 
     if (usuarioPodeAcessar('membros')) {
       await carregarMembros()
     }
 
-    mostrarAviso('Usuário aprovado com sucesso.')
+    mostrarAviso(`Usuário aprovado com sucesso.${avisoBoasVindas}`, 'sucesso')
   } catch (error) {
     mostrarAviso('Erro ao aprovar usuário pendente.')
     console.error(error)

@@ -1,6 +1,7 @@
 import { fazAniversarioHoje, hojeNaBahia, montarEmailAniversario } from './emailAniversario.js'
 import { decodeBase64url, tokenGoogle, urlFirestore } from './google.js'
 import { fazerBackup } from './backup.js'
+import { montarEmailBoasVindas } from './emailBoasVindas.js'
 
 // Worker agendado: todo dia de manhã envia o e-mail de aniversário aos membros
 // e, de madrugada, salva uma cópia de segurança do banco no Google Drive (backup.js).
@@ -38,9 +39,9 @@ async function listarMembros(env, token) {
   return membros
 }
 
-// Marca o envio do ano antes de mandar o e-mail; se a marca já existe, o membro já recebeu.
-async function reservarEnvio(env, token, id) {
-  const r = await fetch(`${urlFirestore(env, 'emailsAniversario')}?documentId=${encodeURIComponent(id)}`, {
+// Marca o envio antes de mandar o e-mail; se a marca já existe, a pessoa já recebeu.
+async function reservarEnvio(env, token, id, colecao = 'emailsAniversario') {
+  const r = await fetch(`${urlFirestore(env, colecao)}?documentId=${encodeURIComponent(id)}`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields: { enviadoEm: { timestampValue: new Date().toISOString() } } }),
@@ -50,8 +51,8 @@ async function reservarEnvio(env, token, id) {
   return true
 }
 
-async function liberarEnvio(env, token, id) {
-  await fetch(urlFirestore(env, `emailsAniversario/${encodeURIComponent(id)}`), {
+async function liberarEnvio(env, token, id, colecao = 'emailsAniversario') {
+  await fetch(urlFirestore(env, `${colecao}/${encodeURIComponent(id)}`), {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   })
@@ -68,14 +69,47 @@ async function carregarTextoEmail(env, token) {
   return Object.fromEntries(Object.entries(campos).map(([chave, valor]) => [chave, valor.stringValue || '']))
 }
 
-async function enviarEmail(env, para, nome, config = {}) {
-  const { assunto, html, texto } = montarEmailAniversario(nome, config)
+// Lê um documento do Firestore e devolve os campos de texto e verdadeiro/falso (null se não existir).
+async function lerDocumento(env, token, caminho) {
+  const r = await fetch(urlFirestore(env, caminho), { headers: { Authorization: `Bearer ${token}` } })
+  if (r.status === 404) return null
+  if (!r.ok) throw new Error(`Falha ao ler ${caminho} (HTTP ${r.status})`)
+  const campos = (await r.json()).fields || {}
+  return Object.fromEntries(Object.entries(campos).map(([chave, valor]) =>
+    [chave, valor.booleanValue ?? valor.stringValue ?? '']))
+}
+
+async function enviarResend(env, para, { assunto, html, texto }) {
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ from: env.REMETENTE, to: [para], subject: assunto, html, text: texto }),
   })
   if (!r.ok) throw new Error(`Resend recusou o envio (HTTP ${r.status}): ${(await r.text()).slice(0, 200)}`)
+}
+
+async function enviarEmail(env, para, nome, config = {}) {
+  await enviarResend(env, para, montarEmailAniversario(nome, config))
+}
+
+// Boas-vindas para quem se cadastrou pelo site, enviado uma única vez, quando o acesso é liberado.
+export async function enviarBoasVindas(env, uid) {
+  const token = await tokenGoogle(env)
+  const permissao = await lerDocumento(env, token, `usuariosPermissoes/${encodeURIComponent(uid)}`)
+  if (!permissao || permissao.ativo !== true || permissao.origemCadastro !== 'autoCadastro') {
+    return { enviado: false, motivo: 'Cadastro não liberado ou não feito pelo site.' }
+  }
+  const membro = permissao.membroId ? await lerDocumento(env, token, `membros/${encodeURIComponent(permissao.membroId)}`) : null
+  const email = String(membro?.email || permissao.email || '').trim()
+  if (!email.includes('@')) return { enviado: false, motivo: 'Cadastro sem e-mail.' }
+  if (!await reservarEnvio(env, token, uid, 'emailsBoasVindas')) return { enviado: false, motivo: 'Boas-vindas já enviado.' }
+  try {
+    await enviarResend(env, email, montarEmailBoasVindas(membro?.nome || permissao.nome))
+    return { enviado: true, email }
+  } catch (error) {
+    await liberarEnvio(env, token, uid, 'emailsBoasVindas')
+    throw error
+  }
 }
 
 export async function enviarAniversariantesDoDia(env, agora = new Date()) {
@@ -108,7 +142,7 @@ export async function enviarAniversariantesDoDia(env, agora = new Date()) {
 // Confere o login do Firebase de quem pediu o e-mail de teste.
 let chavesGoogle
 let expiraChaves = 0
-async function emailDoToken(token, projeto) {
+async function usuarioDoToken(token, projeto) {
   const [h, p, s] = token.split('.')
   const header = JSON.parse(new TextDecoder().decode(decodeBase64url(h)))
   const payload = JSON.parse(new TextDecoder().decode(decodeBase64url(p)))
@@ -125,7 +159,14 @@ async function emailDoToken(token, projeto) {
   if (!await crypto.subtle.verify('RSASSA-PKCS1-v1_5', chave, decodeBase64url(s), new TextEncoder().encode(`${h}.${p}`))) {
     throw new Error('Assinatura inválida')
   }
-  return payload.email
+  return { uid: payload.sub, email: payload.email }
+}
+
+// Administrador geral ou perfil Administrador ativo.
+async function ehAdministrador(env, usuario) {
+  if (usuario.email === ADMIN_GERAL) return true
+  const permissao = await lerDocumento(env, await tokenGoogle(env), `usuariosPermissoes/${encodeURIComponent(usuario.uid)}`)
+  return permissao?.ativo === true && permissao.perfil === 'admin'
 }
 
 export default {
@@ -145,16 +186,34 @@ export default {
     headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers })
     const rota = new URL(request.url).pathname
-    if (!['/teste', '/backup'].includes(rota) || request.method !== 'POST') {
+    if (!['/teste', '/backup', '/boas-vindas'].includes(rota) || request.method !== 'POST') {
       return Response.json({ mensagem: 'Rota não encontrada.' }, { status: 404, headers })
     }
-    let email
+    let usuario
     try {
       const token = request.headers.get('Authorization')?.match(/^Bearer (\S+)$/)?.[1] || ''
-      email = await emailDoToken(token, env.FIREBASE_PROJECT)
+      usuario = await usuarioDoToken(token, env.FIREBASE_PROJECT)
     } catch {
       return Response.json({ mensagem: 'Entre novamente na sua conta.' }, { status: 401, headers })
     }
+    // POST /boas-vindas { uid }: chamado pelo painel ao liberar o acesso de quem se cadastrou pelo site.
+    if (rota === '/boas-vindas') {
+      try {
+        if (!await ehAdministrador(env, usuario)) {
+          return Response.json({ mensagem: 'Somente administradores podem enviar as boas-vindas.' }, { status: 403, headers })
+        }
+        const { uid } = await request.json().catch(() => ({}))
+        if (typeof uid !== 'string' || !uid || uid.length > 128) {
+          return Response.json({ mensagem: 'Usuário inválido.' }, { status: 400, headers })
+        }
+        const resultado = await enviarBoasVindas(env, uid)
+        return Response.json({ mensagem: resultado.enviado ? `E-mail de boas-vindas enviado para ${resultado.email}.` : resultado.motivo, ...resultado }, { headers })
+      } catch (error) {
+        console.error('Falha no e-mail de boas-vindas:', error.message)
+        return Response.json({ mensagem: 'Não foi possível enviar o e-mail de boas-vindas.' }, { status: 502, headers })
+      }
+    }
+    const email = usuario.email
     if (email !== ADMIN_GERAL) return Response.json({ mensagem: 'Somente o administrador geral pode fazer isso.' }, { status: 403, headers })
     if (rota === '/backup') {
       try {
