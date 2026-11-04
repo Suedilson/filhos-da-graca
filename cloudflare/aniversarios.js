@@ -59,8 +59,8 @@ async function liberarEnvio(env, token, id, colecao = 'emailsAniversario') {
 }
 
 // Texto do e-mail salvo pelo administrador no painel; sem ele, vale o texto padrão.
-async function carregarTextoEmail(env, token) {
-  const r = await fetch(urlFirestore(env, 'configuracoes/emailAniversario'), {
+async function carregarTextoEmail(env, token, caminho = 'configuracoes/emailAniversario') {
+  const r = await fetch(urlFirestore(env, caminho), {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (r.status === 404) return {}
@@ -104,12 +104,25 @@ export async function enviarBoasVindas(env, uid) {
   if (!email.includes('@')) return { enviado: false, motivo: 'Cadastro sem e-mail.' }
   if (!await reservarEnvio(env, token, uid, 'emailsBoasVindas')) return { enviado: false, motivo: 'Boas-vindas já enviado.' }
   try {
-    await enviarResend(env, email, montarEmailBoasVindas(membro?.nome || permissao.nome))
+    const config = await carregarTextoEmail(env, token, 'configuracoes/emailBoasVindas')
+    await enviarResend(env, email, montarEmailBoasVindas(membro?.nome || permissao.nome, config))
     return { enviado: true, email }
   } catch (error) {
     await liberarEnvio(env, token, uid, 'emailsBoasVindas')
     throw error
   }
+}
+
+// Envio manual pelo painel: manda as boas-vindas para o e-mail do membro, mesmo que já tenha recebido antes.
+export async function enviarBoasVindasManual(env, membroId) {
+  const token = await tokenGoogle(env)
+  const membro = await lerDocumento(env, token, `membros/${encodeURIComponent(membroId)}`)
+  if (!membro) return { enviado: false, motivo: 'Membro não encontrado.' }
+  const email = String(membro.email || '').trim()
+  if (!email.includes('@')) return { enviado: false, motivo: 'Este membro não tem e-mail cadastrado.' }
+  const config = await carregarTextoEmail(env, token, 'configuracoes/emailBoasVindas')
+  await enviarResend(env, email, montarEmailBoasVindas(membro.nome, config))
+  return { enviado: true, email }
 }
 
 export async function enviarAniversariantesDoDia(env, agora = new Date()) {
@@ -196,14 +209,32 @@ export default {
     } catch {
       return Response.json({ mensagem: 'Entre novamente na sua conta.' }, { status: 401, headers })
     }
-    // POST /boas-vindas { uid }: chamado pelo painel ao liberar o acesso de quem se cadastrou pelo site.
+    // POST /boas-vindas { uid }: chamado pelo painel ao liberar o acesso de quem se cadastrou pelo site (uma vez só).
+    // POST /boas-vindas { membroId }: envio manual; { teste: true, texto }: exemplo para o próprio administrador.
     if (rota === '/boas-vindas') {
       try {
         if (!await ehAdministrador(env, usuario)) {
           return Response.json({ mensagem: 'Somente administradores podem enviar as boas-vindas.' }, { status: 403, headers })
         }
-        const { uid } = await request.json().catch(() => ({}))
-        if (typeof uid !== 'string' || !uid || uid.length > 128) {
+        const corpo = await request.json().catch(() => ({})) || {}
+        const idValido = (id) => typeof id === 'string' && id && id.length <= 128 && !id.includes('/')
+        // { teste: true, texto }: manda um exemplo para o próprio administrador (texto ainda não salvo).
+        if (corpo.teste === true) {
+          if (!String(usuario.email || '').includes('@')) return Response.json({ mensagem: 'Sua conta não tem e-mail.' }, { status: 400, headers })
+          const texto = corpo.texto && typeof corpo.texto === 'object' && !Array.isArray(corpo.texto)
+            ? corpo.texto
+            : await carregarTextoEmail(env, await tokenGoogle(env), 'configuracoes/emailBoasVindas')
+          await enviarResend(env, usuario.email, montarEmailBoasVindas('Fulano de Tal', texto))
+          return Response.json({ mensagem: `E-mail de teste enviado para ${usuario.email}.`, enviado: true, email: usuario.email }, { headers })
+        }
+        // { membroId }: envio manual para um membro cadastrado.
+        if (corpo.membroId !== undefined) {
+          if (!idValido(corpo.membroId)) return Response.json({ mensagem: 'Membro inválido.' }, { status: 400, headers })
+          const resultado = await enviarBoasVindasManual(env, corpo.membroId)
+          return Response.json({ mensagem: resultado.enviado ? `E-mail de boas-vindas enviado para ${resultado.email}.` : resultado.motivo, ...resultado }, { headers })
+        }
+        const { uid } = corpo
+        if (!idValido(uid)) {
           return Response.json({ mensagem: 'Usuário inválido.' }, { status: 400, headers })
         }
         const resultado = await enviarBoasVindas(env, uid)

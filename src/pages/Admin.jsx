@@ -29,7 +29,8 @@ import { mostrarAviso } from '../services/avisos'
 import CampoSenha from '../components/CampoSenha'
 import { enviarEmailAniversarioTeste } from '../services/emailAniversario'
 import { fazerBackupAgora } from '../services/backup'
-import { enviarBoasVindas } from '../services/boasVindas'
+import { enviarBoasVindas, enviarBoasVindasManual, enviarTesteBoasVindas } from '../services/boasVindas'
+import { TEXTO_PADRAO_BOAS_VINDAS } from '../../cloudflare/emailBoasVindas.js'
 import { TEXTO_PADRAO as TEXTO_PADRAO_EMAIL_ANIVERSARIO } from '../../cloudflare/emailAniversario.js'
 import './Admin.css'
 import Louvor from './Louvor'
@@ -259,6 +260,11 @@ const categoriasGaleria = [
   const [enviandoTesteAniversario, setEnviandoTesteAniversario] = useState(false)
   const [textoEmailAniversario, setTextoEmailAniversario] = useState(TEXTO_PADRAO_EMAIL_ANIVERSARIO)
   const [salvandoTextoEmail, setSalvandoTextoEmail] = useState(false)
+  const [textoBoasVindas, setTextoBoasVindas] = useState(TEXTO_PADRAO_BOAS_VINDAS)
+  const [salvandoBoasVindas, setSalvandoBoasVindas] = useState(false)
+  const [enviandoTesteBoasVindas, setEnviandoTesteBoasVindas] = useState(false)
+  const [enviandoBoasVindasId, setEnviandoBoasVindasId] = useState('')
+  const [membroBoasVindasId, setMembroBoasVindasId] = useState('')
   const [fazendoBackup, setFazendoBackup] = useState(false)
   const [buscaMembro, setBuscaMembro] = useState('')
   const [filtroStatusMembro, setFiltroStatusMembro] = useState('Todos')
@@ -4101,6 +4107,88 @@ async function salvarMeusDados(event) {
     if (!confirm('Voltar para o texto padrão? A mudança só vale depois de clicar em Salvar texto.')) return
     setTextoEmailAniversario(TEXTO_PADRAO_EMAIL_ANIVERSARIO)
   }
+
+  async function carregarTextoBoasVindas() {
+    const snapshot = await getDoc(doc(db, 'configuracoes', 'emailBoasVindas'))
+    const salvo = snapshot.exists() ? snapshot.data() : {}
+
+    return Object.fromEntries(
+      Object.keys(TEXTO_PADRAO_BOAS_VINDAS).map((chave) => [
+        chave,
+        salvo[chave] || TEXTO_PADRAO_BOAS_VINDAS[chave],
+      ]),
+    )
+  }
+
+  async function salvarTextoBoasVindas(event) {
+    event.preventDefault()
+    setSalvandoBoasVindas(true)
+
+    try {
+      await setDoc(doc(db, 'configuracoes', 'emailBoasVindas'), {
+        ...Object.fromEntries(
+          Object.keys(TEXTO_PADRAO_BOAS_VINDAS).map((chave) => [
+            chave,
+            String(textoBoasVindas[chave] || '').trim(),
+          ]),
+        ),
+        atualizadoEm: serverTimestamp(),
+      })
+
+      mostrarAviso('Texto do e-mail de boas-vindas salvo com sucesso.', 'sucesso')
+    } catch (error) {
+      mostrarAviso('Erro ao salvar o texto do e-mail de boas-vindas.', 'erro')
+      console.error(error)
+    } finally {
+      setSalvandoBoasVindas(false)
+    }
+  }
+
+  function restaurarTextoBoasVindas() {
+    if (!confirm('Voltar para o texto padrão? A mudança só vale depois de clicar em Salvar texto.')) return
+    setTextoBoasVindas(TEXTO_PADRAO_BOAS_VINDAS)
+  }
+
+  async function testarTextoBoasVindas() {
+    setEnviandoTesteBoasVindas(true)
+
+    try {
+      const resultado = await enviarTesteBoasVindas(textoBoasVindas)
+      mostrarAviso(resultado.mensagem, 'sucesso')
+    } catch (error) {
+      mostrarAviso(error.message, 'erro')
+    } finally {
+      setEnviandoTesteBoasVindas(false)
+    }
+  }
+
+  // Envio manual (usa o texto salvo). Pode ser repetido, por isso pede confirmação.
+  async function enviarBoasVindasParaMembro(membro) {
+    if (!membro?.email) {
+      mostrarAviso('Este membro não tem e-mail cadastrado.', 'erro')
+      return
+    }
+    if (!confirm(`Enviar o e-mail de boas-vindas para ${membro.nome} (${membro.email})?`)) return
+
+    setEnviandoBoasVindasId(membro.id)
+
+    try {
+      const resultado = await enviarBoasVindasManual(membro.id)
+      mostrarAviso(resultado.mensagem, resultado.enviado ? 'sucesso' : 'erro')
+    } catch (error) {
+      mostrarAviso(error.message, 'erro')
+    } finally {
+      setEnviandoBoasVindasId('')
+    }
+  }
+
+  useEffect(() => {
+    if (modoMembros === 'boasVindas' && isPerfilAdministrador) {
+      carregarTextoBoasVindas()
+        .then(setTextoBoasVindas)
+        .catch((error) => console.error('Erro ao carregar o texto do e-mail de boas-vindas.', error))
+    }
+  }, [modoMembros, isPerfilAdministrador])
 
   async function fazerBackupManual() {
     setFazendoBackup(true)
@@ -10043,7 +10131,7 @@ function formatarMoeda(valor) {
 )}
     {abaAtiva === 'membros' && usuarioPodeAcessar('membros') && (
   <section className="members-admin-area">
-  <div className="member-mode-actions member-mode-actions-four">
+  <div className={`member-mode-actions member-mode-actions-four ${isPerfilAdministrador ? 'member-mode-actions-five' : ''}`}>
   <button
     type="button"
     className={modoMembros === 'lista' ? 'active' : ''}
@@ -10091,11 +10179,25 @@ function formatarMoeda(valor) {
     <span>🎂</span>
     Aniversariantes
   </button>
+
+  {isPerfilAdministrador && (
+    <button
+      type="button"
+      className={modoMembros === 'boasVindas' ? 'active' : ''}
+      onClick={() => {
+        cancelarEdicaoMembro()
+        setModoMembros('boasVindas')
+      }}
+    >
+      <span>✉️</span>
+      E-mail de boas-vindas
+    </button>
+  )}
 </div>
 <div className="admin-grid admin-events-grid">
  <form
   className={`admin-card member-form-panel ${
-    modoMembros === 'lista' || modoMembros === 'aniversariantes'
+    modoMembros === 'lista' || modoMembros === 'aniversariantes' || modoMembros === 'boasVindas'
       ? 'member-hidden-panel'
       : ''
   } ${
@@ -10634,6 +10736,18 @@ function formatarMoeda(valor) {
                       </button>
                     )}
 
+                    {isPerfilAdministrador && membro.email && (
+                      <button
+                        type="button"
+                        className="welcome-button"
+                        onClick={() => enviarBoasVindasParaMembro(membro)}
+                        disabled={enviandoBoasVindasId === membro.id}
+                        title="Enviar o e-mail de boas-vindas"
+                      >
+                        {enviandoBoasVindasId === membro.id ? 'Enviando...' : '✉️ Boas-vindas'}
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       className="edit-button"
@@ -10662,6 +10776,149 @@ function formatarMoeda(valor) {
                            ))}
                       </div>
           </section>
+
+          {modoMembros === 'boasVindas' && isPerfilAdministrador && (
+            <section className="admin-card member-welcome-card">
+              <div className="member-welcome-header">
+                <span className="admin-section-label">E-mail de boas-vindas</span>
+                <h2>✉️ Boas-vindas para novos membros</h2>
+                <p>
+                  Enviado automaticamente quando o acesso de quem se cadastrou pelo site é liberado.
+                  Você também pode enviar manualmente para qualquer membro com e-mail.
+                </p>
+              </div>
+
+              <div className="member-welcome-send">
+                <label>
+                  Enviar agora para
+                  <select
+                    value={membroBoasVindasId}
+                    onChange={(event) => setMembroBoasVindasId(event.target.value)}
+                  >
+                    <option value="">Escolha um membro</option>
+                    {membros
+                      .filter((membro) => membro.email)
+                      .slice()
+                      .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'))
+                      .map((membro) => (
+                        <option key={membro.id} value={membro.id}>
+                          {membro.nome} — {membro.email}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  disabled={!membroBoasVindasId || Boolean(enviandoBoasVindasId)}
+                  onClick={() =>
+                    enviarBoasVindasParaMembro(membros.find((membro) => membro.id === membroBoasVindasId))
+                  }
+                >
+                  {enviandoBoasVindasId ? 'Enviando...' : 'Enviar boas-vindas'}
+                </button>
+                <small className="member-field-hint">
+                  O envio usa o texto salvo. Salve as alterações antes de enviar.
+                </small>
+              </div>
+
+              <form className="birthday-email-editor" onSubmit={salvarTextoBoasVindas}>
+              <div className="birthday-email-editor-header member-field-wide">
+                <span className="admin-section-label">Texto do e-mail</span>
+                <h3>Mensagem de boas-vindas</h3>
+                <p>
+                  Escreva <code>{'{nome}'}</code> onde deve aparecer o primeiro nome do membro.
+                  A logo, as cores e o botão para o site são fixos.
+                </p>
+              </div>
+
+              <label className="member-field-wide">
+                Assunto do e-mail
+                <input
+                  value={textoBoasVindas.assunto}
+                  onChange={(event) => setTextoBoasVindas({ ...textoBoasVindas, assunto: event.target.value })}
+                  maxLength={300}
+                />
+              </label>
+              <label className="member-field-wide">
+                Título no topo do e-mail
+                <input
+                  value={textoBoasVindas.titulo}
+                  onChange={(event) => setTextoBoasVindas({ ...textoBoasVindas, titulo: event.target.value })}
+                  maxLength={300}
+                />
+              </label>
+              <label className="member-field-wide">
+                Mensagem
+                <textarea
+                  rows={10}
+                  value={textoBoasVindas.mensagem}
+                  onChange={(event) => setTextoBoasVindas({ ...textoBoasVindas, mensagem: event.target.value })}
+                  maxLength={4000}
+                />
+                <small className="member-field-hint">Deixe uma linha em branco entre os parágrafos.</small>
+              </label>
+              <label>
+                Versículo
+                <input
+                  value={textoBoasVindas.versiculo}
+                  onChange={(event) => setTextoBoasVindas({ ...textoBoasVindas, versiculo: event.target.value })}
+                  maxLength={300}
+                />
+              </label>
+              <label>
+                Referência do versículo
+                <input
+                  value={textoBoasVindas.referencia}
+                  onChange={(event) => setTextoBoasVindas({ ...textoBoasVindas, referencia: event.target.value })}
+                  maxLength={300}
+                />
+              </label>
+              <label>
+                Despedida
+                <input
+                  value={textoBoasVindas.despedida}
+                  onChange={(event) => setTextoBoasVindas({ ...textoBoasVindas, despedida: event.target.value })}
+                  maxLength={300}
+                />
+              </label>
+              <label>
+                Assinatura
+                <input
+                  value={textoBoasVindas.assinatura}
+                  onChange={(event) => setTextoBoasVindas({ ...textoBoasVindas, assinatura: event.target.value })}
+                  maxLength={300}
+                />
+              </label>
+              <label className="member-field-wide">
+                Complemento da assinatura
+                <input
+                  value={textoBoasVindas.assinaturaComplemento}
+                  onChange={(event) => setTextoBoasVindas({ ...textoBoasVindas, assinaturaComplemento: event.target.value })}
+                  maxLength={300}
+                />
+              </label>
+
+              <div className="birthday-email-editor-actions member-field-wide">
+                <button type="submit" disabled={salvandoBoasVindas}>
+                  {salvandoBoasVindas ? 'Salvando...' : 'Salvar texto'}
+                </button>
+
+                <button
+                  type="button"
+                  className="cancel-button"
+                  onClick={testarTextoBoasVindas}
+                  disabled={enviandoTesteBoasVindas}
+                >
+                  {enviandoTesteBoasVindas ? 'Enviando...' : 'Testar no meu e-mail'}
+                </button>
+
+                <button type="button" className="cancel-button" onClick={restaurarTextoBoasVindas}>
+                  Restaurar texto padrão
+                </button>
+              </div>
+              </form>
+            </section>
+          )}
 
           {modoMembros === 'aniversariantes' && (
             <section className="admin-card member-birthday-card">

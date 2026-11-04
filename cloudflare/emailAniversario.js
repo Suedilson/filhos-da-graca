@@ -3,7 +3,7 @@
 const SITE = 'https://filhosdagraca.com.br'
 const LOGO = `${SITE}/logo-filhos-colorida.png`
 
-function escapar(texto) {
+export function escapar(texto) {
   return String(texto ?? '')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -32,20 +32,25 @@ Que este novo ano seja cheio da graça, da paz e do cuidado do Senhor. Que cada 
 }
 
 // Junta o texto salvo com o padrão; campos vazios usam o texto padrão.
-export function textoDoEmail(config = {}) {
-  const texto = { ...TEXTO_PADRAO }
-  for (const chave of Object.keys(TEXTO_PADRAO)) {
+// Campos vazios ou ausentes usam o texto padrão (vale para os e-mails de aniversário e de boas-vindas).
+export function mesclarTexto(config = {}, padrao = TEXTO_PADRAO) {
+  const texto = { ...padrao }
+  for (const chave of Object.keys(padrao)) {
     const valor = typeof config?.[chave] === 'string' ? config[chave].trim() : ''
     if (valor) texto[chave] = valor.slice(0, chave === 'mensagem' ? 4000 : 300)
   }
   return texto
 }
 
-function comNome(texto, nome) {
+export function textoDoEmail(config = {}) {
+  return mesclarTexto(config, TEXTO_PADRAO)
+}
+
+export function comNome(texto, nome) {
   return texto.replaceAll('{nome}', nome)
 }
 
-function paragrafosHtml(texto) {
+export function paragrafosHtml(texto) {
   return texto
     .split(/\n\s*\n/)
     .map((paragrafo) => paragrafo.trim())

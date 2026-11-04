@@ -257,6 +257,15 @@ service cloud.firestore {
         request.resource.data.get('mensagem', '').size() <= 4000;
     }
 
+    match /configuracoes/emailBoasVindas {
+      allow read: if adminProfile();
+      allow write: if adminProfile() &&
+        request.resource.data.keys().hasOnly(['assunto', 'titulo', 'mensagem', 'versiculo',
+          'referencia', 'despedida', 'assinatura', 'assinaturaComplemento', 'atualizadoEm']) &&
+        request.resource.data.get('mensagem', '') is string &&
+        request.resource.data.get('mensagem', '').size() <= 4000;
+    }
+
     match /configuracoes/youtube {
       allow read: if true;
       allow write: if adminProfile();

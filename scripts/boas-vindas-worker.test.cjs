@@ -21,6 +21,8 @@ test('Boas-vindas: só administrador dispara, envia uma vez e não fala em aprov
     'usuariosPermissoes/novo': { ativo: { booleanValue: true }, origemCadastro: { stringValue: 'autoCadastro' }, membroId: { stringValue: 'm1' }, nome: { stringValue: 'Thiago Muniz' } },
     'usuariosPermissoes/comum': { ativo: { booleanValue: true }, perfil: { stringValue: 'membro' } },
     'membros/m1': { nome: { stringValue: 'Thiago Muniz Lago' }, email: { stringValue: 'thiago@exemplo.test' } },
+    'membros/m2': { nome: { stringValue: 'Ana Souza' } },
+    'configuracoes/emailBoasVindas': { titulo: { stringValue: 'Olá, {nome}! Que bom ter você.' } },
   }
   const reservas = new Set()
   const enviados = []
@@ -69,5 +71,22 @@ test('Boas-vindas: só administrador dispara, envia uma vez e não fala em aprov
     const repetido = await chamar(admin, { uid: 'novo' })
     assert.equal((await repetido.json()).enviado, false)
     assert.equal(enviados.length, 1)
+    assert.ok(enviados[0].html.includes('Olá, Thiago! Que bom ter você.'), 'usa o texto salvo no painel')
+
+    // Envio manual: manda de novo, mesmo já tendo recebido.
+    const manual = await chamar(admin, { membroId: 'm1' })
+    assert.equal((await manual.json()).enviado, true)
+    assert.equal(enviados.length, 2)
+    const semEmail = await chamar(admin, { membroId: 'm2' })
+    assert.equal((await semEmail.json()).enviado, false)
+    assert.equal((await chamar(admin, { membroId: '../x' })).status, 400)
+    assert.equal((await chamar(comum, { membroId: 'm1' })).status, 403)
+
+    // Teste: vai para o próprio administrador, com o texto ainda não salvo.
+    const teste = await chamar(admin, { teste: true, texto: { assunto: 'Assunto de teste {nome}' } })
+    assert.equal(teste.status, 200)
+    assert.deepEqual(enviados[2].to, ['suedilsonfilho@gmail.com'])
+    assert.equal(enviados.at(-1).subject, 'Assunto de teste Fulano')
+    assert.equal(enviados.length, 3)
   } finally { await mf.dispose() }
 })

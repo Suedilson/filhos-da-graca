@@ -7794,3 +7794,72 @@ textarea {
   opacity: 0.7;
   cursor: wait;
 }
+
+/* E-mail de boas-vindas */
+.member-mode-actions-five {
+  width: min(100%, 1180px);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 980px) {
+  .member-mode-actions-five {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .member-mode-actions-five {
+    grid-template-columns: 1fr;
+  }
+}
+
+.member-welcome-header h2 {
+  margin: 4px 0 6px;
+}
+
+.member-welcome-header p {
+  margin: 0;
+  color: #60708a;
+  line-height: 1.5;
+}
+
+.member-welcome-send {
+  margin-top: 20px;
+  padding: 18px 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px 14px;
+  border-radius: 18px;
+  background: #f5f3ff;
+  border: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.member-welcome-send button {
+  width: auto !important;
+  min-width: 190px;
+}
+
+.member-welcome-send .member-field-hint {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+  .member-welcome-send {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .member-welcome-send button {
+    width: 100% !important;
+  }
+}
+
+.admin-actions .welcome-button {
+  background: #ebe8ff;
+  color: #17105f;
+}
+
+.admin-actions .welcome-button:hover {
+  background: #d9d3ff;
+}
