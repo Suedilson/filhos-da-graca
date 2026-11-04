@@ -913,3 +913,17 @@
     grid-template-columns: 28px minmax(0, 1fr) 64px 40px;
   }
 }
+
+/* Culto da noite montado junto com o da manhã */
+.worship-area .worship-night-toggle {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f3f2fb, #fff8e8);
+  border: 1px solid rgba(44, 26, 138, 0.14);
+  cursor: pointer;
+}
+
+.worship-night {
+  background: linear-gradient(160deg, #f1f0fb, #f7f6fd) !important;
+  border-color: rgba(44, 26, 138, 0.18) !important;
+}

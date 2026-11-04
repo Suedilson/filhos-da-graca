@@ -8,6 +8,8 @@ import { formatarCifra } from '../services/formatoCifra.js'
 
 const novaMusica = () => ({ titulo: '', autor: '', letra: '', tom: '', notas: '', ministros: '', ativo: true })
 const novaEscala = () => ({ titulo: '', data: '', horario: '', ministro: '', observacoes: '', status: 'Confirmada', equipe: [{ nome: '', funcao: '' }], repertorio: [] })
+// Culto da noite montado junto com o da manhã: mesmo dia, ministro, status e observações.
+const novaNoite = () => ({ ativo: false, titulo: '', horario: '19:00', mesmaEquipe: true, equipe: [{ nome: '', funcao: '' }], repertorio: [] })
 const hoje = () => new Date().toLocaleDateString('en-CA')
 const dataLegivel = (data) => data?.split('-').reverse().join('/') || ''
 const MESES = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ']
@@ -37,6 +39,7 @@ export default function Louvor({ user }) {
   const [historico, setHistorico] = useState(null)
   const [carregandoHistorico, setCarregandoHistorico] = useState(false)
   const [gerandoPdf, setGerandoPdf] = useState(false)
+  const [noite, setNoite] = useState(novaNoite)
 
   async function imprimirRelatorio(itens, filtro) {
     if (!itens.length) return
@@ -85,24 +88,36 @@ export default function Louvor({ user }) {
 
   async function salvarEscala(event) {
     event.preventDefault()
-    if (!escala.equipe.length || escala.equipe.some((p) => !p.nome.trim() || !p.funcao.trim())) {
+    const comNoite = noite.ativo && !escalaId
+    const equipeNoite = noite.mesmaEquipe ? escala.equipe : noite.equipe
+    const equipeIncompleta = (equipe) => !equipe.length || equipe.some((p) => !p.nome.trim() || !p.funcao.trim())
+    if (equipeIncompleta(escala.equipe) || (comNoite && equipeIncompleta(equipeNoite))) {
       setErro('Preencha o nome e a função de cada integrante da escala.'); return
+    }
+    if (comNoite && noite.horario <= escala.horario) {
+      setErro('O horário do culto da noite precisa ser depois do horário da manhã.'); return
     }
     setSalvando(true); setErro(''); setMensagem('')
     try {
       const ref = escalaId ? doc(db, 'louvorEscalas', escalaId) : doc(collection(db, 'louvorEscalas'))
+      const refNoite = comNoite ? doc(collection(db, 'louvorEscalas')) : null
       await runTransaction(db, async (transaction) => {
         const atual = await transaction.get(ref)
         if ((atual.data()?.versao || 0) !== versao) throw new Error('CONFLITO')
-        const dados = { ...escala, titulo: escala.titulo.trim(), versao: versao + 1,
-          atualizadoEm: serverTimestamp(), atualizadoPor: user.uid,
-          responsavel: user.email || user.uid }
+        const assinatura = { atualizadoEm: serverTimestamp(), atualizadoPor: user.uid, responsavel: user.email || user.uid }
+        const dados = { ...escala, titulo: escala.titulo.trim(), versao: versao + 1, ...assinatura }
         transaction.set(ref, dados)
         transaction.set(doc(ref, 'historico', String(dados.versao)), dados)
+        if (refNoite) {
+          const dadosNoite = { ...escala, titulo: noite.titulo.trim() || `${escala.titulo.trim()} (noite)`.slice(0, 180),
+            horario: noite.horario, equipe: equipeNoite, repertorio: noite.repertorio, versao: 1, ...assinatura }
+          transaction.set(refNoite, dadosNoite)
+          transaction.set(doc(refNoite, 'historico', '1'), dadosNoite)
+        }
       })
-      setEscala(novaEscala()); setEscalaId(null); setVersao(0)
+      setEscala(novaEscala()); setEscalaId(null); setVersao(0); setNoite(novaNoite())
       await carregar()
-      setMensagem('Escala salva e registrada no histórico.')
+      setMensagem(comNoite ? 'Escalas da manhã e da noite salvas e registradas no histórico.' : 'Escala salva e registrada no histórico.')
     } catch (error) {
       console.error(error)
       setErro(error.message === 'CONFLITO' ? 'Esta escala foi alterada por outra pessoa. Atualize a lista e abra a escala novamente.' : 'Não foi possível salvar a escala.')
@@ -122,17 +137,51 @@ export default function Louvor({ user }) {
     setEscala({ titulo: item.titulo, data: item.data, horario: item.horario,
       ministro: item.ministro, observacoes: item.observacoes, status: item.status,
       equipe: item.equipe, repertorio: item.repertorio })
-    setEscalaId(item.id); setVersao(item.versao); setHistorico(null)
+    setEscalaId(item.id); setVersao(item.versao); setHistorico(null); setNoite(novaNoite())
     setMensagem(''); setErro('')
   }
 
-  function selecionarMusica(id) {
+  function itemDoRepertorio(id) {
     const item = musicas.find((m) => m.id === id)
+    return item && { id: item.id, titulo: item.titulo, tom: item.tom, ministros: item.ministros,
+      letra: item.letra, notas: formatarCifra(item.notas) }
+  }
+
+  function selecionarMusica(id) {
+    const item = itemDoRepertorio(id)
     if (!item || escala.repertorio.some((m) => m.id === id)) return
-    setEscala({ ...escala, repertorio: [...escala.repertorio, {
-      id: item.id, titulo: item.titulo, tom: item.tom, ministros: item.ministros,
-      letra: item.letra, notas: formatarCifra(item.notas),
-    }] })
+    setEscala({ ...escala, repertorio: [...escala.repertorio, item] })
+  }
+
+  function selecionarMusicaNoite(id) {
+    const item = itemDoRepertorio(id)
+    if (!item || noite.repertorio.some((m) => m.id === id)) return
+    setNoite({ ...noite, repertorio: [...noite.repertorio, item] })
+  }
+
+  // Lista de integrantes editável, usada na manhã e (quando a equipe muda) na noite.
+  function editorEquipe(equipe, alterar) {
+    return <>
+      {equipe.map((pessoa, index) => <div className="worship-person" key={index}>
+        <label>Nome<input required maxLength={180} value={pessoa.nome} onChange={(e) => alterar(equipe.map((p, i) => i === index ? { ...p, nome: e.target.value } : p))} /></label>
+        <label>Instrumento / função<input required maxLength={100} value={pessoa.funcao} onChange={(e) => alterar(equipe.map((p, i) => i === index ? { ...p, funcao: e.target.value } : p))} placeholder="Ex: Teclado, Voz" /></label>
+        <button type="button" className="worship-icon-button" title="Remover integrante" aria-label="Remover integrante" onClick={() => alterar(equipe.filter((_, i) => i !== index))}>×</button>
+      </div>)}
+      <button type="button" className="worship-add" onClick={() => alterar([...equipe, { nome: '', funcao: '' }])}>+ Adicionar integrante</button>
+    </>
+  }
+
+  // Seleção e lista numerada de louvores, usada na manhã e na noite.
+  function editorRepertorio(repertorio, alterar, selecionar) {
+    return <>
+      <label className="worship-sr-label">Adicionar louvor<select value="" onChange={(e) => selecionar(e.target.value)}><option value="">+ Adicionar louvor ao repertório</option>{musicas.filter((m) => m.ativo && !repertorio.some((r) => r.id === m.id)).map((m) => <option key={m.id} value={m.id}>{m.titulo} {m.tom && `(${m.tom})`}</option>)}</select></label>
+      {repertorio.length > 0 && <ol className="worship-setlist">{repertorio.map((m, index) => <li key={m.id} className="worship-song-row">
+        <span className="worship-song-number">{index + 1}</span>
+        <span className="worship-song-title">{m.titulo}</span>
+        <label>Tom<input maxLength={40} value={m.tom} onChange={(e) => alterar(repertorio.map((r, i) => i === index ? { ...r, tom: e.target.value } : r))} /></label>
+        <button type="button" className="worship-icon-button" title="Remover louvor" aria-label={`Remover ${m.titulo}`} onClick={() => alterar(repertorio.filter((r) => r.id !== m.id))}>×</button>
+      </li>)}</ol>}
+    </>
   }
 
   const termo = busca.toLocaleLowerCase('pt-BR')
@@ -200,7 +249,7 @@ export default function Louvor({ user }) {
             <label>Culto / evento<input required maxLength={180} value={escala.titulo} onChange={(e) => setEscala({ ...escala, titulo: e.target.value })} placeholder="Ex: Culto da Família" /></label>
             <div className="worship-pair">
               <label>Data<input type="date" required value={escala.data} onChange={(e) => setEscala({ ...escala, data: e.target.value })} /></label>
-              <label>Horário<input type="time" required value={escala.horario} onChange={(e) => setEscala({ ...escala, horario: e.target.value })} /></label>
+              <label>{noite.ativo && !escalaId ? 'Horário da manhã' : 'Horário'}<input type="time" required value={escala.horario} onChange={(e) => setEscala({ ...escala, horario: e.target.value })} /></label>
             </div>
             <div className="worship-pair">
               <label>Ministro de louvor<input required maxLength={180} value={escala.ministro} onChange={(e) => setEscala({ ...escala, ministro: e.target.value })} /></label>
@@ -208,31 +257,37 @@ export default function Louvor({ user }) {
             </div>
           </div>
 
+          {!escalaId && <label className="worship-check worship-night-toggle">
+            <input type="checkbox" checked={noite.ativo} onChange={(e) => setNoite({ ...noite, ativo: e.target.checked })} />
+            <span>🌙 Também há culto à noite com o mesmo ministro</span>
+          </label>}
+
           <div className="worship-section">
-            <span className="worship-section-title">Músicos e vocalistas</span>
-            {escala.equipe.map((pessoa, index) => <div className="worship-person" key={index}>
-              <label>Nome<input required maxLength={180} value={pessoa.nome} onChange={(e) => setEscala({ ...escala, equipe: escala.equipe.map((p, i) => i === index ? { ...p, nome: e.target.value } : p) })} /></label>
-              <label>Instrumento / função<input required maxLength={100} value={pessoa.funcao} onChange={(e) => setEscala({ ...escala, equipe: escala.equipe.map((p, i) => i === index ? { ...p, funcao: e.target.value } : p) })} placeholder="Ex: Teclado, Voz" /></label>
-              <button type="button" className="worship-icon-button" title="Remover integrante" aria-label="Remover integrante" onClick={() => setEscala({ ...escala, equipe: escala.equipe.filter((_, i) => i !== index) })}>×</button>
-            </div>)}
-            <button type="button" className="worship-add" onClick={() => setEscala({ ...escala, equipe: [...escala.equipe, { nome: '', funcao: '' }] })}>+ Adicionar integrante</button>
+            <span className="worship-section-title">{noite.ativo && !escalaId ? 'Equipe da manhã' : 'Músicos e vocalistas'}</span>
+            {editorEquipe(escala.equipe, (equipe) => setEscala({ ...escala, equipe }))}
           </div>
 
           <div className="worship-section">
-            <span className="worship-section-title">Repertório</span>
-            <label className="worship-sr-label">Adicionar louvor<select value="" onChange={(e) => selecionarMusica(e.target.value)}><option value="">+ Adicionar louvor ao repertório</option>{musicas.filter((m) => m.ativo && !escala.repertorio.some((r) => r.id === m.id)).map((m) => <option key={m.id} value={m.id}>{m.titulo} {m.tom && `(${m.tom})`}</option>)}</select></label>
-            {escala.repertorio.length > 0 && <ol className="worship-setlist">{escala.repertorio.map((m, index) => <li key={m.id} className="worship-song-row">
-              <span className="worship-song-number">{index + 1}</span>
-              <span className="worship-song-title">{m.titulo}</span>
-              <label>Tom<input maxLength={40} value={m.tom} onChange={(e) => setEscala({ ...escala, repertorio: escala.repertorio.map((r, i) => i === index ? { ...r, tom: e.target.value } : r) })} /></label>
-              <button type="button" className="worship-icon-button" title="Remover louvor" aria-label={`Remover ${m.titulo}`} onClick={() => setEscala({ ...escala, repertorio: escala.repertorio.filter((r) => r.id !== m.id) })}>×</button>
-            </li>)}</ol>}
+            <span className="worship-section-title">{noite.ativo && !escalaId ? '☀️ Louvores da manhã' : 'Repertório'}</span>
+            {editorRepertorio(escala.repertorio, (repertorio) => setEscala({ ...escala, repertorio }), selecionarMusica)}
           </div>
+
+          {noite.ativo && !escalaId && <div className="worship-section worship-night">
+            <span className="worship-section-title">🌙 Culto da noite</span>
+            <div className="worship-pair">
+              <label>Culto / evento da noite<input maxLength={180} value={noite.titulo} onChange={(e) => setNoite({ ...noite, titulo: e.target.value })} placeholder={escala.titulo ? `${escala.titulo} (noite)` : 'Ex: Culto da Família'} /></label>
+              <label>Horário da noite<input type="time" required value={noite.horario} onChange={(e) => setNoite({ ...noite, horario: e.target.value })} /></label>
+            </div>
+            <label className="worship-check"><input type="checkbox" checked={noite.mesmaEquipe} onChange={(e) => setNoite({ ...noite, mesmaEquipe: e.target.checked, equipe: e.target.checked ? noite.equipe : escala.equipe.map((p) => ({ ...p })) })} />Mesma equipe da manhã</label>
+            {!noite.mesmaEquipe && editorEquipe(noite.equipe, (equipe) => setNoite({ ...noite, equipe }))}
+            <span className="worship-section-title">Louvores da noite</span>
+            {editorRepertorio(noite.repertorio, (repertorio) => setNoite({ ...noite, repertorio }), selecionarMusicaNoite)}
+          </div>}
 
           <label>Observações / ensaio<textarea maxLength={10000} value={escala.observacoes} onChange={(e) => setEscala({ ...escala, observacoes: e.target.value })} placeholder="Horário do ensaio, recados para a equipe..." /></label>
           <div className="worship-form-actions">
-            <button type="submit" className="worship-primary">{salvando ? 'Salvando...' : 'Salvar escala'}</button>
-            {escalaId && <button type="button" className="worship-ghost" onClick={() => { setEscala(novaEscala()); setEscalaId(null); setVersao(0) }}>Cancelar edição</button>}
+            <button type="submit" className="worship-primary">{salvando ? 'Salvando...' : noite.ativo && !escalaId ? 'Salvar escalas da manhã e da noite' : 'Salvar escala'}</button>
+            {escalaId && <button type="button" className="worship-ghost" onClick={() => { setEscala(novaEscala()); setEscalaId(null); setVersao(0); setNoite(novaNoite()) }}>Cancelar edição</button>}
           </div>
         </fieldset>
       </form>}
