@@ -320,6 +320,17 @@ const albunsGaleria = Object.values(
     return albuns
   }, {}),
 )
+function descreverItensAlbum(itens) {
+  const videos = itens.filter((item) => item.tipo === 'video').length
+  const fotos = itens.length - videos
+  return [
+    fotos > 0 ? `${fotos} foto${fotos > 1 ? 's' : ''}` : '',
+    videos > 0 ? `${videos} vídeo${videos > 1 ? 's' : ''}` : '',
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}
+
 function abrirAlbum(album) {
   setAlbumAberto(album)
   setFotoAtualAlbum(0)
@@ -756,7 +767,7 @@ async function carregarVideosYoutube(configYoutube) {
             key={album.id}
             onClick={() => abrirAlbum(album)}
           >
-            <div className="gallery-cover-image">
+            <div className={`gallery-cover-image ${fotoCapa.tipo === 'video' ? 'gallery-item-video' : ''}`}>
               <img src={fotoCapa.imagem} alt={album.titulo} />
             </div>
 
@@ -766,9 +777,7 @@ async function carregarVideosYoutube(configYoutube) {
 
               {album.descricao && <p>{album.descricao}</p>}
 
-              <small>
-                {album.fotos.length} foto{album.fotos.length > 1 ? 's' : ''}
-              </small>
+              <small>{descreverItensAlbum(album.fotos)}</small>
             </div>
           </button>
         )
@@ -1073,10 +1082,21 @@ async function carregarVideosYoutube(configYoutube) {
         </>
       )}
 
-      <img
-        src={albumAberto.fotos[fotoAtualAlbum].imagem}
-        alt={albumAberto.titulo}
-      />
+      {albumAberto.fotos[fotoAtualAlbum].tipo === 'video' ? (
+        <video
+          key={albumAberto.fotos[fotoAtualAlbum].id}
+          src={albumAberto.fotos[fotoAtualAlbum].video}
+          poster={albumAberto.fotos[fotoAtualAlbum].imagem}
+          controls
+          playsInline
+          preload="metadata"
+        />
+      ) : (
+        <img
+          src={albumAberto.fotos[fotoAtualAlbum].imagem}
+          alt={albumAberto.titulo}
+        />
+      )}
 
       <div className="gallery-modal-info">
         <span>{albumAberto.categoria}</span>
@@ -1085,7 +1105,8 @@ async function carregarVideosYoutube(configYoutube) {
         {albumAberto.descricao && <p>{albumAberto.descricao}</p>}
 
         <small>
-          Foto {fotoAtualAlbum + 1} de {albumAberto.fotos.length}
+          {albumAberto.fotos[fotoAtualAlbum].tipo === 'video' ? 'Vídeo' : 'Foto'}{' '}
+          {fotoAtualAlbum + 1} de {albumAberto.fotos.length}
         </small>
       </div>
 
@@ -1094,7 +1115,7 @@ async function carregarVideosYoutube(configYoutube) {
           {albumAberto.fotos.map((foto, index) => (
             <button
               type="button"
-              className={index === fotoAtualAlbum ? 'active' : ''}
+              className={`${index === fotoAtualAlbum ? 'active' : ''} ${foto.tipo === 'video' ? 'gallery-item-video' : ''}`}
               key={foto.id}
               onClick={() => setFotoAtualAlbum(index)}
             >

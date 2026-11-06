@@ -40,7 +40,7 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 import { auth, db, firebaseConfig } from '../services/firebase'
-import { uploadArquivoCloudinary } from '../services/cloudinary'
+import { miniaturaVideoCloudinary, uploadArquivoCloudinary } from '../services/cloudinary'
 import { mostrarAviso } from '../services/avisos'
 import CampoSenha from '../components/CampoSenha'
 import { enviarEmailAniversarioTeste } from '../services/emailAniversario'
@@ -269,6 +269,7 @@ const [filtroDataFinalOracao, setFiltroDataFinalOracao] = useState('')
   const [editandoFotoId, setEditandoFotoId] = useState(null)
   const [enviandoImagemGaleria, setEnviandoImagemGaleria] = useState(false)
   const [imagensGaleria, setImagensGaleria] = useState([])
+  const [progressoGaleria, setProgressoGaleria] = useState(0)
   const [galeriaForm, setGaleriaForm] = useState({
   titulo: '',
   descricao: '',
@@ -3679,16 +3680,42 @@ async function carregarGaleria() {
 
   if (files.length === 0) return
 
+  const LIMITE_VIDEO_MB = 100
+  const videoGrande = files.find(
+    (file) => file.type.startsWith('video/') && file.size > LIMITE_VIDEO_MB * 1024 * 1024,
+  )
+
+  if (videoGrande) {
+    mostrarAviso(
+      `O vídeo "${videoGrande.name}" passa de ${LIMITE_VIDEO_MB} MB. Corte ou comprima o vídeo antes de enviar.`,
+      'erro',
+    )
+    event.target.value = ''
+    return
+  }
+
   setEnviandoImagemGaleria(true)
+  setProgressoGaleria(0)
 
   try {
+    const progressoPorArquivo = files.map(() => 0)
     const imagensEnviadas = await Promise.all(
-      files.map(async (file) => {
-        const arquivo = await uploadArquivoCloudinary(file)
+      files.map(async (file, indice) => {
+        const arquivo = await uploadArquivoCloudinary(file, {
+          onProgress: (porcentagem) => {
+            progressoPorArquivo[indice] = porcentagem
+            setProgressoGaleria(
+              Math.round(progressoPorArquivo.reduce((a, b) => a + b, 0) / files.length),
+            )
+          },
+        })
+        const ehVideo = arquivo.tipo === 'video'
 
         return {
-          url: arquivo.url,
+          url: ehVideo ? miniaturaVideoCloudinary(arquivo.url) : arquivo.url,
           publicId: arquivo.publicId,
+          tipo: ehVideo ? 'video' : 'imagem',
+          video: ehVideo ? arquivo.url : '',
         }
       }),
     )
@@ -3708,14 +3735,16 @@ async function carregarGaleria() {
 
     mostrarAviso(
       imagensEnviadas.length === 1
-        ? 'Imagem adicionada com sucesso!'
-        : `${imagensEnviadas.length} imagens adicionadas com sucesso!`,
+        ? 'Arquivo adicionado com sucesso!'
+        : `${imagensEnviadas.length} arquivos adicionados com sucesso!`,
     )
   } catch (error) {
-    mostrarAviso('Erro ao enviar imagem da galeria.')
+    mostrarAviso(`Erro ao enviar para a galeria: ${error.message}`, 'erro')
     console.error(error)
+    event.target.value = ''
   } finally {
     setEnviandoImagemGaleria(false)
+    setProgressoGaleria(0)
   }
 }
 
@@ -3733,7 +3762,7 @@ async function carregarGaleria() {
   }
 
   if (!editandoFotoId && imagensGaleria.length === 0) {
-    mostrarAviso('Selecione e envie pelo menos uma imagem.')
+    mostrarAviso('Selecione e envie pelo menos uma foto ou vídeo.')
     return
   }
 
@@ -3779,6 +3808,8 @@ async function carregarGaleria() {
             ...dadosBase,
             imagem: imagem.url,
             imagemPublicId: imagem.publicId,
+            tipo: imagem.tipo || 'imagem',
+            video: imagem.video || '',
             criadoEm: serverTimestamp(),
           }),
         ),
@@ -3786,8 +3817,8 @@ async function carregarGaleria() {
 
       mostrarAviso(
         imagensGaleria.length === 1
-          ? 'Foto cadastrada com sucesso!'
-          : `${imagensGaleria.length} fotos cadastradas com sucesso!`,
+          ? 'Item cadastrado com sucesso!'
+          : `${imagensGaleria.length} itens cadastrados com sucesso!`,
       )
     }
 
@@ -3807,7 +3838,7 @@ async function adicionarFotosAoEventoGaleria() {
   }
 
   if (imagensGaleria.length === 0) {
-    mostrarAviso('Selecione pelo menos uma foto para adicionar.')
+    mostrarAviso('Selecione pelo menos uma foto ou vídeo para adicionar.')
     return
   }
 
@@ -3828,6 +3859,8 @@ async function adicionarFotosAoEventoGaleria() {
           ...dadosBase,
           imagem: imagem.url,
           imagemPublicId: imagem.publicId,
+          tipo: imagem.tipo || 'imagem',
+          video: imagem.video || '',
           criadoEm: serverTimestamp(),
         }),
       ),
@@ -3835,8 +3868,8 @@ async function adicionarFotosAoEventoGaleria() {
 
     mostrarAviso(
       imagensGaleria.length === 1
-        ? 'Foto adicionada ao álbum com sucesso!'
-        : `${imagensGaleria.length} fotos adicionadas ao álbum com sucesso!`,
+        ? 'Item adicionado ao álbum com sucesso!'
+        : `${imagensGaleria.length} itens adicionados ao álbum com sucesso!`,
     )
 
     setImagensGaleria([])
@@ -3922,7 +3955,7 @@ async function alternarStatusAlbumGaleria(album) {
 }
 async function excluirFotoIndividualGaleria(foto) {
   const confirmar = confirm(
-    `Deseja realmente excluir somente esta foto do álbum "${foto.titulo}"?`,
+    `Deseja realmente excluir somente ${foto.tipo === 'video' ? 'este vídeo' : 'esta foto'} do álbum "${foto.titulo}"?`,
   )
 
   if (!confirmar) return
@@ -10054,12 +10087,12 @@ function formatarMoeda(valor) {
         </label>
 
         <label>
-          Imagens
+          Fotos e vídeos
           <input
             id="gallery-images-input"
             className="gallery-hidden-file-input"
             type="file"
-            accept="image/*"
+            accept="image/*,video/*"
             multiple
             onChange={enviarImagemGaleria}
             disabled={enviandoImagemGaleria}
@@ -10069,7 +10102,7 @@ function formatarMoeda(valor) {
         <div className="gallery-add-more-actions">
           <label htmlFor="gallery-images-input" className="gallery-add-more-button">
             <span>+</span>
-            {imagensGaleria.length > 0 ? 'Adicionar mais fotos' : 'Selecionar fotos'}
+            {imagensGaleria.length > 0 ? 'Adicionar mais fotos ou vídeos' : 'Selecionar fotos ou vídeos'}
           </label>
 
           {imagensGaleria.length > 0 && (
@@ -10079,23 +10112,31 @@ function formatarMoeda(valor) {
               onClick={adicionarFotosAoEventoGaleria}
               disabled={loading || enviandoImagemGaleria}
             >
-              Salvar {imagensGaleria.length} foto
-              {imagensGaleria.length > 1 ? 's' : ''} neste evento
+              Salvar {imagensGaleria.length} {imagensGaleria.length > 1 ? 'itens' : 'item'} neste evento
             </button>
           )}
         </div>
 
         {enviandoImagemGaleria && (
-          <p className="upload-feedback">Enviando imagem...</p>
+          <p className="upload-feedback">
+            Enviando... {progressoGaleria > 0 ? `${progressoGaleria}%` : ''}
+          </p>
         )}
+
+        <small className="member-field-hint">
+          Vídeos de até 100 MB (cerca de 2 a 3 minutos em boa qualidade). Para vídeos longos, prefira o YouTube na aba Mídia.
+        </small>
 
         {imagensGaleria.length > 0 && (
           <div className="gallery-multiple-preview">
             {imagensGaleria.map((imagem) => (
-              <div className="gallery-image-preview" key={imagem.publicId}>
+              <div
+                className={`gallery-image-preview ${imagem.tipo === 'video' ? 'gallery-item-video' : ''}`}
+                key={imagem.publicId}
+              >
                 <img
                   src={imagem.url}
-                  alt={galeriaForm.titulo || 'Prévia da foto'}
+                  alt={galeriaForm.titulo || 'Prévia'}
                 />
               </div>
             ))}
@@ -10130,13 +10171,15 @@ function formatarMoeda(valor) {
         >
           <button
             type="button"
-            className="gallery-album-thumb-button"
+            className={`gallery-album-thumb-button ${foto.tipo === 'video' ? 'gallery-item-video' : ''}`}
             onClick={() => editarFotoGaleria(foto)}
           >
             <img src={foto.imagem} alt={`${foto.titulo} ${index + 1}`} />
 
             <small>
-              {foto.id === editandoFotoId ? 'Selecionada' : `Foto ${index + 1}`}
+              {foto.id === editandoFotoId
+                ? 'Selecionado'
+                : `${foto.tipo === 'video' ? 'Vídeo' : 'Foto'} ${index + 1}`}
             </small>
           </button>
 
@@ -10145,7 +10188,7 @@ function formatarMoeda(valor) {
             className="gallery-delete-single-photo"
             onClick={() => excluirFotoIndividualGaleria(foto)}
           >
-            Excluir foto
+            {foto.tipo === 'video' ? 'Excluir vídeo' : 'Excluir foto'}
           </button>
         </article>
       ))}
@@ -10173,8 +10216,8 @@ function formatarMoeda(valor) {
     : editandoFotoId
       ? 'Salvar alterações do álbum'
       : imagensGaleria.length > 1
-        ? `Cadastrar ${imagensGaleria.length} fotos`
-        : 'Cadastrar foto'}
+        ? `Cadastrar ${imagensGaleria.length} itens`
+        : 'Cadastrar na galeria'}
 </button>
 
         {editandoFotoId && (

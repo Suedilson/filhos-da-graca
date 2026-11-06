@@ -7863,3 +7863,27 @@ textarea {
 .admin-actions .welcome-button:hover {
   background: #d9d3ff;
 }
+
+
+/* Vídeos na galeria */
+.gallery-item-video {
+  position: relative;
+}
+
+.gallery-item-video::after {
+  content: '▶';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding-left: 3px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(23, 16, 95, 0.78);
+  color: #ffffff;
+  font-size: 14px;
+  pointer-events: none;
+}

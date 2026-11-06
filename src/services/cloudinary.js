@@ -99,3 +99,10 @@ export async function uploadArquivoCloudinary(file, options = {}) {
     tipo: data.resource_type,
   }
 }
+
+// Miniatura (JPG) de um vídeo do Cloudinary, tirada no primeiro segundo.
+export function miniaturaVideoCloudinary(url) {
+  return String(url || '')
+    .replace('/video/upload/', '/video/upload/so_1,w_800,c_limit/')
+    .replace(/\.[a-z0-9]+$/i, '.jpg')
+}
