@@ -1,9 +1,15 @@
 export const CLOUDINARY_CLOUD_NAME = 'ddtezaiwi'
 export const CLOUDINARY_UPLOAD_PRESET = 'filhos_da_graca_unsigned'
+// Configuração só para vídeos (mp4, mov, webm, m4v); a de cima continua só com imagens e PDF.
+export const CLOUDINARY_UPLOAD_PRESET_VIDEO = 'filhos_da_graca_videos'
+
+function ehVideo(file) {
+  return file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v)$/i.test(file.name || '')
+}
 
 function obterResourceType(file) {
   if (file.type === 'application/pdf') return 'raw'
-  if (file.type.startsWith('video/')) return 'video'
+  if (ehVideo(file)) return 'video'
   return 'auto'
 }
 
@@ -21,8 +27,8 @@ export async function uploadArquivoCloudinary(file, options = {}) {
   const formData = new FormData()
 
   formData.append('file', file)
-  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET)
-  formData.append('folder', 'filhos-da-graca/uploads')
+  formData.append('upload_preset', resourceType === 'video' ? CLOUDINARY_UPLOAD_PRESET_VIDEO : CLOUDINARY_UPLOAD_PRESET)
+  formData.append('folder', resourceType === 'video' ? 'filhos-da-graca/videos' : 'filhos-da-graca/uploads')
 
   if (onProgress) {
     const data = await new Promise((resolve, reject) => {
