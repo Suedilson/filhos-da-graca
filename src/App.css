@@ -5045,3 +5045,13 @@ main.site {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Vídeo de capa rodando sozinho em loop */
+#galeria .gallery-album-card .gallery-cover-autoloop video {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  background: #0f0b35 !important;
+}
+

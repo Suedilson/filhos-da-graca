@@ -277,6 +277,7 @@ const [filtroDataFinalOracao, setFiltroDataFinalOracao] = useState('')
   imagem: '',
   imagemPublicId: '',
   ativo: true,
+  autoLoop: false,
 })
 
 const categoriasGaleria = [
@@ -3669,6 +3670,7 @@ async function carregarGaleria() {
     imagem: '',
     imagemPublicId: '',
     ativo: true,
+    autoLoop: false,
   })
 
   setImagensGaleria([])
@@ -3774,6 +3776,7 @@ async function carregarGaleria() {
       descricao: galeriaForm.descricao,
       categoria: galeriaForm.categoria,
       ativo: galeriaForm.ativo,
+      autoLoop: galeriaForm.autoLoop === true,
       atualizadoEm: serverTimestamp(),
     }
 
@@ -3850,6 +3853,7 @@ async function adicionarFotosAoEventoGaleria() {
       descricao: galeriaForm.descricao,
       categoria: galeriaForm.categoria,
       ativo: galeriaForm.ativo,
+      autoLoop: galeriaForm.autoLoop === true,
       atualizadoEm: serverTimestamp(),
     }
 
@@ -3893,6 +3897,7 @@ async function adicionarFotosAoEventoGaleria() {
       imagem: foto.imagem || '',
       imagemPublicId: foto.imagemPublicId || '',
       ativo: foto.ativo !== false,
+      autoLoop: foto.autoLoop === true,
     })
 
     window.scrollTo({
@@ -10208,6 +10213,20 @@ function formatarMoeda(valor) {
             }
           />
           Álbum ativo no site
+        </label>
+
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={galeriaForm.autoLoop}
+            onChange={(event) =>
+              setGaleriaForm({
+                ...galeriaForm,
+                autoLoop: event.target.checked,
+              })
+            }
+          />
+          Vídeos rodando automaticamente em loop (sem som)
         </label>
 
         <button type="submit" disabled={loading || enviandoImagemGaleria}>

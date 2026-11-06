@@ -767,9 +767,24 @@ async function carregarVideosYoutube(configYoutube) {
             key={album.id}
             onClick={() => abrirAlbum(album)}
           >
-            <div className={`gallery-cover-image ${fotoCapa.tipo === 'video' ? 'gallery-item-video' : ''}`}>
-              <img src={fotoCapa.imagem} alt={album.titulo} />
-            </div>
+            {fotoCapa.tipo === 'video' && fotoCapa.autoLoop && fotoCapa.video ? (
+              <div className="gallery-cover-image gallery-cover-autoloop">
+                <video
+                  src={fotoCapa.video}
+                  poster={fotoCapa.imagem}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  aria-label={album.titulo}
+                />
+              </div>
+            ) : (
+              <div className={`gallery-cover-image ${fotoCapa.tipo === 'video' ? 'gallery-item-video' : ''}`}>
+                <img src={fotoCapa.imagem} alt={album.titulo} />
+              </div>
+            )}
 
             <div className="gallery-card-content">
               <span>{album.categoria}</span>
@@ -1090,6 +1105,9 @@ async function carregarVideosYoutube(configYoutube) {
           controls
           playsInline
           preload="metadata"
+          autoPlay={albumAberto.fotos[fotoAtualAlbum].autoLoop === true}
+          muted={albumAberto.fotos[fotoAtualAlbum].autoLoop === true}
+          loop={albumAberto.fotos[fotoAtualAlbum].autoLoop === true}
         />
       ) : (
         <img
