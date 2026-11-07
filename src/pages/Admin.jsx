@@ -799,6 +799,8 @@ const [anoFiltroFinanceiro, setAnoFiltroFinanceiro] = useState(
   anoAtualFinanceiro,
 )
 const [statusFiltroContaPagar, setStatusFiltroContaPagar] = useState('Todas')
+// Linha marcada nas tabelas do Financeiro: { tabela, id }
+const [linhaFinanceiroSelecionada, setLinhaFinanceiroSelecionada] = useState(null)
 const [fornecedorFiltroContaPagar, setFornecedorFiltroContaPagar] = useState('')
 async function carregarEnsinoMateriais() {
   try {
@@ -2689,13 +2691,15 @@ function adicionarMesesData(dataBase, quantidadeMeses) {
   if (!dataBase) return ''
 
   const [ano, mes, dia] = dataBase.split('-').map(Number)
-  const data = new Date(ano, mes - 1, dia)
+  // Vai para o mês desejado e usa o mesmo dia; se o mês não tiver esse dia
+  // (ex.: 31 em novembro, 29-31 em fevereiro), usa o último dia do mês.
+  // Antes, 31/01 + 1 mês virava 03/03, pulando fevereiro e repetindo março.
+  const alvo = new Date(ano, mes - 1 + quantidadeMeses, 1)
+  const ultimoDia = new Date(alvo.getFullYear(), alvo.getMonth() + 1, 0).getDate()
 
-  data.setMonth(data.getMonth() + quantidadeMeses)
-
-  const novoAno = data.getFullYear()
-  const novoMes = String(data.getMonth() + 1).padStart(2, '0')
-  const novoDia = String(data.getDate()).padStart(2, '0')
+  const novoAno = alvo.getFullYear()
+  const novoMes = String(alvo.getMonth() + 1).padStart(2, '0')
+  const novoDia = String(Math.min(dia, ultimoDia)).padStart(2, '0')
 
   return `${novoAno}-${novoMes}-${novoDia}`
 }
@@ -5138,6 +5142,149 @@ const saldoTotalPorContas = saldosContasBancarias.reduce(
   (total, conta) => total + Number(conta.saldoAtual || 0),
   0,
 )
+
+// Saldo no último dia do último mês selecionado no filtro:
+// saldo inicial + arrecadações até essa data - despesas pagas até essa data.
+const ultimoMesFiltroFinanceiro = Math.max(
+  ...mesesFiltroFinanceiro.map(Number).filter((mes) => mes >= 1 && mes <= 12),
+  1,
+)
+const anoSaldoFinalFinanceiro = Number(anoFiltroFinanceiro) || new Date().getFullYear()
+const dataSaldoFinalFinanceiro = `${anoSaldoFinalFinanceiro}-${String(
+  ultimoMesFiltroFinanceiro,
+).padStart(2, '0')}-${String(
+  new Date(anoSaldoFinalFinanceiro, ultimoMesFiltroFinanceiro, 0).getDate(),
+).padStart(2, '0')}`
+const nomeMesSaldoFinalFinanceiro = new Date(
+  anoSaldoFinalFinanceiro,
+  ultimoMesFiltroFinanceiro - 1,
+  1,
+).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+
+function dataPagamentoDespesa(despesa) {
+  return despesa.dataPagamento || despesa.vencimento || ''
+}
+
+function calcularSaldoFinalFinanceiro(contaBancariaId) {
+  const daConta = (item) => contaBancariaId === undefined || item.contaBancariaId === contaBancariaId
+  const inicial = contasBancarias
+    .filter((conta) => contaBancariaId === undefined || conta.id === contaBancariaId)
+    .reduce((total, conta) => total + Number(conta.saldoInicial || 0), 0)
+  const entradas = arrecadacoes
+    .filter(
+      (item) =>
+        item.ativo !== false && daConta(item) && (item.data || '') <= dataSaldoFinalFinanceiro,
+    )
+    .reduce((total, item) => total + Number(item.valor || 0), 0)
+  const saidas = contasPagar
+    .filter(
+      (item) =>
+        item.status === 'Paga' &&
+        item.ativo !== false &&
+        daConta(item) &&
+        dataPagamentoDespesa(item) <= dataSaldoFinalFinanceiro,
+    )
+    .reduce((total, item) => total + Number(item.valor || 0), 0)
+  const emAberto = contasPagar
+    .filter(
+      (item) =>
+        item.status !== 'Paga' &&
+        item.status !== 'Cancelada' &&
+        item.ativo !== false &&
+        daConta(item) &&
+        (item.vencimento || '') <= dataSaldoFinalFinanceiro,
+    )
+    .reduce((total, item) => total + Number(item.valor || 0), 0)
+
+  const realizado = inicial + entradas - saidas
+  return { realizado, previsto: realizado - emAberto, emAberto }
+}
+
+const saldoFinalMesFinanceiro = calcularSaldoFinalFinanceiro()
+const saldoFinalMesPorConta = contasBancarias.map((conta) => ({
+  id: conta.id,
+  nome: conta.nome,
+  ...calcularSaldoFinalFinanceiro(conta.id),
+}))
+
+function renderizarSaldoFinalMes() {
+  const classeValor = (valor) => (valor < 0 ? 'negative' : '')
+
+  return (
+    <section className="finance-month-balance">
+      <div className="finance-month-balance-main">
+        <span>Saldo final em {nomeMesSaldoFinalFinanceiro}</span>
+        <strong className={classeValor(saldoFinalMesFinanceiro.realizado)}>
+          {formatarMoeda(saldoFinalMesFinanceiro.realizado)}
+        </strong>
+        <small>Saldo inicial + arrecadações − despesas pagas até {formatarData(dataSaldoFinalFinanceiro)}</small>
+      </div>
+
+      <div className="finance-month-balance-main">
+        <span>Saldo previsto</span>
+        <strong className={classeValor(saldoFinalMesFinanceiro.previsto)}>
+          {formatarMoeda(saldoFinalMesFinanceiro.previsto)}
+        </strong>
+        <small>
+          Descontando {formatarMoeda(saldoFinalMesFinanceiro.emAberto)} em despesas abertas até essa data
+        </small>
+      </div>
+
+      {saldoFinalMesPorConta.length > 0 && (
+        <div className="finance-month-balance-accounts">
+          {saldoFinalMesPorConta.map((conta) => (
+            <article key={conta.id}>
+              <span>{conta.nome}</span>
+              <strong className={classeValor(conta.realizado)}>
+                {formatarMoeda(conta.realizado)}
+              </strong>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function linhaFinanceiroEstaSelecionada(tabela, id) {
+  return linhaFinanceiroSelecionada?.tabela === tabela && linhaFinanceiroSelecionada.id === id
+}
+
+function alternarLinhaFinanceiro(tabela, id) {
+  setLinhaFinanceiroSelecionada((atual) =>
+    atual?.tabela === tabela && atual.id === id ? null : { tabela, id },
+  )
+}
+
+// Barra que aparece em cima da tabela quando uma linha está marcada.
+function renderizarBarraLinhaSelecionada(tabela, lista, descrever, aoEditar) {
+  const item =
+    linhaFinanceiroSelecionada?.tabela === tabela
+      ? lista.find((registro) => registro.id === linhaFinanceiroSelecionada.id)
+      : null
+
+  if (!item) {
+    return <small>Clique em uma linha para selecionar</small>
+  }
+
+  return (
+    <div className="finance-selected-bar">
+      <span>
+        Selecionado: <strong>{descrever(item)}</strong>
+      </span>
+      <button type="button" className="edit-button" onClick={() => aoEditar(item)}>
+        Editar
+      </button>
+      <button
+        type="button"
+        className="cancel-button"
+        onClick={() => setLinhaFinanceiroSelecionada(null)}
+      >
+        Desmarcar
+      </button>
+    </div>
+  )
+}
 const movimentacaoPorContaBancaria = [
   ...contasBancarias.map((conta) => {
     const entradas = arrecadacoesAtivas
@@ -8261,11 +8408,18 @@ function formatarMoeda(valor) {
         </strong>
       </article>
     </div>
+
+    {renderizarSaldoFinalMes()}
     <section className="finance-spreadsheet-card">
       <div className="finance-spreadsheet-topbar">
         <strong>Relação de arrecadações</strong>
 
-        <small>Clique em uma linha para editar</small>
+        {renderizarBarraLinhaSelecionada(
+          'arrecadacoes',
+          arrecadacoesFiltradasFinanceiro,
+          (item) => `${formatarData(item.data)} · ${item.descricao} · ${formatarMoeda(item.valor)}`,
+          editarArrecadacao,
+        )}
       </div>
 
       <div className="finance-table-scroll">
@@ -8295,10 +8449,16 @@ function formatarMoeda(valor) {
             {arrecadacoesFiltradasFinanceiro.map((arrecadacao) => (
               <tr
                 key={arrecadacao.id}
-                className={arrecadacao.ativo === false ? 'finance-row-canceled' : ''}
-                onClick={() => editarArrecadacao(arrecadacao)}
+                className={`${arrecadacao.ativo === false ? 'finance-row-canceled' : ''} ${
+                  linhaFinanceiroEstaSelecionada('arrecadacoes', arrecadacao.id)
+                    ? 'finance-row-selected'
+                    : ''
+                }`}
+                onClick={() => alternarLinhaFinanceiro('arrecadacoes', arrecadacao.id)}
+                onDoubleClick={() => editarArrecadacao(arrecadacao)}
+                aria-selected={linhaFinanceiroEstaSelecionada('arrecadacoes', arrecadacao.id)}
                 tabIndex={0}
-                aria-label={`Abrir arrecadação: ${arrecadacao.descricao}`}
+                aria-label={`Selecionar arrecadação: ${arrecadacao.descricao}`}
                 onKeyDown={(event) => {
                   if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
                     event.preventDefault()
@@ -8696,10 +8856,17 @@ function formatarMoeda(valor) {
         <strong>{resumoFinanceiro.contasPagarVencemHoje}</strong>
       </article>
     </div>
+
+    {renderizarSaldoFinalMes()}
     <section className="finance-spreadsheet-card">
       <div className="finance-spreadsheet-topbar">
         <strong>Relação de contas a pagar</strong>
-        <small>Clique em uma linha para editar</small>
+        {renderizarBarraLinhaSelecionada(
+          'contasPagar',
+          contasPagarFiltradasFinanceiro,
+          (item) => `${formatarData(item.vencimento)} · ${item.descricao} · ${formatarMoeda(item.valor)}`,
+          editarContaPagar,
+        )}
       </div>
 
       <div className="finance-table-scroll">
@@ -8735,7 +8902,7 @@ function formatarMoeda(valor) {
               return (
                 <tr
                   key={conta.id}
-                  className={
+                  className={`${
                     statusVisual === 'Vencida'
                       ? 'finance-row-overdue'
                       : statusVisual === 'Paga'
@@ -8743,8 +8910,10 @@ function formatarMoeda(valor) {
                         : statusVisual === 'Cancelada'
                           ? 'finance-row-canceled'
                           : ''
-                  }
-                  onClick={() => editarContaPagar(conta)}
+                  } ${linhaFinanceiroEstaSelecionada('contasPagar', conta.id) ? 'finance-row-selected' : ''}`}
+                  onClick={() => alternarLinhaFinanceiro('contasPagar', conta.id)}
+                  onDoubleClick={() => editarContaPagar(conta)}
+                  aria-selected={linhaFinanceiroEstaSelecionada('contasPagar', conta.id)}
                 >
                   <td>
                     {formatarData(conta.vencimento)}
@@ -9276,7 +9445,12 @@ function formatarMoeda(valor) {
     <section className="finance-spreadsheet-card">
       <div className="finance-spreadsheet-topbar">
         <strong>Relação de aprovisionamentos</strong>
-        <small>Clique em uma linha para editar</small>
+        {renderizarBarraLinhaSelecionada(
+          'aprovisionamentos',
+          aprovisionamentos,
+          (item) => `${formatarData(item.data)} · ${item.descricao} · ${formatarMoeda(item.valor)}`,
+          editarAprovisionamento,
+        )}
       </div>
 
       <div className="finance-table-scroll">
@@ -9307,14 +9481,16 @@ function formatarMoeda(valor) {
             {aprovisionamentos.map((item) => (
               <tr
                 key={item.id}
-                className={
+                className={`${
                   item.status === 'Cancelado'
                     ? 'finance-row-canceled'
                     : item.status === 'Utilizado'
                       ? 'finance-row-paid'
                       : ''
-                }
-                onClick={() => editarAprovisionamento(item)}
+                } ${linhaFinanceiroEstaSelecionada('aprovisionamentos', item.id) ? 'finance-row-selected' : ''}`}
+                onClick={() => alternarLinhaFinanceiro('aprovisionamentos', item.id)}
+                onDoubleClick={() => editarAprovisionamento(item)}
+                aria-selected={linhaFinanceiroEstaSelecionada('aprovisionamentos', item.id)}
               >
                 <td>{formatarData(item.data)}</td>
                 <td>{item.previsaoUso ? formatarData(item.previsaoUso) : '-'}</td>

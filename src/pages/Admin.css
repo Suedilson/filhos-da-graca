@@ -7887,3 +7887,125 @@ textarea {
   font-size: 14px;
   pointer-events: none;
 }
+
+/* Financeiro: linha selecionada e barra de ações */
+.finance-spreadsheet-table tbody tr.finance-row-selected td {
+  background: #ebe8ff !important;
+  box-shadow: inset 0 2px 0 #3b2aa8, inset 0 -2px 0 #3b2aa8;
+}
+
+.finance-spreadsheet-table tbody tr.finance-row-selected td:first-child {
+  box-shadow: inset 4px 0 0 #3b2aa8, inset 0 2px 0 #3b2aa8, inset 0 -2px 0 #3b2aa8;
+}
+
+.finance-selected-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  font-size: 0.86rem;
+  color: #2b2f4a;
+}
+
+.finance-selected-bar strong {
+  color: #17105f;
+}
+
+.finance-selected-bar button {
+  width: auto !important;
+  min-height: 34px !important;
+  padding: 6px 14px !important;
+  font-size: 0.82rem !important;
+}
+
+/* Financeiro: saldo final do mês selecionado */
+.finance-month-balance {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.finance-month-balance-main {
+  display: grid;
+  gap: 4px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #17105f, #3b2aa8);
+  color: #ffffff;
+}
+
+.finance-month-balance-main + .finance-month-balance-main {
+  background: #ffffff;
+  color: #2b2f4a;
+  border: 1px solid rgba(23, 16, 95, 0.12);
+}
+
+.finance-month-balance-main span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.finance-month-balance-main span::first-letter {
+  text-transform: uppercase;
+}
+
+.finance-month-balance-main strong {
+  font-size: 1.6rem;
+  line-height: 1.15;
+}
+
+.finance-month-balance-main strong.negative {
+  color: #ff9c9c;
+}
+
+.finance-month-balance-main + .finance-month-balance-main strong {
+  color: #17105f;
+}
+
+.finance-month-balance-main + .finance-month-balance-main strong.negative {
+  color: #c62828;
+}
+
+.finance-month-balance-main small {
+  font-size: 0.78rem;
+  opacity: 0.8;
+}
+
+.finance-month-balance-accounts {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.finance-month-balance-accounts article {
+  display: grid;
+  gap: 2px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: #f5f3ff;
+  border: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.finance-month-balance-accounts span {
+  font-size: 0.76rem;
+  color: #60708a;
+}
+
+.finance-month-balance-accounts strong {
+  color: #17105f;
+}
+
+.finance-month-balance-accounts strong.negative {
+  color: #c62828;
+}
+
+@media (max-width: 720px) {
+  .finance-month-balance {
+    grid-template-columns: 1fr;
+  }
+}
