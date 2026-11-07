@@ -50,6 +50,7 @@ import { TEXTO_PADRAO_BOAS_VINDAS } from '../../cloudflare/emailBoasVindas.js'
 import { TEXTO_PADRAO as TEXTO_PADRAO_EMAIL_ANIVERSARIO } from '../../cloudflare/emailAniversario.js'
 import './Admin.css'
 import Louvor from './Louvor'
+import FinanceiroDashboard from './FinanceiroDashboard'
 
 const ADMIN_EMAILS = ['suedilsonfilho@gmail.com']
 
@@ -7970,137 +7971,13 @@ function formatarMoeda(valor) {
     </div>
 
     {modoFinanceiro === 'dashboard' && (
-      <section className="finance-dashboard">
-       <div className="finance-summary-grid">
-    <article>
-    <span>Saldo disponível</span>
-    <strong>{formatarMoeda(resumoFinanceiro.saldoDisponivel)}</strong>
-  </article>
-
-  <article>
-    <span>Saldo financeiro</span>
-    <strong>{formatarMoeda(resumoFinanceiro.saldoFinanceiro)}</strong>
-  </article>
-
-        <article>
-        <span>Total arrecadado</span>
-        <strong>{formatarMoeda(resumoFinanceiro.totalArrecadacoes)}</strong>
-      </article>
-
-      <article>
-        <span>Resultado período</span>
-        <strong>{formatarMoeda(resumoFinanceiro.resultadoPeriodoFinanceiro)}</strong>
-      </article>
-
-      <article>
-        <span>Contas pagas</span>
-        <strong>{formatarMoeda(resumoFinanceiro.totalContasPagas)}</strong>
-      </article>
-
-  <article>
-    <span>Contas em aberto</span>
-    <strong>{formatarMoeda(resumoFinanceiro.totalContasAbertas)}</strong>
-  </article>
-  <article>
-    <span>Aprovisionado</span>
-    <strong>{formatarMoeda(resumoFinanceiro.totalAprovisionado)}</strong>
-  </article>
-
-  <article>
-    <span>Vencidas</span>
-    <strong>{resumoFinanceiro.contasPagarVencidas}</strong>
-  </article>
-
-  <article>
-    <span>Vencem hoje</span>
-    <strong>{resumoFinanceiro.contasPagarVencemHoje}</strong>
-  </article>
-
-  <article>
-    <span>Próximos 7 dias</span>
-    <strong>{resumoFinanceiro.contasPagarProximos7Dias}</strong>
-  </article>
-
-  <article>
-    <span>Contas bancárias</span>
-    <strong>{resumoFinanceiro.contas}</strong>
-  </article>
-</div>
-
-        <div className="finance-dashboard-grid">
-          <section className="admin-card">
-            <span className="admin-section-label">Resumo</span>
-
-            <h2>Visão geral</h2>
-
-            <p>
-              Os números acima são atualizados automaticamente com as contas
-              bancárias, arrecadações, contas a pagar e aprovisionamentos
-              cadastrados.
-            </p>
-
-            <div className="finance-empty-state">
-              <strong>Como usar</strong>
-              <p>
-                Use os botões acima para registrar cada movimentação. Em
-                Relatórios, você gera o resumo do período em PDF.
-              </p>
-            </div>
-          </section>
-
-                   <section className="admin-card finance-account-balance-card">
-            <span className="admin-section-label">Contas</span>
-
-            <div className="finance-account-balance-header">
-              <div>
-                <h2>Saldo por conta</h2>
-                <p>Saldo inicial + arrecadações - despesas pagas.</p>
-              </div>
-
-              <strong
-                className={
-                  saldoTotalPorContas < 0
-                    ? 'finance-balance-total negative'
-                    : 'finance-balance-total'
-                }
-              >
-                {formatarMoeda(saldoTotalPorContas)}
-              </strong>
-            </div>
-
-            <div className="finance-account-mini-list finance-account-balance-list">
-              {saldosContasBancarias.length === 0 && (
-                <p>Nenhuma conta bancária cadastrada ainda.</p>
-              )}
-
-              {saldosContasBancarias.map((conta) => (
-                <article
-                  className={`finance-account-balance-item ${
-                    conta.ativo === false ? 'inactive-item' : ''
-                  } ${conta.saldoAtual < 0 ? 'negative' : ''}`}
-                  key={conta.id}
-                >
-                  <div>
-                    <strong>{conta.nome}</strong>
-                    <small>{conta.banco || conta.tipo}</small>
-
-                    <div className="finance-account-flow">
-                      <span>Inicial: {formatarMoeda(conta.saldoInicial)}</span>
-                      <span>Entradas: {formatarMoeda(conta.entradasConta)}</span>
-                      <span>Saídas: {formatarMoeda(conta.saidasConta)}</span>
-                    </div>
-                  </div>
-
-                  <section>
-                    <small>Saldo atual</small>
-                    <strong>{formatarMoeda(conta.saldoAtual)}</strong>
-                  </section>
-                </article>
-              ))}
-            </div>
-          </section>
-        </div>
-      </section>
+      <FinanceiroDashboard
+        arrecadacoes={arrecadacoes}
+        contasPagar={contasPagar}
+        contasBancarias={contasBancarias}
+        aprovisionamentos={aprovisionamentos}
+        aoAbrir={setModoFinanceiro}
+      />
     )}
 
     {modoFinanceiro === 'contas' && (

@@ -1,0 +1,691 @@
+/* Painel financeiro (Dashboard) */
+.fd {
+  --fd-surface: #ffffff;
+  --fd-ink: #17105f;
+  --fd-text: #2b2f4a;
+  --fd-muted: #60708a;
+  --fd-line: rgba(23, 16, 95, 0.08);
+  --fd-grid: rgba(23, 16, 95, 0.07);
+  --fd-receitas: #2a78d6;
+  --fd-despesas: #eb6834;
+  --fd-saldo: #3b2aa8;
+  --fd-good: #1a7f37;
+  --fd-bad: #c62828;
+
+  display: grid;
+  gap: 16px;
+  color: var(--fd-text);
+}
+
+.fd *,
+.fd *::before,
+.fd *::after {
+  box-sizing: border-box;
+}
+
+.fd-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fd-eyebrow {
+  display: block;
+  color: #6fbd2a;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.fd-toolbar h2 {
+  margin: 4px 0 0;
+  color: var(--fd-ink);
+  font-size: 1.45rem;
+}
+
+.fd-period {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--fd-surface);
+  border: 1px solid var(--fd-line);
+  box-shadow: 0 6px 18px rgba(23, 16, 95, 0.05);
+}
+
+.fd-period select {
+  width: auto !important;
+  min-height: 36px !important;
+  padding: 6px 10px !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--fd-line) !important;
+  background: #f7f8fc !important;
+  color: var(--fd-ink) !important;
+  font-weight: 700 !important;
+}
+
+.fd-period button {
+  width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  background: #f1efff !important;
+  color: var(--fd-ink) !important;
+  font-size: 1.2rem !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+}
+
+/* KPIs */
+.fd-kpis {
+  display: grid;
+  grid-template-columns: 1.3fr repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.fd-kpi {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 18px;
+  border-radius: 18px;
+  background: var(--fd-surface);
+  border: 1px solid var(--fd-line);
+  box-shadow: 0 10px 28px rgba(23, 16, 95, 0.06);
+}
+
+.fd-kpi > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fd-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.fd-kpi strong {
+  color: var(--fd-ink);
+  font-size: 1.7rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.fd-kpi-hero {
+  background: linear-gradient(135deg, #17105f, #3b2aa8);
+  border: 0;
+}
+
+.fd-kpi-hero > span,
+.fd-kpi-hero .fd-kpi-hint {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.fd-kpi-hero strong {
+  color: #ffffff;
+  font-size: 2rem;
+}
+
+.fd-kpi-hint {
+  color: var(--fd-muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.fd-kpi-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.fd-good {
+  color: var(--fd-good);
+}
+
+.fd-bad {
+  color: var(--fd-bad);
+}
+
+.fd-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: 0 0 auto;
+}
+
+.fd-swatch-receitas {
+  background: var(--fd-receitas);
+}
+
+.fd-swatch-despesas {
+  background: var(--fd-despesas);
+}
+
+/* Faixa de contas a pagar / saldos */
+.fd-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.fd-strip-item {
+  display: grid !important;
+  gap: 3px !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  padding: 14px 16px !important;
+  border-radius: 14px !important;
+  background: #f7f8fc !important;
+  border: 1px solid var(--fd-line) !important;
+  box-shadow: none !important;
+  color: var(--fd-text) !important;
+  text-align: left !important;
+  font-weight: 400 !important;
+}
+
+button.fd-strip-item {
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+button.fd-strip-item:hover {
+  border-color: rgba(59, 42, 168, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+.fd-strip-item span {
+  color: var(--fd-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.fd-strip-item strong {
+  color: var(--fd-ink);
+  font-size: 1.15rem;
+}
+
+.fd-strip-item small {
+  color: var(--fd-muted);
+  font-size: 0.74rem;
+}
+
+.fd-strip-alert {
+  background: #fff4f2 !important;
+  border-color: rgba(198, 40, 40, 0.25) !important;
+}
+
+.fd-strip-alert span,
+.fd-strip-alert strong {
+  color: var(--fd-bad) !important;
+}
+
+/* Cards */
+.fd-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.fd-card {
+  min-width: 0;
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: var(--fd-surface);
+  border: 1px solid var(--fd-line);
+  box-shadow: 0 10px 28px rgba(23, 16, 95, 0.06);
+}
+
+.fd-span-2 {
+  grid-column: span 2;
+}
+
+.fd-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 10px;
+}
+
+.fd-card-head h3 {
+  margin: 0;
+  color: var(--fd-ink);
+  font-size: 1.02rem;
+}
+
+.fd-card-head p {
+  margin: 2px 0 0;
+  color: var(--fd-muted);
+  font-size: 0.8rem;
+}
+
+.fd-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--fd-text);
+}
+
+.fd-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fd-link {
+  width: auto !important;
+  min-height: 0 !important;
+  padding: 4px 8px !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--fd-saldo) !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+}
+
+.fd-link:hover {
+  background: #f1efff !important;
+}
+
+.fd-empty {
+  margin: 12px 0;
+  color: var(--fd-muted);
+  font-size: 0.88rem;
+}
+
+/* Gráficos */
+.fd-chart {
+  position: relative;
+}
+
+.fd-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.fd-grid-line {
+  stroke: var(--fd-grid);
+  stroke-width: 1;
+}
+
+.fd-axis-line {
+  stroke: rgba(23, 16, 95, 0.25);
+  stroke-width: 1;
+}
+
+.fd-axis-text {
+  fill: var(--fd-muted);
+  font-size: 11px;
+  font-family: inherit;
+}
+
+.fd-axis-strong {
+  fill: var(--fd-ink);
+  font-weight: 800;
+}
+
+.fd-bar-receitas {
+  fill: var(--fd-receitas);
+}
+
+.fd-bar-despesas {
+  fill: var(--fd-despesas);
+}
+
+.fd-faded {
+  opacity: 0.35;
+  transition: opacity 0.15s ease;
+}
+
+.fd-selected-band {
+  fill: #f5f3ff;
+}
+
+.fd-saldo-line {
+  fill: none;
+  stroke: var(--fd-saldo);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.fd-saldo-area {
+  fill: rgba(59, 42, 168, 0.08);
+}
+
+.fd-saldo-dot {
+  fill: var(--fd-saldo);
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.fd-crosshair {
+  stroke: rgba(23, 16, 95, 0.3);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.fd-direct-label {
+  fill: var(--fd-ink);
+  font-size: 12px;
+  font-weight: 800;
+  font-family: inherit;
+}
+
+.fd-tooltip {
+  position: absolute;
+  top: 6px;
+  z-index: 3;
+  display: grid;
+  gap: 4px;
+  min-width: 190px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid var(--fd-line);
+  box-shadow: 0 14px 34px rgba(23, 16, 95, 0.18);
+  transform: translateX(-50%);
+  pointer-events: none;
+  font-size: 0.8rem;
+  color: var(--fd-text);
+}
+
+.fd-tooltip strong {
+  color: var(--fd-ink);
+  text-transform: capitalize;
+}
+
+.fd-tooltip span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fd-tooltip b {
+  margin-left: auto;
+  color: var(--fd-ink);
+}
+
+.fd-tooltip-total {
+  padding-top: 4px;
+  border-top: 1px solid var(--fd-line);
+}
+
+.fd-tooltip small {
+  color: var(--fd-muted);
+  font-size: 0.72rem;
+}
+
+.fd-year-totals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--fd-line);
+}
+
+.fd-year-totals div {
+  display: grid;
+  gap: 2px;
+}
+
+.fd-year-totals span {
+  color: var(--fd-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.fd-year-totals b {
+  color: var(--fd-ink);
+  font-size: 0.98rem;
+}
+
+/* Próximos vencimentos */
+.fd-due-list,
+.fd-accounts,
+.fd-hbars {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fd-due-list li {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--fd-line);
+}
+
+.fd-due-list li:last-child {
+  border-bottom: 0;
+}
+
+.fd-due-date {
+  display: grid;
+  place-items: center;
+  padding: 5px 0;
+  border-radius: 10px;
+  background: #f1efff;
+  color: var(--fd-ink);
+  line-height: 1.1;
+}
+
+.fd-due-date b {
+  font-size: 1rem;
+}
+
+.fd-due-date small {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.fd-due-date.fd-late {
+  background: #fdecea;
+  color: var(--fd-bad);
+}
+
+.fd-due-info {
+  display: grid;
+  min-width: 0;
+}
+
+.fd-due-info strong {
+  overflow: hidden;
+  color: var(--fd-ink);
+  font-size: 0.88rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fd-due-info small {
+  color: var(--fd-muted);
+  font-size: 0.74rem;
+}
+
+.fd-due-value {
+  color: var(--fd-ink);
+  font-size: 0.88rem;
+}
+
+/* Saldo por conta */
+.fd-accounts li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--fd-line);
+  font-size: 0.9rem;
+}
+
+.fd-accounts li span {
+  display: grid;
+  gap: 2px;
+}
+
+.fd-accounts li b {
+  color: var(--fd-ink);
+  white-space: nowrap;
+}
+
+.fd-accounts-warning small {
+  color: #9a6400;
+  font-size: 0.74rem;
+}
+
+.fd-accounts-total {
+  border-bottom: 0 !important;
+  font-weight: 800;
+  color: var(--fd-ink);
+}
+
+/* Barras horizontais */
+.fd-hbars li {
+  display: grid;
+  gap: 4px;
+  padding: 7px 0;
+}
+
+.fd-hbar-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.86rem;
+}
+
+.fd-hbar-label b {
+  color: var(--fd-ink);
+}
+
+.fd-hbar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #f1f2f8;
+  overflow: hidden;
+}
+
+.fd-hbar-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.fd-fill-receitas {
+  background: var(--fd-receitas);
+}
+
+.fd-fill-despesas {
+  background: var(--fd-despesas);
+}
+
+.fd-hbars small {
+  color: var(--fd-muted);
+  font-size: 0.72rem;
+}
+
+/* Tabela mês a mês */
+.fd-table-wrap {
+  max-height: 340px;
+  overflow: auto;
+}
+
+.fd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.fd-table th {
+  position: sticky;
+  top: 0;
+  padding: 8px 6px;
+  background: #ffffff;
+  color: var(--fd-muted);
+  font-size: 0.72rem;
+  text-align: right;
+  border-bottom: 1px solid var(--fd-line);
+}
+
+.fd-table td {
+  padding: 7px 6px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--fd-line);
+}
+
+.fd-table th:first-child,
+.fd-table td:first-child {
+  text-align: left;
+}
+
+.fd-table tbody tr {
+  cursor: pointer;
+}
+
+.fd-table tbody tr:hover td {
+  background: #f7f8fc;
+}
+
+.fd-row-active td {
+  background: #f1efff !important;
+  font-weight: 800;
+  color: var(--fd-ink);
+}
+
+.fd-negative {
+  color: var(--fd-bad);
+}
+
+/* Responsivo */
+@media (max-width: 1100px) {
+  .fd-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fd-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .fd-kpis,
+  .fd-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fd-span-2 {
+    grid-column: auto;
+  }
+
+  .fd-year-totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fd-kpi strong {
+    font-size: 1.45rem;
+  }
+
+  .fd-period {
+    width: 100%;
+  }
+
+  .fd-period select {
+    flex: 1;
+  }
+}
