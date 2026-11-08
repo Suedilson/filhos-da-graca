@@ -56,6 +56,26 @@ import CarteirinhaViewer from './CarteirinhaViewer'
 import { gerarPdfCarteirinhas, TEXTO_VERSO_PADRAO } from '../services/carteirinhaPdf'
 
 const ADMIN_EMAILS = ['suedilsonfilho@gmail.com']
+
+// CPF: formata como 000.000.000-00 enquanto digita e confere os dígitos verificadores
+function formatarCpf(valor) {
+  const d = String(valor || '').replace(/\D/g, '').slice(0, 11)
+  return d
+    .replace(/^(\d{3})(\d)/, '$1.$2')
+    .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1-$2')
+}
+
+function cpfValido(valor) {
+  const d = String(valor || '').replace(/\D/g, '')
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false
+  const digito = (base) => {
+    const soma = base.split('').reduce((t, n, i) => t + Number(n) * (base.length + 1 - i), 0)
+    const resto = (soma * 10) % 11
+    return resto === 10 ? 0 : resto
+  }
+  return digito(d.slice(0, 9)) === Number(d[9]) && digito(d.slice(0, 10)) === Number(d[10])
+}
 // Caixa de e-mail @filhosdagraca.com.br (Zoho Mail). O botão só aparece para quem tem a
 // permissão "E-mail da igreja"; o login no Zoho continua pedindo a senha do e-mail.
 const ENDERECO_EMAIL_IGREJA = 'https://mail.zoho.com/zm/#mail/folder/inbox'
@@ -360,6 +380,7 @@ const categoriasGaleria = [
   dataProximaAcao: '',
   observacaoAcompanhamento: '',
   email: '',
+  cpf: '',
   receberEmailAniversario: true,
 })
 const [meusDadosMembro, setMeusDadosMembro] = useState(null)
@@ -376,6 +397,7 @@ const [meusDadosForm, setMeusDadosForm] = useState({
   nome: '',
   telefone: '',
   nascimento: '',
+  cpf: '',
   endereco: '',
   ministerio: '',
   foto: '',
@@ -4045,6 +4067,7 @@ async function abrirMinhaCarteirinha() {
         nome: minhaCarteirinha.nome,
         foto: meusDadosMembro?.foto,
         nascimento: meusDadosMembro?.nascimento,
+        cpf: meusDadosMembro?.cpf,
         funcao: minhaCarteirinha.funcao,
         validade: minhaCarteirinha.validade,
         emitidaEm: minhaCarteirinha.emitidaEm,
@@ -4098,6 +4121,7 @@ async function carregarMeuCadastroMembro() {
       nome: dados.nome || '',
       telefone: dados.telefone || '',
       nascimento: dados.nascimento || '',
+      cpf: dados.cpf || '',
       endereco: dados.endereco || '',
       ministerio: dados.ministerio || '',
       foto: dados.foto || '',
@@ -4185,6 +4209,11 @@ async function enviarFotoMeusDados(event) {
 async function salvarMeusDados(event) {
   event.preventDefault()
 
+  if (meusDadosForm.cpf && !cpfValido(meusDadosForm.cpf)) {
+    mostrarAviso('CPF inválido. Confira os números ou deixe o campo em branco.', 'erro')
+    return
+  }
+
   if (!permissaoUsuario?.membroId) {
     mostrarAviso('Seu usuário não está vinculado a um cadastro de membro.')
     return
@@ -4202,6 +4231,7 @@ async function salvarMeusDados(event) {
       nome: meusDadosForm.nome,
       telefone: meusDadosForm.telefone,
       nascimento: meusDadosForm.nascimento,
+      cpf: formatarCpf(meusDadosForm.cpf),
       endereco: meusDadosForm.endereco,
       ministerio: meusDadosForm.ministerio,
       foto: meusDadosForm.foto,
@@ -4524,6 +4554,11 @@ async function salvarMeusDados(event) {
       return
     }
 
+    if (membroForm.cpf && !cpfValido(membroForm.cpf)) {
+      mostrarAviso('CPF inválido. Confira os números ou deixe o campo em branco.', 'erro')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -4531,6 +4566,7 @@ async function salvarMeusDados(event) {
   nome: membroForm.nome,
   telefone: membroForm.telefone,
   nascimento: membroForm.nascimento,
+  cpf: formatarCpf(membroForm.cpf),
   endereco: membroForm.endereco,
   ministerio: membroForm.ministerio,
   status: membroForm.status,
@@ -4580,6 +4616,7 @@ async function salvarMeusDados(event) {
   dataProximaAcao: '',
   observacaoAcompanhamento: '',
   email: '',
+  cpf: '',
   receberEmailAniversario: true,
 })
 
@@ -4603,6 +4640,7 @@ async function salvarMeusDados(event) {
       nome: membro.nome || '',
       telefone: membro.telefone || '',
       nascimento: membro.nascimento || '',
+      cpf: membro.cpf || '',
       endereco: membro.endereco || '',
       ministerio: membro.ministerio || '',
       status: membro.status || 'Ativo',
@@ -4645,6 +4683,7 @@ async function salvarMeusDados(event) {
       dataProximaAcao: '',
       observacaoAcompanhamento: '',
       email: '',
+      cpf: '',
       receberEmailAniversario: true,
     })
 
@@ -5884,6 +5923,7 @@ function cancelarEdicaoMeusDados() {
     nome: dados.nome || '',
     telefone: dados.telefone || '',
     nascimento: dados.nascimento || '',
+    cpf: dados.cpf || '',
     endereco: dados.endereco || '',
     ministerio: dados.ministerio || '',
     foto: dados.foto || '',
@@ -6006,6 +6046,13 @@ function renderizarPerfilMeusDados() {
               <div>
                 <small>Data de nascimento</small>
                 {valor(dados.nascimento ? formatarData(dados.nascimento) : '')}
+              </div>
+            </li>
+            <li>
+              <span className="md-icon" aria-hidden="true">🆔</span>
+              <div>
+                <small>CPF</small>
+                {valor(dados.cpf)}
               </div>
             </li>
             <li>
@@ -6143,6 +6190,22 @@ function renderizarMeusDados() {
                 })
               }
             />
+          </label>
+
+          <label>
+            CPF
+            <input
+              value={meusDadosForm.cpf || ''}
+              onChange={(event) =>
+                setMeusDadosForm({ ...meusDadosForm, cpf: formatarCpf(event.target.value) })
+              }
+              inputMode="numeric"
+              placeholder="000.000.000-00"
+              maxLength={14}
+            />
+            {meusDadosForm.cpf && !cpfValido(meusDadosForm.cpf) && (
+              <small className="member-field-hint member-field-error">CPF incompleto ou inválido</small>
+            )}
           </label>
 
           <label>
@@ -10858,6 +10921,24 @@ function formatarMoeda(valor) {
           <small className="member-field-hint">
             {calcularIdade(membroForm.nascimento)} anos
           </small>
+        )}
+      </label>
+    )}
+
+    {modoMembros !== 'pastoral' && (
+      <label>
+        CPF
+        <input
+          value={membroForm.cpf || ''}
+          onChange={(event) =>
+            setMembroForm({ ...membroForm, cpf: formatarCpf(event.target.value) })
+          }
+          inputMode="numeric"
+          placeholder="000.000.000-00"
+          maxLength={14}
+        />
+        {membroForm.cpf && !cpfValido(membroForm.cpf) && (
+          <small className="member-field-hint member-field-error">CPF incompleto ou inválido</small>
         )}
       </label>
     )}

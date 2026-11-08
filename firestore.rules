@@ -187,6 +187,7 @@ service cloud.firestore {
         'nome',
         'telefone',
         'nascimento',
+        'cpf',
         'endereco',
         'ministerio',
         'foto',

@@ -98,6 +98,7 @@ export default function Carteirinhas({ membros }) {
       nome: m.nome,
       foto: m.foto,
       nascimento: m.nascimento,
+      cpf: m.cpf,
       funcao: funcaoDe(m),
       validade,
       emitidaEm: hojeISO(),
@@ -200,6 +201,7 @@ export default function Carteirinhas({ membros }) {
         nome: c.nome,
         foto: membro.foto,
         nascimento: membro.nascimento,
+        cpf: membro.cpf,
         funcao: c.funcao,
         validade: c.validade,
         emitidaEm: c.emitidaEm,
@@ -268,6 +270,7 @@ export default function Carteirinhas({ membros }) {
                       <strong>{m.nome}</strong>
                       <small>
                         {m.foto ? '' : '⚠ sem foto · '}
+                        {m.cpf ? '' : '⚠ sem CPF · '}
                         {atual ? `Carteirinha ${atual.numero} até ${dataBR(atual.validade)}` : 'Nenhuma carteirinha emitida'}
                       </small>
                     </span>
@@ -288,7 +291,7 @@ export default function Carteirinhas({ membros }) {
             {filtrados.length === 0 && <li className="cart-empty">Nenhum membro ativo encontrado.</li>}
           </ul>
           <small className="member-field-hint">
-            Membros sem foto saem com as iniciais. Para colocar a foto, edite o cadastro do membro.
+            Membros sem foto saem com as iniciais e, sem CPF, o campo fica em branco. Para completar, edite o cadastro do membro.
           </small>
         </div>
 

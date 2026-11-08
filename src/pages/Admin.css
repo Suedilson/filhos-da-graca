@@ -8410,3 +8410,9 @@ textarea {
     border-radius: 18px;
   }
 }
+
+/* Aviso de campo inválido (ex.: CPF) */
+.member-field-hint.member-field-error {
+  color: #c62828 !important;
+  font-weight: 700;
+}

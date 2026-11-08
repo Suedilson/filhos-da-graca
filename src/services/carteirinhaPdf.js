@@ -190,7 +190,7 @@ function desenharFrente(pdf, x, y, dados, recursos) {
   campo('VALIDADE', dataBR(dados.validade), tx + 26, cy)
   cy += 7.5
   campo('NASCIMENTO', dataBR(dados.nascimento), tx, cy)
-  campo('EMISSÃO', dataBR(dados.emitidaEm), tx + 26, cy)
+  campo('CPF', dados.cpf || '-', tx + 26, cy)
 
   // Faixa inferior
   pdf.setFillColor(...COR.verde)
@@ -216,7 +216,7 @@ function desenharVerso(pdf, x, y, dados, recursos) {
   pdf.setTextColor(...COR.cinza)
   pdf.setFont('helvetica', 'normal')
   pdf.setFontSize(5)
-  pdf.text(`CNPJ ${IGREJA.cnpj}`, x + 4, y + 9.2)
+  pdf.text(`CNPJ ${IGREJA.cnpj}  ·  Emitida em ${dataBR(dados.emitidaEm)}`, x + 4, y + 9.2)
   pdf.text(IGREJA.endereco, x + 4, y + 12)
 
   // Texto livre
