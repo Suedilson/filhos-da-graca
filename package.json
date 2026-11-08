@@ -15,6 +15,7 @@
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.9",
     "pdfjs-dist": "^6.1.200",
+    "qrcode": "1.5.4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-pageflip": "^2.0.3"

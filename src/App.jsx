@@ -18,6 +18,7 @@ import {
 import './App.css'
 import { mostrarAviso } from './services/avisos'
 import Admin from './pages/Admin'
+import VerificarCarteirinha from './pages/VerificarCarteirinha'
 import { db } from './services/firebase'
 
 const quickActions = [
@@ -106,6 +107,10 @@ function App() {
 
   if (caminhoAtual.startsWith('/ensino/')) {
     return <LeitorEnsino />
+  }
+
+  if (caminhoAtual.startsWith('/carteirinha/')) {
+    return <VerificarCarteirinha />
   }
 
   return <Home />

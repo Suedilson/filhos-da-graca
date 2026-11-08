@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-const MODOS_MEMBROS = ['lista', 'cadastro', 'pastoral', 'aniversariantes', 'boasVindas']
+const MODOS_MEMBROS = ['lista', 'cadastro', 'pastoral', 'aniversariantes', 'carteirinhas', 'boasVindas']
 
 // A aba aberta fica no endereço (/admin#membros, /admin#membros/cadastro), assim o botão
 // Voltar do navegador ou do celular volta para a aba anterior em vez de sair do painel.
@@ -51,6 +51,7 @@ import { TEXTO_PADRAO as TEXTO_PADRAO_EMAIL_ANIVERSARIO } from '../../cloudflare
 import './Admin.css'
 import Louvor from './Louvor'
 import FinanceiroDashboard from './FinanceiroDashboard'
+import Carteirinhas from './Carteirinhas'
 
 const ADMIN_EMAILS = ['suedilsonfilho@gmail.com']
 // Caixa de e-mail @filhosdagraca.com.br (Zoho Mail). O botão só aparece para quem tem a
@@ -10445,6 +10446,18 @@ function formatarMoeda(valor) {
     Aniversariantes
   </button>
 
+  <button
+    type="button"
+    className={modoMembros === 'carteirinhas' ? 'active' : ''}
+    onClick={() => {
+      cancelarEdicaoMembro()
+      setModoMembros('carteirinhas')
+    }}
+  >
+    <span>🪪</span>
+    Carteirinhas
+  </button>
+
   {isPerfilAdministrador && (
     <button
       type="button"
@@ -10462,7 +10475,7 @@ function formatarMoeda(valor) {
 <div className="admin-grid admin-events-grid">
  <form
   className={`admin-card member-form-panel ${
-    modoMembros === 'lista' || modoMembros === 'aniversariantes' || modoMembros === 'boasVindas'
+    modoMembros === 'lista' || modoMembros === 'aniversariantes' || modoMembros === 'boasVindas' || modoMembros === 'carteirinhas'
       ? 'member-hidden-panel'
       : ''
   } ${
@@ -11041,6 +11054,8 @@ function formatarMoeda(valor) {
                            ))}
                       </div>
           </section>
+
+          {modoMembros === 'carteirinhas' && <Carteirinhas membros={membros} />}
 
           {modoMembros === 'boasVindas' && isPerfilAdministrador && (
             <section className="admin-card member-welcome-card">

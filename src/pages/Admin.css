@@ -8031,3 +8031,9 @@ textarea {
 .admin-header .admin-email-button:hover {
   background: rgba(255, 255, 255, 0.24);
 }
+
+/* Botões de Membros: agora são 5 ou 6, quebram em linhas iguais */
+.member-mode-actions.member-mode-actions-four {
+  width: min(100%, 1180px);
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
