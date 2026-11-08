@@ -53,6 +53,9 @@ import Louvor from './Louvor'
 import FinanceiroDashboard from './FinanceiroDashboard'
 
 const ADMIN_EMAILS = ['suedilsonfilho@gmail.com']
+// Caixa de e-mail @filhosdagraca.com.br (Zoho Mail). O botão só aparece para quem tem a
+// permissão "E-mail da igreja"; o login no Zoho continua pedindo a senha do e-mail.
+const ENDERECO_EMAIL_IGREJA = 'https://mail.zoho.com'
 
 // Evita que o Excel interprete como fórmula um texto que começa com =, +, - ou @.
 function campoCsv(valor) {
@@ -97,6 +100,7 @@ const PERFIS_USUARIOS = {
 
 const PERMISSOES_POR_PERFIL = {
   admin: [
+    'emailIgreja',
     'louvor',
     'programacao',
     'ensino',
@@ -5979,6 +5983,7 @@ function renderizarUsuariosPermissoes() {
     { id: 'documentos', nome: 'Documentos' },
     { id: 'contribuicao', nome: 'Contribuição' },
     { id: 'financeiro', nome: 'Financeiro' },
+    { id: 'emailIgreja', nome: 'E-mail da igreja' },
     { id: 'galeria', nome: 'Galeria' },
     { id: 'membros', nome: 'Membros' },
     { id: 'localizacao', nome: 'Localização' },
@@ -6702,6 +6707,19 @@ function formatarMoeda(valor) {
       </small>
     </div>
   </div>
+
+  {usuarioPodeAcessar('emailIgreja') && (
+    <a
+      className="admin-email-button"
+      href={ENDERECO_EMAIL_IGREJA}
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Abrir o e-mail da igreja (Zoho Mail) em outra aba"
+    >
+      <span aria-hidden="true">✉️</span>
+      E-mail da igreja
+    </a>
+  )}
 
   <button onClick={sair}>Sair</button>
 </header>
