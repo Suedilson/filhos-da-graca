@@ -772,3 +772,86 @@
     flex: 1;
   }
 }
+
+/* Dica e modo tela cheia (foco) */
+.lv-tap-hint {
+  max-width: 900px;
+  margin: 0 auto 12px;
+  color: #a0a8bd;
+  font-family: Inter, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.lv-reader-body {
+  cursor: zoom-in;
+}
+
+.lv-reader.lv-foco {
+  grid-template-rows: 1fr;
+}
+
+.lv-reader.lv-foco .lv-reader-head,
+.lv-reader.lv-foco .lv-reader-tools,
+.lv-reader.lv-foco .lv-reader-nav {
+  display: none;
+}
+
+.lv-reader.lv-foco .lv-reader-body {
+  padding: max(14px, env(safe-area-inset-top)) 14px 90px;
+  cursor: zoom-out;
+}
+
+.lv-focus-title {
+  max-width: 900px;
+  margin: 0 auto 10px;
+  color: #17105f;
+  font-family: Inter, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  opacity: 0.7;
+}
+
+.lv-focus-bar {
+  position: fixed;
+  left: 50%;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+  border-radius: 999px;
+  background: rgba(23, 16, 95, 0.88);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transform: translateX(-50%);
+  backdrop-filter: blur(6px);
+}
+
+.lv-focus-bar button {
+  width: auto !important;
+  min-width: 40px;
+  min-height: 40px !important;
+  padding: 6px 10px !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  font-size: 0.95rem !important;
+  font-weight: 800 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.lv-focus-bar button:disabled {
+  opacity: 0.35;
+}
+
+.lv-focus-bar span {
+  padding: 0 6px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}

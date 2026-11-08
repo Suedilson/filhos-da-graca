@@ -28,7 +28,10 @@ function Leitor({ musicas, inicial, modoInicial, onFechar, titulo }) {
     try { return Number(localStorage.getItem('louvorFonte')) || padrao } catch { return padrao }
   })
   const [rolagem, setRolagem] = useState(0)
+  // Tela cheia: toque no texto esconde as barras e deixa só a letra/cifra
+  const [foco, setFoco] = useState(false)
   const corpo = useRef(null)
+  const leitor = useRef(null)
   const musica = musicas[indice]
   const tom = semitons[musica.id] || 0
 
@@ -49,9 +52,47 @@ function Leitor({ musicas, inicial, modoInicial, onFechar, titulo }) {
     return () => clearInterval(id)
   }, [rolagem, indice, modo])
 
+  // Se o navegador sair da tela cheia (tecla Esc, gesto do sistema), sai do modo foco também
+  useEffect(() => {
+    const aoMudar = () => {
+      if (!document.fullscreenElement) setFoco(false)
+    }
+    document.addEventListener('fullscreenchange', aoMudar)
+    return () => document.removeEventListener('fullscreenchange', aoMudar)
+  }, [])
+
+  function alternarFoco() {
+    const novo = !foco
+    try {
+      if (novo && document.fullscreenEnabled && !document.fullscreenElement) {
+        leitor.current?.requestFullscreen?.().catch(() => {})
+      } else if (!novo && document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {})
+      }
+    } catch { /* navegador sem tela cheia (ex.: iPhone): só esconde as barras */ }
+    setFoco(novo)
+  }
+
+  // Toque rápido no texto alterna a tela cheia; arrastar para rolar não conta
+  const toque = useRef(null)
+  const aoTocarTexto = (e) => {
+    toque.current = { x: e.clientX, y: e.clientY, t: Date.now() }
+  }
+  const aoSoltarTexto = (e) => {
+    const t = toque.current
+    toque.current = null
+    if (!t) return
+    if (Math.abs(e.clientX - t.x) > 10 || Math.abs(e.clientY - t.y) > 10 || Date.now() - t.t > 400) return
+    alternarFoco()
+  }
+
   useEffect(() => {
     const teclado = (e) => {
-      if (e.key === 'Escape') onFechar()
+      if (e.key === 'Escape') {
+        if (document.fullscreenElement) return
+        if (foco) { setFoco(false); return }
+        onFechar()
+      }
       if (e.key === 'ArrowRight') setIndice((i) => Math.min(musicas.length - 1, i + 1))
       if (e.key === 'ArrowLeft') setIndice((i) => Math.max(0, i - 1))
     }
@@ -62,7 +103,7 @@ function Leitor({ musicas, inicial, modoInicial, onFechar, titulo }) {
       window.removeEventListener('keydown', teclado)
       document.body.style.overflow = anterior
     }
-  }, [musicas.length, onFechar])
+  }, [musicas.length, onFechar, foco])
 
   const cifra = formatarCifra(musica.notas)
   const letra = (musica.letra || '').trim() || extrairLetraDaCifra(cifra)
@@ -72,7 +113,12 @@ function Leitor({ musicas, inicial, modoInicial, onFechar, titulo }) {
   const mudarTom = (d) => setSemitons((s) => ({ ...s, [musica.id]: ((s[musica.id] || 0) + d + 12) % 12 }))
 
   return (
-    <div className="lv-reader" role="dialog" aria-label={`${musica.titulo} – ${modo === 'cifra' ? 'cifra' : 'letra'}`}>
+    <div
+      ref={leitor}
+      className={`lv-reader ${foco ? 'lv-foco' : ''}`}
+      role="dialog"
+      aria-label={`${musica.titulo} – ${modo === 'cifra' ? 'cifra' : 'letra'}`}
+    >
       <header className="lv-reader-head">
         <button type="button" className="lv-icon-btn" onClick={onFechar} aria-label="Voltar para a escala">‹</button>
         <div className="lv-reader-title">
@@ -109,7 +155,16 @@ function Leitor({ musicas, inicial, modoInicial, onFechar, titulo }) {
         </button>
       </div>
 
-      <div className="lv-reader-body" ref={corpo} style={{ fontSize: `${fonte}px` }} onClick={() => rolagem && setRolagem(0)}>
+      <div
+        className="lv-reader-body"
+        ref={corpo}
+        style={{ fontSize: `${fonte}px` }}
+        onPointerDown={aoTocarTexto}
+        onPointerUp={aoSoltarTexto}
+        title={foco ? 'Toque para sair da tela cheia' : 'Toque para ver em tela cheia'}
+      >
+        {!foco && <p className="lv-tap-hint">Toque no texto para ver em tela cheia</p>}
+        {foco && <p className="lv-focus-title">{musica.titulo}{musica.tom ? ` · ${transporTom(musica.tom, tom) || musica.tom}` : ''}</p>}
         {modo === 'letra' ? (
           letra ? <div className="lv-lyrics">{letra}</div> : <p className="lv-empty">Letra não cadastrada para este louvor.</p>
         ) : cifra ? (
@@ -134,6 +189,18 @@ function Leitor({ musicas, inicial, modoInicial, onFechar, titulo }) {
           <p className="lv-empty">Cifra não cadastrada para este louvor. Cadastre em “Músicas”.</p>
         )}
       </div>
+
+      {foco && (
+        <div className="lv-focus-bar">
+          <button type="button" onClick={alternarFoco} aria-label="Sair da tela cheia">✕</button>
+          <button type="button" disabled={!anterior} onClick={() => setIndice(indice - 1)} aria-label="Música anterior">‹</button>
+          <span>{indice + 1}/{musicas.length}</span>
+          <button type="button" disabled={!proxima} onClick={() => setIndice(indice + 1)} aria-label="Próxima música">›</button>
+          <button type="button" onClick={() => setFonte((f) => Math.max(11, f - 1))} aria-label="Diminuir letra">A−</button>
+          <button type="button" onClick={() => setFonte((f) => Math.min(30, f + 1))} aria-label="Aumentar letra">A+</button>
+          {rolagem > 0 && <button type="button" onClick={() => setRolagem(0)} aria-label="Parar rolagem">❚❚</button>}
+        </div>
+      )}
 
       <nav className="lv-reader-nav">
         <button type="button" disabled={!anterior} onClick={() => setIndice(indice - 1)}>
