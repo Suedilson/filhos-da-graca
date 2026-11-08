@@ -1,0 +1,238 @@
+/* Visualizador da carteirinha: celular em tela cheia (horizontal) e computador em cartões */
+.cv-loading {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.cv-close {
+  display: grid !important;
+  place-items: center;
+  width: 42px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  color: #17105f !important;
+  font-size: 1.6rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25) !important;
+}
+
+.cv-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 18px;
+  border-radius: 12px;
+  background: #6fbd2a;
+  color: #ffffff;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+/* ---------- Computador ---------- */
+.cv-desktop-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(12, 9, 45, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.cv-desktop {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  width: min(820px, 100%);
+  max-height: calc(100vh - 48px);
+  border-radius: 22px;
+  background: #f4f5fa;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.cv-desktop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, #17105f, #3b2aa8);
+  color: #ffffff;
+}
+
+.cv-desktop-head span {
+  color: #a7e06d;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cv-desktop-head h2 {
+  margin: 4px 0 0;
+  color: #ffffff;
+  font-size: 1.25rem;
+}
+
+.cv-desktop-cards {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  padding: 22px;
+  overflow: auto;
+}
+
+.cv-desktop-cards img {
+  display: block;
+  width: min(720px, 100%);
+  height: auto;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(23, 16, 95, 0.18);
+}
+
+.cv-desktop-cards .cv-loading {
+  color: #17105f;
+}
+
+.cv-desktop-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 14px 22px;
+  background: #ffffff;
+  border-top: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.cv-desktop-foot small {
+  color: #60708a;
+}
+
+/* ---------- Celular: tela cheia ---------- */
+.cv-mobile {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: #0c092d;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.cv-stage {
+  box-sizing: border-box;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--cv-w, 100vw);
+  height: var(--cv-h, 100vh);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Celular em pé: a carteirinha gira para ocupar a tela na horizontal */
+.cv-stage.cv-rotated {
+  width: var(--cv-h, 100vh);
+  height: var(--cv-w, 100vw);
+  transform-origin: top left;
+  transform: rotate(90deg) translateY(-100%);
+}
+
+.cv-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.cv-slide {
+  box-sizing: border-box;
+  flex: 0 0 100%;
+  height: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 64px 54px;
+}
+
+.cv-slide img {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.cv-close-mobile {
+  position: absolute !important;
+  top: 10px;
+  right: 12px;
+  z-index: 3;
+}
+
+.cv-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.cv-dots {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.cv-dots button {
+  width: auto !important;
+  min-height: 34px !important;
+  padding: 6px 16px !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+  font-size: 0.86rem !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+}
+
+.cv-dots button.on {
+  background: #ffffff !important;
+  color: #17105f !important;
+}
+
+.cv-download-mobile {
+  padding: 8px 14px;
+  font-size: 0.86rem;
+}
+
+.cv-hint {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+}

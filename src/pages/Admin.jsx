@@ -52,6 +52,7 @@ import './Admin.css'
 import Louvor from './Louvor'
 import FinanceiroDashboard from './FinanceiroDashboard'
 import Carteirinhas from './Carteirinhas'
+import CarteirinhaViewer from './CarteirinhaViewer'
 import { gerarPdfCarteirinhas, TEXTO_VERSO_PADRAO } from '../services/carteirinhaPdf'
 
 const ADMIN_EMAILS = ['suedilsonfilho@gmail.com']
@@ -365,6 +366,7 @@ const [meusDadosMembro, setMeusDadosMembro] = useState(null)
 // Carteirinha válida do próprio membro (aba Meus dados)
 const [minhaCarteirinha, setMinhaCarteirinha] = useState(null)
 const [minhaCarteirinhaUrl, setMinhaCarteirinhaUrl] = useState('')
+const [minhaCarteirinhaBytes, setMinhaCarteirinhaBytes] = useState(null)
 const [abrindoCarteirinha, setAbrindoCarteirinha] = useState(false)
 // Meus dados abre só para ver; o formulário aparece ao tocar em "Editar"
 const [editandoMeusDados, setEditandoMeusDados] = useState(false)
@@ -4053,6 +4055,7 @@ async function abrirMinhaCarteirinha() {
       { formato: 'cartao', incluirVerso: true },
     )
     if (minhaCarteirinhaUrl) URL.revokeObjectURL(minhaCarteirinhaUrl)
+    setMinhaCarteirinhaBytes(pdf.output('arraybuffer'))
     setMinhaCarteirinhaUrl(URL.createObjectURL(pdf.output('blob')))
   } catch (error) {
     console.error(error)
@@ -4065,6 +4068,7 @@ async function abrirMinhaCarteirinha() {
 function fecharMinhaCarteirinha() {
   if (minhaCarteirinhaUrl) URL.revokeObjectURL(minhaCarteirinhaUrl)
   setMinhaCarteirinhaUrl('')
+  setMinhaCarteirinhaBytes(null)
 }
 
 async function carregarMeuCadastroMembro() {
@@ -5861,36 +5865,15 @@ function renderizarEnsino() {
   )
 }
 function renderizarJanelaMinhaCarteirinha() {
-  if (!minhaCarteirinhaUrl || !minhaCarteirinha) return null
+  if (!minhaCarteirinhaUrl || !minhaCarteirinhaBytes || !minhaCarteirinha) return null
   return (
-    <div className="finance-modal-backdrop" onClick={fecharMinhaCarteirinha}>
-      <section className="finance-modal-card my-card-modal" onClick={(event) => event.stopPropagation()}>
-        <div className="finance-modal-header">
-          <div>
-            <span className="admin-section-label">Carteirinha de membro</span>
-            <h2>{minhaCarteirinha.numero} · válida até {formatarData(minhaCarteirinha.validade)}</h2>
-          </div>
-          <button type="button" className="finance-modal-close" onClick={fecharMinhaCarteirinha}>
-            ×
-          </button>
-        </div>
-        <iframe
-          title="Minha carteirinha"
-          src={`${minhaCarteirinhaUrl}#toolbar=0&navpanes=0&view=Fit`}
-          className="my-card-frame"
-        />
-        <div className="my-card-actions">
-          <a
-            href={minhaCarteirinhaUrl}
-            download={`carteirinha-${minhaCarteirinha.numero}.pdf`}
-            className="my-card-download"
-          >
-            Baixar PDF
-          </a>
-          <small>A primeira página é a frente e a segunda é o verso.</small>
-        </div>
-      </section>
-    </div>
+    <CarteirinhaViewer
+      dadosPdf={minhaCarteirinhaBytes}
+      urlPdf={minhaCarteirinhaUrl}
+      nomeArquivo={`carteirinha-${minhaCarteirinha.numero}.pdf`}
+      titulo={`${minhaCarteirinha.numero} · válida até ${formatarData(minhaCarteirinha.validade)}`}
+      onFechar={fecharMinhaCarteirinha}
+    />
   )
 }
 
