@@ -224,7 +224,9 @@ service cloud.firestore {
     // Carteirinhas: o QR code abre a verificação pública de um código (sem listar todas).
     match /carteirinhas/{codigo} {
       allow get: if true;
-      allow list: if hasPermission('carteirinhas') || adminProfile();
+      // O próprio membro também pode buscar as carteirinhas dele (para ver a sua no painel).
+      allow list: if hasPermission('carteirinhas') || adminProfile() ||
+        (activeUser() && resource.data.membroId == userPermission().get('membroId', ''));
       allow create: if (hasPermission('carteirinhas') || adminProfile()) &&
         request.resource.data.keys().hasOnly(['membroId', 'nome', 'funcao', 'numero', 'numeroSeq',
           'validade', 'emitidaEm', 'ativa', 'criadoEm']) &&

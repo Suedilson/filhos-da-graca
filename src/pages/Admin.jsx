@@ -52,6 +52,7 @@ import './Admin.css'
 import Louvor from './Louvor'
 import FinanceiroDashboard from './FinanceiroDashboard'
 import Carteirinhas from './Carteirinhas'
+import { gerarPdfCarteirinhas, TEXTO_VERSO_PADRAO } from '../services/carteirinhaPdf'
 
 const ADMIN_EMAILS = ['suedilsonfilho@gmail.com']
 // Caixa de e-mail @filhosdagraca.com.br (Zoho Mail). O botão só aparece para quem tem a
@@ -361,6 +362,10 @@ const categoriasGaleria = [
   receberEmailAniversario: true,
 })
 const [meusDadosMembro, setMeusDadosMembro] = useState(null)
+// Carteirinha válida do próprio membro (aba Meus dados)
+const [minhaCarteirinha, setMinhaCarteirinha] = useState(null)
+const [minhaCarteirinhaUrl, setMinhaCarteirinhaUrl] = useState('')
+const [abrindoCarteirinha, setAbrindoCarteirinha] = useState(false)
 const [enviandoFotoMeusDados, setEnviandoFotoMeusDados] = useState(false)
 
 const [meusDadosForm, setMeusDadosForm] = useState({
@@ -4010,6 +4015,56 @@ async function excluirAlbumGaleria(album) {
     console.error(error)
   }
 }
+async function carregarMinhaCarteirinha(membroId) {
+  try {
+    const snap = await getDocs(
+      query(collection(db, 'carteirinhas'), where('membroId', '==', membroId)),
+    )
+    const hoje = obterHojeISO()
+    const valida = snap.docs
+      .map((item) => ({ id: item.id, ...item.data() }))
+      .filter((c) => c.ativa !== false && (!c.validade || c.validade >= hoje))
+      .sort((a, b) => (b.numeroSeq || 0) - (a.numeroSeq || 0))[0]
+    setMinhaCarteirinha(valida || null)
+  } catch (error) {
+    setMinhaCarteirinha(null)
+    console.error('Erro ao buscar a carteirinha do membro.', error)
+  }
+}
+
+async function abrirMinhaCarteirinha() {
+  if (!minhaCarteirinha) return
+  setAbrindoCarteirinha(true)
+  try {
+    const pdf = await gerarPdfCarteirinhas(
+      [{
+        nome: minhaCarteirinha.nome,
+        foto: meusDadosMembro?.foto,
+        nascimento: meusDadosMembro?.nascimento,
+        funcao: minhaCarteirinha.funcao,
+        validade: minhaCarteirinha.validade,
+        emitidaEm: minhaCarteirinha.emitidaEm,
+        textoVerso: TEXTO_VERSO_PADRAO,
+        numero: minhaCarteirinha.numero,
+        codigo: minhaCarteirinha.id,
+      }],
+      { formato: 'cartao', incluirVerso: true },
+    )
+    if (minhaCarteirinhaUrl) URL.revokeObjectURL(minhaCarteirinhaUrl)
+    setMinhaCarteirinhaUrl(URL.createObjectURL(pdf.output('blob')))
+  } catch (error) {
+    console.error(error)
+    mostrarAviso('Não foi possível abrir a carteirinha.', 'erro')
+  } finally {
+    setAbrindoCarteirinha(false)
+  }
+}
+
+function fecharMinhaCarteirinha() {
+  if (minhaCarteirinhaUrl) URL.revokeObjectURL(minhaCarteirinhaUrl)
+  setMinhaCarteirinhaUrl('')
+}
+
 async function carregarMeuCadastroMembro() {
   if (!permissaoUsuario?.membroId) {
     setMeusDadosMembro(null)
@@ -4031,6 +4086,7 @@ async function carregarMeuCadastroMembro() {
     }
 
     setMeusDadosMembro(dados)
+    carregarMinhaCarteirinha(dados.id)
 
     setMeusDadosForm({
       nome: dados.nome || '',
@@ -5801,6 +5857,40 @@ function renderizarEnsino() {
     </section>
   )
 }
+function renderizarJanelaMinhaCarteirinha() {
+  if (!minhaCarteirinhaUrl || !minhaCarteirinha) return null
+  return (
+    <div className="finance-modal-backdrop" onClick={fecharMinhaCarteirinha}>
+      <section className="finance-modal-card my-card-modal" onClick={(event) => event.stopPropagation()}>
+        <div className="finance-modal-header">
+          <div>
+            <span className="admin-section-label">Carteirinha de membro</span>
+            <h2>{minhaCarteirinha.numero} · válida até {formatarData(minhaCarteirinha.validade)}</h2>
+          </div>
+          <button type="button" className="finance-modal-close" onClick={fecharMinhaCarteirinha}>
+            ×
+          </button>
+        </div>
+        <iframe
+          title="Minha carteirinha"
+          src={`${minhaCarteirinhaUrl}#toolbar=0&navpanes=0&view=Fit`}
+          className="my-card-frame"
+        />
+        <div className="my-card-actions">
+          <a
+            href={minhaCarteirinhaUrl}
+            download={`carteirinha-${minhaCarteirinha.numero}.pdf`}
+            className="my-card-download"
+          >
+            Baixar PDF
+          </a>
+          <small>A primeira página é a frente e a segunda é o verso.</small>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function renderizarMeusDados() {
   if (!permissaoUsuario?.membroId) {
     return (
@@ -5843,6 +5933,18 @@ function renderizarMeusDados() {
               igreja sempre correto.
             </p>
           </div>
+
+          {minhaCarteirinha && (
+            <button
+              type="button"
+              className="my-card-button"
+              onClick={abrirMinhaCarteirinha}
+              disabled={abrindoCarteirinha}
+            >
+              <span aria-hidden="true">🪪</span>
+              {abrindoCarteirinha ? 'Abrindo...' : 'Ver minha carteirinha'}
+            </button>
+          )}
 
           <div className="my-data-photo">
             {meusDadosForm.foto ? (
@@ -11500,6 +11602,7 @@ function formatarMoeda(valor) {
 {abaAtiva === 'meusDados' &&
   usuarioPodeAcessar('meusDados') &&
   renderizarMeusDados()}
+{abaAtiva === 'meusDados' && renderizarJanelaMinhaCarteirinha()}
       {abaAtiva === 'usuarios' &&
         usuarioPodeAcessar('usuarios') &&
         renderizarUsuariosPermissoes()}

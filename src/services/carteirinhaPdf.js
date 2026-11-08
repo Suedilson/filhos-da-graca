@@ -7,6 +7,9 @@ import QRCode from 'qrcode'
 
 export const CARTAO = { largura: 85.6, altura: 53.98 }
 
+export const TEXTO_VERSO_PADRAO =
+  'Esta credencial é pessoal e intransferível e identifica o portador como membro desta igreja. Em caso de perda, comunique a secretaria.'
+
 const IGREJA = {
   nome: 'Igreja Evangélica Filhos da Graça',
   cnpj: '69.860.065/0001-03',

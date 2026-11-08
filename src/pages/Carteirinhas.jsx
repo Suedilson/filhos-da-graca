@@ -8,11 +8,8 @@ import {
 } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import { mostrarAviso } from '../services/avisos'
-import { gerarPdfCarteirinhas } from '../services/carteirinhaPdf'
+import { gerarPdfCarteirinhas, TEXTO_VERSO_PADRAO } from '../services/carteirinhaPdf'
 import './Carteirinhas.css'
-
-const TEXTO_VERSO_PADRAO =
-  'Esta credencial é pessoal e intransferível e identifica o portador como membro desta igreja. Em caso de perda, comunique a secretaria.'
 
 const hojeISO = () => new Date().toISOString().slice(0, 10)
 

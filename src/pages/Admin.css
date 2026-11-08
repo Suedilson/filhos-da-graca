@@ -8037,3 +8037,53 @@ textarea {
   width: min(100%, 1180px);
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
+
+/* Meus dados: botão e janela da carteirinha */
+.my-card-button {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  width: auto !important;
+  align-self: center;
+  padding: 10px 18px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, #17105f, #3b2aa8) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  white-space: nowrap;
+}
+
+.my-card-modal {
+  width: min(760px, calc(100vw - 24px)) !important;
+}
+
+.my-card-frame {
+  width: 100%;
+  height: min(70vh, 560px);
+  border: 0;
+  border-radius: 14px;
+  background: #eef0f7;
+}
+
+.my-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-top: 12px;
+}
+
+.my-card-download {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: #6fbd2a;
+  color: #ffffff;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.my-card-actions small {
+  color: #60708a;
+}
