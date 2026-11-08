@@ -224,14 +224,14 @@ service cloud.firestore {
     // Carteirinhas: o QR code abre a verificação pública de um código (sem listar todas).
     match /carteirinhas/{codigo} {
       allow get: if true;
-      allow list: if hasPermission('membros') || adminProfile();
-      allow create: if (hasPermission('membros') || adminProfile()) &&
+      allow list: if hasPermission('carteirinhas') || adminProfile();
+      allow create: if (hasPermission('carteirinhas') || adminProfile()) &&
         request.resource.data.keys().hasOnly(['membroId', 'nome', 'funcao', 'numero', 'numeroSeq',
           'validade', 'emitidaEm', 'ativa', 'criadoEm']) &&
         request.resource.data.nome is string && request.resource.data.nome.size() <= 140 &&
         request.resource.data.funcao is string && request.resource.data.funcao.size() <= 60 &&
         request.resource.data.ativa == true;
-      allow update: if (hasPermission('membros') || adminProfile()) &&
+      allow update: if (hasPermission('carteirinhas') || adminProfile()) &&
         request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['ativa', 'canceladaEm', 'substituidaEm']) &&
         request.resource.data.ativa == false;

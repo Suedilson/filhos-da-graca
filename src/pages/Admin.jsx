@@ -102,6 +102,7 @@ const PERFIS_USUARIOS = {
 const PERMISSOES_POR_PERFIL = {
   admin: [
     'emailIgreja',
+    'carteirinhas',
     'louvor',
     'programacao',
     'ensino',
@@ -5987,6 +5988,7 @@ function renderizarUsuariosPermissoes() {
     { id: 'emailIgreja', nome: 'E-mail da igreja' },
     { id: 'galeria', nome: 'Galeria' },
     { id: 'membros', nome: 'Membros' },
+    { id: 'carteirinhas', nome: 'Carteirinhas de membro (requer Membros)' },
     { id: 'localizacao', nome: 'Localização' },
     { id: 'usuarios', nome: 'Permissões' },
     { id: 'meusDados', nome: 'Meus dados' },
@@ -10446,17 +10448,19 @@ function formatarMoeda(valor) {
     Aniversariantes
   </button>
 
-  <button
-    type="button"
-    className={modoMembros === 'carteirinhas' ? 'active' : ''}
-    onClick={() => {
-      cancelarEdicaoMembro()
-      setModoMembros('carteirinhas')
-    }}
-  >
-    <span>🪪</span>
-    Carteirinhas
-  </button>
+  {usuarioPodeAcessar('carteirinhas') && (
+    <button
+      type="button"
+      className={modoMembros === 'carteirinhas' ? 'active' : ''}
+      onClick={() => {
+        cancelarEdicaoMembro()
+        setModoMembros('carteirinhas')
+      }}
+    >
+      <span>🪪</span>
+      Carteirinhas
+    </button>
+  )}
 
   {isPerfilAdministrador && (
     <button
@@ -11055,7 +11059,15 @@ function formatarMoeda(valor) {
                       </div>
           </section>
 
-          {modoMembros === 'carteirinhas' && <Carteirinhas membros={membros} />}
+          {modoMembros === 'carteirinhas' &&
+            (usuarioPodeAcessar('carteirinhas') ? (
+              <Carteirinhas membros={membros} />
+            ) : (
+              <section className="admin-card">
+                <h2>Sem acesso às carteirinhas</h2>
+                <p>Peça a um administrador para liberar a permissão “Carteirinhas de membro”.</p>
+              </section>
+            ))}
 
           {modoMembros === 'boasVindas' && isPerfilAdministrador && (
             <section className="admin-card member-welcome-card">
