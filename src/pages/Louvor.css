@@ -939,3 +939,16 @@
   background: #fdecec;
   border-color: #e5a9a9;
 }
+
+/* Voltar do editor para a tela da escala */
+.worship-back {
+  justify-self: start;
+  width: auto !important;
+  padding: 9px 16px !important;
+  border-radius: 12px !important;
+  background: #f1efff !important;
+  color: #17105f !important;
+  font-weight: 800 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}

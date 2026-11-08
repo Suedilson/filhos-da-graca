@@ -5,6 +5,7 @@ import './Louvor.css'
 import BuscarLouvor from './BuscarLouvor'
 import BuscarCifra from './BuscarCifra'
 import { formatarCifra } from '../services/formatoCifra.js'
+import LouvorPainel from './LouvorPainel'
 
 const novaMusica = () => ({ titulo: '', autor: '', letra: '', tom: '', notas: '', ministros: '', ativo: true })
 const novaEscala = () => ({ titulo: '', data: '', horario: '', ministro: '', observacoes: '', status: 'Confirmada', equipe: [{ nome: '', funcao: '' }], repertorio: [] })
@@ -22,6 +23,8 @@ function partesData(data) {
 const classeStatus = (status) => `worship-status status-${String(status || '').toLowerCase()}`
 
 export default function Louvor({ user }) {
+  // 'painel' = escala e repertório (tela inicial); 'editor' = cadastro de escalas e músicas
+  const [modo, setModo] = useState('painel')
   const [aba, setAba] = useState('escalas')
   const [musicas, setMusicas] = useState([])
   const [escalas, setEscalas] = useState([])
@@ -118,6 +121,7 @@ export default function Louvor({ user }) {
       setEscala(novaEscala()); setEscalaId(null); setVersao(0); setNoite(novaNoite())
       await carregar()
       setMensagem(comNoite ? 'Escalas da manhã e da noite salvas e registradas no histórico.' : 'Escala salva e registrada no histórico.')
+      setModo('painel')
     } catch (error) {
       console.error(error)
       setErro(error.message === 'CONFLITO' ? 'Esta escala foi alterada por outra pessoa. Atualize a lista e abra a escala novamente.' : 'Não foi possível salvar a escala.')
@@ -137,6 +141,35 @@ export default function Louvor({ user }) {
       console.error(error)
       setErro(error.code === 'permission-denied' ? 'Só quem tem a permissão Louvor marcada pode excluir escalas.' : 'Não foi possível excluir a escala.')
     } finally { setSalvando(false) }
+  }
+
+  async function salvarOrdemRepertorio(item, repertorio) {
+    setSalvando(true); setErro(''); setMensagem('')
+    try {
+      const ref = doc(db, 'louvorEscalas', item.id)
+      await runTransaction(db, async (transaction) => {
+        const atual = await transaction.get(ref)
+        if (!atual.exists() || (atual.data().versao || 0) !== (item.versao || 0)) throw new Error('CONFLITO')
+        const dados = { ...atual.data(), repertorio, versao: (item.versao || 0) + 1,
+          atualizadoEm: serverTimestamp(), atualizadoPor: user.uid, responsavel: user.email || user.uid }
+        transaction.set(ref, dados)
+        transaction.set(doc(ref, 'historico', String(dados.versao)), dados)
+      })
+      await carregar()
+      setMensagem('Nova ordem do repertório salva.')
+      return true
+    } catch (error) {
+      console.error(error)
+      setErro(error.message === 'CONFLITO'
+        ? 'Esta escala foi alterada por outra pessoa. Atualize e tente de novo.'
+        : 'Não foi possível salvar a nova ordem.')
+      return false
+    } finally { setSalvando(false) }
+  }
+
+  function abrirEditor(abaEditor) {
+    setAba(abaEditor); setBusca(''); setErro(''); setMensagem(''); setModo('editor')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function abrirHistorico(item) {
@@ -208,7 +241,25 @@ export default function Louvor({ user }) {
   const proximas = escalas.filter((e) => e.data >= hoje() && e.status !== 'Cancelada').length
   const ativos = musicas.filter((m) => m.ativo).length
 
+  if (modo === 'painel') {
+    return <>
+      {erro && <p role="alert" className="worship-banner worship-banner-erro">{erro}</p>}
+      {mensagem && <p role="status" className="worship-banner worship-banner-ok">{mensagem}</p>}
+      <LouvorPainel
+        escalas={escalas}
+        musicas={musicas}
+        carregando={carregando}
+        salvando={salvando}
+        onIncluirEscala={() => { setEscala(novaEscala()); setEscalaId(null); setVersao(0); setNoite(novaNoite()); abrirEditor('escalas') }}
+        onEditarEscala={(item) => { editarEscala(item); abrirEditor('escalas') }}
+        onAbrirMusicas={() => abrirEditor('louvores')}
+        onSalvarOrdem={salvarOrdemRepertorio}
+      />
+    </>
+  }
+
   return <section className="worship-area">
+    <button type="button" className="worship-back" onClick={() => { setModo('painel'); setErro(''); setMensagem('') }}>‹ Voltar para a escala</button>
     <header className="worship-hero">
       <div className="worship-hero-text">
         <span className="worship-eyebrow">Ministério de louvor</span>

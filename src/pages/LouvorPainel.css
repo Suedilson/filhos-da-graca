@@ -1,0 +1,774 @@
+/* Louvor – tela inicial (escala + repertório) e leitor de letra/cifra */
+.lv {
+  --lv-ink: #17105f;
+  --lv-text: #2b2f4a;
+  --lv-muted: #60708a;
+  --lv-line: rgba(23, 16, 95, 0.09);
+  --lv-green: #6fbd2a;
+  --lv-chord: #e8590c;
+  display: grid;
+  gap: 14px;
+  color: var(--lv-text);
+}
+
+.lv *,
+.lv *::before,
+.lv *::after {
+  box-sizing: border-box;
+}
+
+.lv button {
+  width: auto;
+  min-height: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.lv button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Cabeçalho */
+.lv-hero {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 22px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(111, 189, 42, 0.35), transparent 40%),
+    linear-gradient(135deg, #120c4a 0%, #2a1d8f 60%, #4a35c9 100%);
+  color: #ffffff;
+  box-shadow: 0 18px 40px rgba(23, 16, 95, 0.25);
+  overflow: hidden;
+}
+
+.lv-eyebrow {
+  color: #a7e06d;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.lv-hero h2 {
+  margin: 4px 0 0;
+  color: #ffffff;
+  font-size: clamp(1.4rem, 4vw, 1.9rem);
+}
+
+.lv-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lv-btn-primary,
+.lv-btn-glass,
+.lv-btn-ghost,
+.lv-btn-soft {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 18px !important;
+  border-radius: 14px !important;
+  font-size: 0.92rem !important;
+  font-weight: 800 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.lv-btn-primary {
+  background: var(--lv-green) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 22px rgba(111, 189, 42, 0.35) !important;
+}
+
+.lv-btn-glass {
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.lv-btn-ghost {
+  background: #f1efff !important;
+  color: var(--lv-ink) !important;
+}
+
+.lv-btn-soft {
+  padding: 8px 14px !important;
+  background: #fff1e6 !important;
+  color: var(--lv-chord) !important;
+}
+
+/* Próximas / anteriores */
+.lv-switch {
+  display: inline-flex;
+  justify-self: start;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #ebe8f7;
+}
+
+.lv-switch button {
+  padding: 8px 18px !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--lv-muted) !important;
+  font-weight: 800 !important;
+  font-size: 0.86rem !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.lv-switch button.on {
+  background: #ffffff !important;
+  color: var(--lv-ink) !important;
+  box-shadow: 0 4px 12px rgba(23, 16, 95, 0.12) !important;
+}
+
+/* Datas (carrossel) */
+.lv-dates {
+  display: flex;
+  gap: 8px;
+  padding: 2px 2px 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lv-date {
+  flex: 0 0 74px;
+  display: grid !important;
+  justify-items: center;
+  gap: 1px;
+  padding: 10px 6px !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  border: 1px solid var(--lv-line) !important;
+  color: var(--lv-ink) !important;
+  scroll-snap-align: start;
+  box-shadow: 0 6px 16px rgba(23, 16, 95, 0.06) !important;
+}
+
+.lv-date small {
+  color: var(--lv-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.lv-date strong {
+  font-size: 1.45rem;
+  line-height: 1.1;
+}
+
+.lv-date span {
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.lv-date em {
+  margin-top: 2px;
+  color: var(--lv-muted);
+  font-size: 0.7rem;
+  font-style: normal;
+}
+
+.lv-date.on {
+  background: linear-gradient(160deg, #17105f, #3b2aa8) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 22px rgba(23, 16, 95, 0.3) !important;
+}
+
+.lv-date.on small,
+.lv-date.on em {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Cartão da escala */
+.lv-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid var(--lv-line);
+  box-shadow: 0 14px 34px rgba(23, 16, 95, 0.08);
+}
+
+.lv-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.lv-card-date {
+  flex: 0 0 56px;
+  display: grid;
+  justify-items: center;
+  padding: 8px 0;
+  border-radius: 14px;
+  background: #f1efff;
+  color: var(--lv-ink);
+}
+
+.lv-card-date strong {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.lv-card-date span {
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.lv-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lv-card-info small {
+  color: var(--lv-muted);
+  font-weight: 700;
+}
+
+.lv-card-info h3 {
+  margin: 2px 0 4px;
+  color: var(--lv-ink);
+  font-size: 1.15rem;
+  line-height: 1.25;
+}
+
+.lv-card-info p {
+  margin: 0;
+  color: var(--lv-text);
+  font-size: 0.9rem;
+}
+
+.lv-status {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e8f5e9;
+  color: #1a7f37;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.lv-status-rascunho {
+  background: #fff4e5;
+  color: #9a6400;
+}
+
+.lv-status-cancelada {
+  background: #fdecea;
+  color: #c62828;
+}
+
+.lv-status-realizada {
+  background: #eef0f4;
+  color: var(--lv-muted);
+}
+
+.lv-team {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lv-team li {
+  display: grid;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: #f7f8fc;
+  border: 1px solid var(--lv-line);
+}
+
+.lv-team strong {
+  color: var(--lv-ink);
+  font-size: 0.84rem;
+}
+
+.lv-team span {
+  color: var(--lv-muted);
+  font-size: 0.74rem;
+}
+
+.lv-notes {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fffbea;
+  color: #6b5200;
+  font-size: 0.86rem;
+  white-space: pre-line;
+}
+
+.lv-set-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid var(--lv-line);
+}
+
+.lv-set-head h4 {
+  margin: 10px 0 0;
+  color: var(--lv-ink);
+  font-size: 1rem;
+}
+
+.lv-set-head h4 span {
+  margin-left: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #f1efff;
+  font-size: 0.78rem;
+}
+
+.lv-set-head .lv-btn-soft {
+  margin-top: 10px;
+}
+
+/* Lista de louvores */
+.lv-set {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lv-song {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'order num info key'
+    'order num actions actions';
+  align-items: center;
+  gap: 4px 10px;
+  padding: 10px 12px 10px 6px;
+  border-radius: 16px;
+  background: #f9f9fd;
+  border: 1px solid var(--lv-line);
+}
+
+.lv-order {
+  grid-area: order;
+  display: grid;
+  gap: 2px;
+}
+
+.lv-order button {
+  width: 30px !important;
+  height: 26px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--lv-muted) !important;
+  font-size: 0.7rem !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.lv-order button:not(:disabled):active,
+.lv-order button:not(:disabled):hover {
+  background: #ebe8ff !important;
+  color: var(--lv-ink) !important;
+}
+
+.lv-num {
+  grid-area: num;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--lv-ink);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.lv-song-info {
+  grid-area: info;
+  display: grid;
+  min-width: 0;
+}
+
+.lv-song-info strong {
+  overflow: hidden;
+  color: var(--lv-ink);
+  font-size: 0.96rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lv-song-info small {
+  overflow: hidden;
+  color: var(--lv-muted);
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lv-key {
+  grid-area: key;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: #fff1e6;
+  color: var(--lv-chord);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.lv-song-actions {
+  grid-area: actions;
+  display: flex;
+  gap: 6px;
+}
+
+.lv-song-actions button {
+  padding: 7px 14px !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: var(--lv-ink) !important;
+  border: 1px solid rgba(23, 16, 95, 0.15) !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+}
+
+.lv-song-actions .lv-chords-btn {
+  background: var(--lv-chord) !important;
+  border-color: var(--lv-chord) !important;
+  color: #ffffff !important;
+}
+
+.lv-save-order {
+  position: sticky;
+  bottom: 10px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(111, 189, 42, 0.5);
+  box-shadow: 0 12px 30px rgba(23, 16, 95, 0.18);
+}
+
+.lv-save-order span {
+  margin-right: auto;
+  color: var(--lv-ink);
+  font-weight: 800;
+}
+
+.lv-card-foot {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.lv-empty-card {
+  display: grid;
+  gap: 4px;
+  padding: 26px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px dashed rgba(23, 16, 95, 0.2);
+  color: var(--lv-muted);
+  text-align: center;
+}
+
+.lv-empty-card strong {
+  color: var(--lv-ink);
+}
+
+.lv-empty-inline,
+.lv-empty {
+  color: var(--lv-muted);
+}
+
+/* ---------------- Leitor (tela cheia) ---------------- */
+.lv-reader {
+  position: fixed;
+  inset: 0;
+  z-index: 10040;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  background: #ffffff;
+  color: #1f2333;
+}
+
+.lv-reader-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: max(10px, env(safe-area-inset-top)) 14px 10px;
+  background: linear-gradient(135deg, #120c4a, #3b2aa8);
+  color: #ffffff;
+}
+
+.lv-icon-btn {
+  flex: 0 0 auto;
+  display: grid !important;
+  place-items: center;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  font-size: 1.6rem !important;
+  line-height: 1 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.lv-reader-title {
+  flex: 1;
+  display: grid;
+  min-width: 0;
+}
+
+.lv-reader-title small {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.lv-reader-title h2 {
+  margin: 1px 0;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 1.12rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lv-reader-title span {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8rem;
+}
+
+.lv-key-big {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #e8590c;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.lv-reader-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  background: #f6f5fb;
+  border-bottom: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.lv-reader-tools button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.lv-seg,
+.lv-tool {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(23, 16, 95, 0.1);
+}
+
+.lv-seg button,
+.lv-tool button,
+.lv-scroll {
+  width: auto !important;
+  min-height: 34px !important;
+  padding: 6px 12px !important;
+  border-radius: 9px !important;
+  background: transparent !important;
+  color: #17105f !important;
+  font-size: 0.86rem !important;
+  font-weight: 800 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+}
+
+.lv-seg button.on {
+  background: #17105f !important;
+  color: #ffffff !important;
+}
+
+.lv-tool span {
+  padding: 0 4px;
+  color: #60708a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.lv-scroll {
+  flex: 0 0 auto;
+  background: #ffffff !important;
+  border: 1px solid rgba(23, 16, 95, 0.1) !important;
+}
+
+.lv-scroll.on {
+  background: #e8590c !important;
+  color: #ffffff !important;
+}
+
+.lv-reader-body {
+  overflow: auto;
+  padding: 16px 12px 28px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lv-lyrics {
+  max-width: 720px;
+  margin: 0 auto;
+  font-size: 1.05em;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+.lv-sheet {
+  max-width: 900px;
+  margin: 0 auto;
+  font-family: 'Roboto Mono', 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 1em;
+  line-height: 1.55;
+  white-space: pre;
+  color: #1f2333;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.lv-line {
+  display: inline;
+}
+
+.lv-chord {
+  color: #e8590c;
+  font-weight: 800;
+}
+
+.lv-section {
+  color: #17105f;
+  font-weight: 800;
+}
+
+.lv-tab {
+  color: #60708a;
+}
+
+.lv-reader-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px 12px max(10px, env(safe-area-inset-bottom));
+  background: #ffffff;
+  border-top: 1px solid rgba(23, 16, 95, 0.1);
+  box-shadow: 0 -8px 20px rgba(23, 16, 95, 0.06);
+}
+
+.lv-reader-nav button {
+  display: grid !important;
+  gap: 1px;
+  width: 100% !important;
+  min-height: 52px !important;
+  padding: 8px 12px !important;
+  border-radius: 14px !important;
+  background: #f1efff !important;
+  color: #17105f !important;
+  text-align: left;
+  border: 0 !important;
+  box-shadow: none !important;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.lv-reader-nav button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.lv-reader-nav .lv-next {
+  background: #17105f !important;
+  color: #ffffff !important;
+  text-align: right;
+}
+
+.lv-reader-nav span {
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.lv-reader-nav small {
+  overflow: hidden;
+  font-size: 0.74rem;
+  opacity: 0.75;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 900px) {
+  .lv-song {
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas: 'order num info key actions';
+  }
+
+  .lv-reader-body {
+    padding: 28px 32px 40px;
+  }
+}
+
+@media (max-width: 560px) {
+  .lv-hero {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .lv-hero-actions {
+    width: 100%;
+  }
+
+  .lv-hero-actions button {
+    flex: 1;
+  }
+
+  .lv-card {
+    padding: 14px;
+    border-radius: 20px;
+  }
+
+  .lv-song-actions button {
+    flex: 1;
+  }
+}
