@@ -55,7 +55,7 @@ import FinanceiroDashboard from './FinanceiroDashboard'
 const ADMIN_EMAILS = ['suedilsonfilho@gmail.com']
 // Caixa de e-mail @filhosdagraca.com.br (Zoho Mail). O botão só aparece para quem tem a
 // permissão "E-mail da igreja"; o login no Zoho continua pedindo a senha do e-mail.
-const ENDERECO_EMAIL_IGREJA = 'https://mail.zoho.com'
+const ENDERECO_EMAIL_IGREJA = 'https://mail.zoho.com/zm/#mail/folder/inbox'
 
 // Evita que o Excel interprete como fórmula um texto que começa com =, +, - ou @.
 function campoCsv(valor) {
