@@ -366,6 +366,8 @@ const [meusDadosMembro, setMeusDadosMembro] = useState(null)
 const [minhaCarteirinha, setMinhaCarteirinha] = useState(null)
 const [minhaCarteirinhaUrl, setMinhaCarteirinhaUrl] = useState('')
 const [abrindoCarteirinha, setAbrindoCarteirinha] = useState(false)
+// Meus dados abre só para ver; o formulário aparece ao tocar em "Editar"
+const [editandoMeusDados, setEditandoMeusDados] = useState(false)
 const [enviandoFotoMeusDados, setEnviandoFotoMeusDados] = useState(false)
 
 const [meusDadosForm, setMeusDadosForm] = useState({
@@ -4215,6 +4217,7 @@ async function salvarMeusDados(event) {
     await carregarMeuCadastroMembro()
 
     mostrarAviso('Seus dados foram atualizados com sucesso!')
+    setEditandoMeusDados(false)
   } catch (error) {
     mostrarAviso('Erro ao salvar seus dados.')
     console.error(error)
@@ -5891,6 +5894,175 @@ function renderizarJanelaMinhaCarteirinha() {
   )
 }
 
+function cancelarEdicaoMeusDados() {
+  const dados = meusDadosMembro || {}
+  setMeusDadosForm((atual) => ({
+    ...atual,
+    nome: dados.nome || '',
+    telefone: dados.telefone || '',
+    nascimento: dados.nascimento || '',
+    endereco: dados.endereco || '',
+    ministerio: dados.ministerio || '',
+    foto: dados.foto || '',
+    fotoPublicId: dados.fotoPublicId || '',
+    observacoes: dados.observacoes || '',
+  }))
+  setEditandoMeusDados(false)
+}
+
+function diasParaAniversario(nascimento) {
+  if (!nascimento) return null
+  const [, mes, dia] = nascimento.split('-').map(Number)
+  if (!mes || !dia) return null
+  const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
+  let proximo = new Date(hoje.getFullYear(), mes - 1, dia)
+  if (proximo < hoje) proximo = new Date(hoje.getFullYear() + 1, mes - 1, dia)
+  return Math.round((proximo - hoje) / 86400000)
+}
+
+function linkWhatsApp(telefone) {
+  const numero = String(telefone || '').replace(/\D/g, '').replace(/^55/, '')
+  return numero.length >= 10 ? `https://wa.me/55${numero}` : ''
+}
+
+function renderizarPerfilMeusDados() {
+  const dados = meusDadosMembro || {}
+  const idade = dados.nascimento ? calcularIdade(dados.nascimento) : null
+  const dias = diasParaAniversario(dados.nascimento)
+  const email = dados.email || user?.email || ''
+  const ativo = (dados.status || 'Ativo') !== 'Inativo'
+  const whatsapp = linkWhatsApp(dados.telefone)
+  const valor = (texto) =>
+    texto ? <strong>{texto}</strong> : <strong className="md-empty">Não informado</strong>
+
+  return (
+    <section className="md">
+      <div className="md-hero">
+        <div className="md-photo">
+          {dados.foto ? (
+            <img src={dados.foto} alt={dados.nome || 'Minha foto'} />
+          ) : (
+            <span>{obterIniciais(dados.nome) || '?'}</span>
+          )}
+        </div>
+        <div className="md-hero-text">
+          <span className="md-eyebrow">Meu cadastro</span>
+          <h2>{dados.nome || 'Membro'}</h2>
+          <div className="md-chips">
+            <span className={`md-chip ${ativo ? 'md-chip-ok' : 'md-chip-off'}`}>
+              {ativo ? '● ' : '○ '}
+              {dados.status || 'Ativo'}
+            </span>
+            {dados.ministerio && <span className="md-chip">⛪ {dados.ministerio}</span>}
+            {idade !== null && <span className="md-chip">{idade} anos</span>}
+          </div>
+        </div>
+      </div>
+
+      <div className="md-actions">
+        <button type="button" className="md-edit" onClick={() => setEditandoMeusDados(true)}>
+          <span aria-hidden="true">✏️</span>
+          Editar meus dados
+        </button>
+        {minhaCarteirinha && (
+          <button
+            type="button"
+            className="md-card"
+            onClick={abrirMinhaCarteirinha}
+            disabled={abrindoCarteirinha}
+          >
+            <span aria-hidden="true">🪪</span>
+            {abrindoCarteirinha ? 'Abrindo...' : 'Ver minha carteirinha'}
+          </button>
+        )}
+      </div>
+
+      {dias !== null && (
+        <div className="md-birthday">
+          <span aria-hidden="true">🎂</span>
+          {dias === 0
+            ? 'Hoje é o seu aniversário! Feliz aniversário!'
+            : dias === 1
+              ? 'Seu aniversário é amanhã!'
+              : `Faltam ${dias} dias para o seu aniversário (${formatarData(dados.nascimento).slice(0, 5)}).`}
+        </div>
+      )}
+
+      <div className="md-sections">
+        <section className="md-section">
+          <h3>Contato</h3>
+          <ul>
+            <li>
+              <span className="md-icon" aria-hidden="true">📞</span>
+              <div>
+                <small>Telefone</small>
+                {valor(dados.telefone)}
+              </div>
+              {whatsapp && (
+                <a className="md-link" href={whatsapp} target="_blank" rel="noreferrer">
+                  WhatsApp
+                </a>
+              )}
+            </li>
+            <li>
+              <span className="md-icon" aria-hidden="true">✉️</span>
+              <div>
+                <small>E-mail</small>
+                {valor(email)}
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        <section className="md-section">
+          <h3>Dados pessoais</h3>
+          <ul>
+            <li>
+              <span className="md-icon" aria-hidden="true">🎂</span>
+              <div>
+                <small>Data de nascimento</small>
+                {valor(dados.nascimento ? formatarData(dados.nascimento) : '')}
+              </div>
+            </li>
+            <li>
+              <span className="md-icon" aria-hidden="true">⛪</span>
+              <div>
+                <small>Ministério</small>
+                {valor(dados.ministerio)}
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        <section className="md-section md-section-wide">
+          <h3>Endereço</h3>
+          <ul>
+            <li>
+              <span className="md-icon" aria-hidden="true">📍</span>
+              <div>
+                <small>Onde moro</small>
+                {valor(dados.endereco)}
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        {dados.observacoes && (
+          <section className="md-section md-section-wide">
+            <h3>Observações para a secretaria</h3>
+            <p className="md-note">{dados.observacoes}</p>
+          </section>
+        )}
+      </div>
+
+      <p className="md-hint">
+        Mantenha seus dados atualizados. Eles são usados pela secretaria, nos e-mails de aniversário e na sua carteirinha.
+      </p>
+    </section>
+  )
+}
+
 function renderizarMeusDados() {
   if (!permissaoUsuario?.membroId) {
     return (
@@ -5919,6 +6091,10 @@ function renderizarMeusDados() {
     )
   }
 
+  if (!editandoMeusDados) {
+    return renderizarPerfilMeusDados()
+  }
+
   return (
     <section className="my-data-area">
       <form className="admin-card my-data-form" onSubmit={salvarMeusDados}>
@@ -5926,25 +6102,13 @@ function renderizarMeusDados() {
           <div>
             <span className="admin-section-label">Meus dados</span>
 
-            <h2>Meu cadastro</h2>
+            <h2>Editar meu cadastro</h2>
 
             <p>
               Atualize suas informações de contato para manter o cadastro da
               igreja sempre correto.
             </p>
           </div>
-
-          {minhaCarteirinha && (
-            <button
-              type="button"
-              className="my-card-button"
-              onClick={abrirMinhaCarteirinha}
-              disabled={abrindoCarteirinha}
-            >
-              <span aria-hidden="true">🪪</span>
-              {abrindoCarteirinha ? 'Abrindo...' : 'Ver minha carteirinha'}
-            </button>
-          )}
 
           <div className="my-data-photo">
             {meusDadosForm.foto ? (
@@ -6069,9 +6233,14 @@ function renderizarMeusDados() {
           </article>
         </div>
 
-        <button type="submit" disabled={loading || enviandoFotoMeusDados}>
-          {loading ? 'Salvando...' : 'Salvar meus dados'}
-        </button>
+        <div className="md-form-actions">
+          <button type="submit" disabled={loading || enviandoFotoMeusDados}>
+            {loading ? 'Salvando...' : 'Salvar meus dados'}
+          </button>
+          <button type="button" className="cancel-button" onClick={cancelarEdicaoMeusDados}>
+            Cancelar
+          </button>
+        </div>
       </form>
     </section>
   )
