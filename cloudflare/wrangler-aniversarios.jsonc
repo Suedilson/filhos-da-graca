@@ -10,7 +10,7 @@
   "triggers": { "crons": ["0 11 * * *", "0 14 * * *", "0 6 * * *"] },
   "vars": {
     "FIREBASE_PROJECT": "filhos-da-graca",
-    "REMETENTE": "Igreja Filhos da Graça <contato@filhosdagraca.com.br>"
+    "REMETENTE": "Igreja Filhos da Graça <igreja@filhosdagraca.com.br>"
   },
   "observability": { "enabled": true }
 }
