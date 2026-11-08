@@ -3,8 +3,9 @@
 // a mesma da tela Financeiro → Conciliação.
 //
 // Segredos (wrangler secret put): PLUGGY_CLIENT_ID, PLUGGY_CLIENT_SECRET e PLUGGY_ITEM_IDS
-// (ids das conexões do Meu Pluggy, separados por vírgula).
-// Cada conta da Pluggy é ligada à conta do site pelo nome do banco (ex.: "Cora" → conta "Cora").
+// (ids das conexões do Meu Pluggy, separados por vírgula). Para dizer a qual conta do site
+// cada conexão pertence, escreva o nome depois de dois-pontos: "id-da-cora:Cora,id-da-stone:Stone".
+// Sem o nome, a ligação é feita pelo nome do banco que aparece na conta (ex.: "Cora" → conta "Cora").
 
 import { tokenGoogle, urlFirestore } from './google.js'
 
@@ -113,6 +114,10 @@ function contaCorrespondente(contasSite, nomeConector, nomeConta) {
 
 export async function sincronizarBancos(env) {
   const itens = String(env.PLUGGY_ITEM_IDS || '').split(',').map((s) => s.trim()).filter(Boolean)
+    .map((s) => {
+      const [id, ...rotulo] = s.split(':')
+      return { id: id.trim(), rotulo: rotulo.join(':').trim() }
+    })
   if (!env.PLUGGY_CLIENT_ID || !env.PLUGGY_CLIENT_SECRET || !itens.length) {
     return { configurado: false, mensagem: 'Sincronização automática ainda não configurada (faltam as chaves da Pluggy).' }
   }
@@ -121,15 +126,23 @@ export async function sincronizarBancos(env) {
   const contasSite = await contasDoSite(env, token)
   const resumo = []
 
-  for (const itemId of itens) {
+  for (const { id: itemId, rotulo } of itens) {
     const item = await pluggyGet(chave, `/items/${itemId}`)
     const conector = item.connector?.name || itemId
     const contas = ((await pluggyGet(chave, '/accounts', { itemId })).results || []).filter((a) => a.type === 'BANK')
 
     for (const conta of contas) {
-      const destino = contaCorrespondente(contasSite, conector, conta.marketingName || conta.name)
+      const destino = rotulo
+        ? contasSite.find((c) => c.ativo && normal(c.nome) === normal(rotulo))
+        : contaCorrespondente(contasSite, conector, conta.marketingName || conta.name)
       if (!destino) {
-        resumo.push({ banco: conector, conta: conta.name, erro: 'Sem conta correspondente no site (cadastre uma conta com o nome do banco).' })
+        resumo.push({
+          banco: rotulo || conector,
+          conta: conta.marketingName || conta.name,
+          erro: rotulo
+            ? `Não existe conta "${rotulo}" em Contas bancárias do site.`
+            : 'Não deu para saber de qual conta é. Use "id:Cora" ou "id:Stone" em PLUGGY_ITEM_IDS.',
+        })
         continue
       }
 
@@ -186,7 +199,7 @@ export async function sincronizarBancos(env) {
       })
 
       await gravar(env, token, writes)
-      resumo.push({ banco: conector, conta: destino.nome, novos: writes.length - 1, jaPorArquivo, saldo: Number(conta.balance || 0) })
+      resumo.push({ banco: rotulo || conector, conta: destino.nome, novos: writes.length - 1, jaPorArquivo, saldo: Number(conta.balance || 0) })
     }
   }
 

@@ -39,7 +39,7 @@ test('Bancos: busca na Pluggy, liga à conta do site, não duplica e respeita pe
 
   const bundle = buildSync({ entryPoints: [path.resolve(__dirname, '../cloudflare/aniversarios.js')], bundle: true, write: false, format: 'esm', platform: 'browser' }).outputFiles[0].text
   const mf = new Miniflare(convertV4MiniflareOptions({ workers: [{ modules: true, script: bundle, compatibilityDate: '2026-11-02',
-    bindings: { FIREBASE_PROJECT: 'filhos-da-graca', FIREBASE_SERVICE_ACCOUNT: contaServico, PLUGGY_CLIENT_ID: 'id', PLUGGY_CLIENT_SECRET: 'segredo', PLUGGY_ITEM_IDS: 'itemCora,itemStone' },
+    bindings: { FIREBASE_PROJECT: 'filhos-da-graca', FIREBASE_SERVICE_ACCOUNT: contaServico, PLUGGY_CLIENT_ID: 'id', PLUGGY_CLIENT_SECRET: 'segredo', PLUGGY_ITEM_IDS: 'itemCora, itemStone:Stone' },
     outboundService: async (request) => {
       const url = new URL(request.url)
       if (url.hostname === 'www.googleapis.com') return Response.json({ keys: [jwk] })
@@ -48,12 +48,12 @@ test('Bancos: busca na Pluggy, liga à conta do site, não duplica e respeita pe
         chamadasPluggy.push(url.pathname)
         if (url.pathname === '/auth') return Response.json({ apiKey: 'chave' })
         if (url.pathname === '/items/itemCora') return Response.json({ id: 'itemCora', connector: { name: 'Cora PJ' } })
-        if (url.pathname === '/items/itemStone') return Response.json({ id: 'itemStone', connector: { name: 'Stone' } })
+        if (url.pathname === '/items/itemStone') return Response.json({ id: 'itemStone', connector: { name: 'MeuPluggy' } })
         if (url.pathname === '/accounts') {
           const item = url.searchParams.get('itemId')
           return Response.json({ results: item === 'itemCora'
             ? [{ id: 'accC', type: 'BANK', name: 'Conta corrente', balance: 1063.52 }, { id: 'cartao', type: 'CREDIT', name: 'Cartão' }]
-            : [{ id: 'accS', type: 'BANK', name: 'Conta Stone', balance: 80 }] })
+            : [{ id: 'accS', type: 'BANK', name: 'Conta de pagamento', balance: 80 }] })
         }
         if (url.pathname === '/v2/transactions') return Response.json({ results: transacoesPluggy[url.searchParams.get('accountId')] || [], next: null })
       }
