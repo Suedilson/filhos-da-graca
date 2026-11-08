@@ -386,6 +386,21 @@ service cloud.firestore {
       allow read, write: if hasPermission('financeiro');
     }
 
+    // Extrato importado dos bancos (conciliação bancária)
+    match /extratoBancario/{id} {
+      allow read, write: if hasPermission('financeiro');
+    }
+
+    match /extratoSaldos/{id} {
+      allow read, write: if hasPermission('financeiro');
+    }
+
+    // Resultado da última sincronização automática dos bancos (gravado pelo Worker)
+    match /configuracoes/sincronizacaoBancos {
+      allow read: if hasPermission('financeiro');
+      allow write: if false;
+    }
+
     match /aprovisionamentos/{id} {
       allow read, write: if hasPermission('financeiro');
     }

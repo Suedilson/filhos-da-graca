@@ -1,0 +1,374 @@
+.cc {
+  display: grid;
+  gap: 14px;
+  color: #2b2f4a;
+}
+
+.cc *,
+.cc *::before,
+.cc *::after {
+  box-sizing: border-box;
+}
+
+.cc button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.cc button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.cc-head h2 {
+  margin: 4px 0 4px;
+  color: #17105f;
+}
+
+.cc-head p {
+  margin: 0;
+  color: #60708a;
+}
+
+.cc-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cc-accounts,
+.cc-filter {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: #ebe8f7;
+}
+
+.cc-accounts button,
+.cc-filter button {
+  width: auto !important;
+  min-height: 0 !important;
+  padding: 9px 16px !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: #60708a !important;
+  font-weight: 800 !important;
+  font-size: 0.88rem !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.cc-accounts button.on,
+.cc-filter button.on {
+  background: #ffffff !important;
+  color: #17105f !important;
+  box-shadow: 0 4px 12px rgba(23, 16, 95, 0.12) !important;
+}
+
+.cc-upload {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 18px;
+  border-radius: 12px;
+  background: #6fbd2a;
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(111, 189, 42, 0.3);
+}
+
+.cc-upload.busy {
+  opacity: 0.7;
+}
+
+.cc-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.cc-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.cc-summary article {
+  display: grid;
+  gap: 3px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(23, 16, 95, 0.08);
+  box-shadow: 0 8px 22px rgba(23, 16, 95, 0.05);
+}
+
+.cc-summary span {
+  color: #60708a;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.cc-summary strong {
+  color: #17105f;
+  font-size: 1.2rem;
+}
+
+.cc-summary small {
+  color: #60708a;
+  font-size: 0.74rem;
+}
+
+.cc-summary .cc-alert {
+  background: #fff4f2;
+  border-color: rgba(198, 40, 40, 0.25);
+}
+
+.cc-summary .cc-alert strong {
+  color: #c62828;
+}
+
+.cc-summary .cc-ok small {
+  color: #1a7f37;
+}
+
+.cc-empty {
+  padding: 22px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px dashed rgba(23, 16, 95, 0.2);
+  color: #60708a;
+  text-align: center;
+}
+
+.cc-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cc-item {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.cc-conciliado {
+  background: #f5fbf0;
+}
+
+.cc-ignorado {
+  opacity: 0.65;
+}
+
+.cc-date {
+  display: grid;
+  justify-items: center;
+  padding: 6px 0;
+  border-radius: 12px;
+  background: #f1efff;
+  color: #17105f;
+  line-height: 1.1;
+}
+
+.cc-date b {
+  font-size: 1.1rem;
+}
+
+.cc-date small {
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.cc-desc {
+  display: grid;
+  min-width: 0;
+}
+
+.cc-desc strong {
+  overflow: hidden;
+  color: #17105f;
+  font-size: 0.92rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-desc small {
+  color: #60708a;
+  font-size: 0.76rem;
+}
+
+.cc-conciliado .cc-desc small {
+  color: #1a7f37;
+  font-weight: 700;
+}
+
+.cc-value {
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.cc-value.in {
+  color: #1a7f37;
+}
+
+.cc-value.out {
+  color: #c62828;
+}
+
+.cc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.cc-actions button {
+  width: auto !important;
+  min-height: 34px !important;
+  padding: 6px 12px !important;
+  border-radius: 10px !important;
+  font-size: 0.8rem !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+}
+
+.cc-btn-main {
+  background: #17105f !important;
+  color: #ffffff !important;
+  border: 0 !important;
+}
+
+.cc-btn-ok {
+  background: #e8f5e9 !important;
+  color: #1a7f37 !important;
+  border: 0 !important;
+}
+
+.cc-btn-ghost {
+  background: #f1efff !important;
+  color: #17105f !important;
+  border: 0 !important;
+}
+
+.cc-modal {
+  width: min(560px, calc(100vw - 24px)) !important;
+}
+
+.cc-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cc-wide {
+  grid-column: 1 / -1;
+}
+
+.cc-note {
+  margin: 0;
+  color: #60708a;
+  font-size: 0.84rem;
+}
+
+.cc-form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cc-form-actions button {
+  flex: 1;
+}
+
+@media (max-width: 900px) {
+  .cc-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-item {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+  }
+
+  .cc-actions {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+  }
+
+  .cc-actions button {
+    flex: 1;
+  }
+
+  .cc-upload {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cc-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cc-sync {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f5f3ff, #eef8e6);
+  border: 1px solid rgba(23, 16, 95, 0.08);
+}
+
+.cc-sync div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cc-sync strong {
+  color: #17105f;
+}
+
+.cc-sync small {
+  color: #60708a;
+  font-size: 0.8rem;
+}
+
+.cc-sync button {
+  width: auto !important;
+  min-height: 0 !important;
+  padding: 10px 16px !important;
+  border-radius: 12px !important;
+  background: #17105f !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.cc-auto {
+  margin-right: 4px;
+}
+
+@media (max-width: 640px) {
+  .cc-sync button {
+    width: 100% !important;
+  }
+}

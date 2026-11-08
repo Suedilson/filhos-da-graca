@@ -7,7 +7,8 @@
   "preview_urls": false,
   // 08:00 e 11:00 em Vitória da Conquista (UTC-3): e-mails de aniversário; o segundo reenvia o que falhou.
   // 03:00: cópia de segurança do banco no Google Drive.
-  "triggers": { "crons": ["0 11 * * *", "0 14 * * *", "0 6 * * *"] },
+  // 06:30: extratos da Cora e da Stone pela Pluggy (bancos.js).
+  "triggers": { "crons": ["0 11 * * *", "0 14 * * *", "0 6 * * *", "30 9 * * *"] },
   "vars": {
     "FIREBASE_PROJECT": "filhos-da-graca",
     "REMETENTE": "Igreja Filhos da Graça <igreja@filhosdagraca.com.br>"

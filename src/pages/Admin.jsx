@@ -51,6 +51,7 @@ import { TEXTO_PADRAO as TEXTO_PADRAO_EMAIL_ANIVERSARIO } from '../../cloudflare
 import './Admin.css'
 import Louvor from './Louvor'
 import FinanceiroDashboard from './FinanceiroDashboard'
+import Conciliacao from './Conciliacao'
 import Carteirinhas from './Carteirinhas'
 import CarteirinhaViewer from './CarteirinhaViewer'
 import { gerarPdfCarteirinhas, TEXTO_VERSO_PADRAO } from '../services/carteirinhaPdf'
@@ -8300,6 +8301,15 @@ function formatarMoeda(valor) {
 
       <button
         type="button"
+        className={modoFinanceiro === 'conciliacao' ? 'active' : ''}
+        onClick={() => setModoFinanceiro('conciliacao')}
+      >
+        <span>🔁</span>
+        Conciliação
+      </button>
+
+      <button
+        type="button"
         className={modoFinanceiro === 'relatorios' ? 'active' : ''}
         onClick={() => setModoFinanceiro('relatorios')}
       >
@@ -8307,6 +8317,17 @@ function formatarMoeda(valor) {
         Relatórios
       </button>
     </div>
+
+    {modoFinanceiro === 'conciliacao' && (
+      <Conciliacao
+        contasBancarias={contasBancarias}
+        arrecadacoes={arrecadacoes}
+        contasPagar={contasPagar}
+        tiposArrecadacao={tiposArrecadacao}
+        categoriasContaPagar={categoriasContaPagar}
+        aoAtualizar={() => Promise.all([carregarArrecadacoes(), carregarContasPagar()])}
+      />
+    )}
 
     {modoFinanceiro === 'dashboard' && (
       <FinanceiroDashboard

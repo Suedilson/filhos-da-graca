@@ -8416,3 +8416,10 @@ textarea {
   color: #c62828 !important;
   font-weight: 700;
 }
+
+/* Financeiro: 7 botões (com Conciliação) */
+@media (min-width: 1181px) {
+  .finance-mode-actions {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  }
+}

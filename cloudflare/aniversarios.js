@@ -2,6 +2,7 @@ import { fazAniversarioHoje, hojeNaBahia, montarEmailAniversario } from './email
 import { decodeBase64url, tokenGoogle, urlFirestore } from './google.js'
 import { fazerBackup } from './backup.js'
 import { montarEmailBoasVindas } from './emailBoasVindas.js'
+import { sincronizarBancos } from './bancos.js'
 
 // Worker agendado: todo dia de manhã envia o e-mail de aniversário aos membros
 // e, de madrugada, salva uma cópia de segurança do banco no Google Drive (backup.js).
@@ -10,6 +11,8 @@ import { montarEmailBoasVindas } from './emailBoasVindas.js'
 
 const ADMIN_GERAL = 'suedilsonfilho@gmail.com'
 const CRON_BACKUP = '0 6 * * *'
+// 06:30 em Vitória da Conquista: busca os extratos da Cora e da Stone na Pluggy
+const CRON_BANCOS = '30 9 * * *'
 const dominios = new Set(['https://filhosdagraca.com.br', 'https://www.filhosdagraca.com.br', 'https://filhos-da-graca.web.app', 'https://filhos-da-graca.firebaseapp.com', 'http://localhost:5173'])
 
 async function listarMembros(env, token) {
@@ -175,6 +178,18 @@ async function usuarioDoToken(token, projeto) {
   return { uid: payload.sub, email: payload.email }
 }
 
+// Administrador geral ou usuário ativo com a permissão Financeiro marcada.
+async function podeFinanceiro(env, usuario) {
+  if (usuario.email === ADMIN_GERAL) return true
+  const r = await fetch(urlFirestore(env, `usuariosPermissoes/${encodeURIComponent(usuario.uid)}`), {
+    headers: { Authorization: `Bearer ${await tokenGoogle(env)}` },
+  })
+  if (!r.ok) return false
+  const f = (await r.json()).fields || {}
+  const permissoes = (f.permissoes?.arrayValue?.values || []).map((v) => v.stringValue)
+  return f.ativo?.booleanValue === true && permissoes.includes('financeiro')
+}
+
 // Administrador geral ou perfil Administrador ativo.
 async function ehAdministrador(env, usuario) {
   if (usuario.email === ADMIN_GERAL) return true
@@ -184,6 +199,10 @@ async function ehAdministrador(env, usuario) {
 
 export default {
   async scheduled(evento, env, ctx) {
+    if (evento.cron === CRON_BANCOS) {
+      ctx.waitUntil(sincronizarBancos(env).catch((error) => console.error('Falha na sincronização bancária:', error.message)))
+      return
+    }
     ctx.waitUntil(evento.cron === CRON_BACKUP ? fazerBackup(env) : enviarAniversariantesDoDia(env))
   },
 
@@ -199,7 +218,7 @@ export default {
     headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers })
     const rota = new URL(request.url).pathname
-    if (!['/teste', '/backup', '/boas-vindas'].includes(rota) || request.method !== 'POST') {
+    if (!['/teste', '/backup', '/boas-vindas', '/bancos'].includes(rota) || request.method !== 'POST') {
       return Response.json({ mensagem: 'Rota não encontrada.' }, { status: 404, headers })
     }
     let usuario
@@ -209,6 +228,20 @@ export default {
     } catch {
       return Response.json({ mensagem: 'Entre novamente na sua conta.' }, { status: 401, headers })
     }
+    // POST /bancos: sincroniza os extratos agora (administrador geral ou quem tem a permissão Financeiro)
+    if (rota === '/bancos') {
+      try {
+        if (!await podeFinanceiro(env, usuario)) {
+          return Response.json({ mensagem: 'Somente quem tem a permissão Financeiro pode sincronizar.' }, { status: 403, headers })
+        }
+        const resultado = await sincronizarBancos(env)
+        return Response.json(resultado, { status: resultado.configurado ? 200 : 409, headers })
+      } catch (error) {
+        console.error('Falha na sincronização bancária:', error.message)
+        return Response.json({ mensagem: `Não foi possível sincronizar: ${error.message}` }, { status: 502, headers })
+      }
+    }
+
     // POST /boas-vindas { uid }: chamado pelo painel ao liberar o acesso de quem se cadastrou pelo site (uma vez só).
     // POST /boas-vindas { membroId }: envio manual; { teste: true, texto }: exemplo para o próprio administrador.
     if (rota === '/boas-vindas') {
