@@ -1,6 +1,11 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from 'firebase/firestore'
 
 export const firebaseConfig = {
   apiKey: 'AIzaSyDCSuNAUP0dIRz5k3zSfLZDSqGQPkj-YhU',
@@ -14,4 +19,17 @@ export const firebaseConfig = {
 const app = initializeApp(firebaseConfig)
 
 export const auth = getAuth(app)
-export const db = getFirestore(app)
+// Guarda no aparelho tudo o que já foi lido (letras, cifras, escalas...), para funcionar
+// com internet lenta ou sem internet. Se o navegador não permitir, usa o modo normal.
+function criarFirestore() {
+  try {
+    return initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    })
+  } catch (error) {
+    console.warn('Cache offline indisponível neste navegador.', error)
+    return getFirestore(app)
+  }
+}
+
+export const db = criarFirestore()

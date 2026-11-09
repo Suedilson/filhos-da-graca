@@ -217,6 +217,9 @@ function Leitor({ musicas, inicial, modoInicial, onFechar, titulo }) {
 }
 
 export default function LouvorPainel({
+  semInternet,
+  salvoEm,
+  onAtualizar,
   escalas,
   musicas,
   carregando,
@@ -275,6 +278,20 @@ export default function LouvorPainel({
           <button type="button" className="lv-btn-glass" onClick={onAbrirMusicas}>🎵 Músicas</button>
         </div>
       </header>
+
+      {semInternet && (
+        <div className="lv-offline" role="status">
+          <span aria-hidden="true">📴</span>
+          <div>
+            <strong>Sem internet no momento</strong>
+            <small>
+              Mostrando as escalas, letras e cifras salvas neste aparelho
+              {salvoEm ? ` (atualizadas em ${new Date(salvoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })})` : ''}.
+            </small>
+          </div>
+          {onAtualizar && <button type="button" onClick={onAtualizar}>Tentar de novo</button>}
+        </div>
+      )}
 
       <div className="lv-switch" role="tablist">
         {[['proximas', 'Próximas'], ['anteriores', 'Anteriores']].map(([id, nome]) => (

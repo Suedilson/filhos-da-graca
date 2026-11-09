@@ -855,3 +855,40 @@
   font-weight: 700;
   white-space: nowrap;
 }
+
+/* Aviso de modo sem internet */
+.lv-offline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #fff8e6;
+  border: 1px solid rgba(216, 165, 38, 0.4);
+  color: #6b5200;
+}
+
+.lv-offline > span {
+  font-size: 1.3rem;
+}
+
+.lv-offline div {
+  display: grid;
+  flex: 1;
+  min-width: 200px;
+}
+
+.lv-offline small {
+  font-size: 0.8rem;
+}
+
+.lv-offline button {
+  padding: 8px 14px !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: #6b5200 !important;
+  border: 1px solid rgba(216, 165, 38, 0.5) !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+}

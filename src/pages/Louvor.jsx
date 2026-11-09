@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { collection, deleteDoc, doc, getDocs, orderBy, query, runTransaction, serverTimestamp, setDoc } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDocs, getDocsFromCache, getDocsFromServer, orderBy, query, runTransaction, serverTimestamp, setDoc } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import './Louvor.css'
 import BuscarLouvor from './BuscarLouvor'
@@ -38,6 +38,11 @@ export default function Louvor({ user }) {
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  // Sem internet: mostra a cópia salva no aparelho e quando ela foi atualizada
+  const [semInternet, setSemInternet] = useState(false)
+  const [salvoEm, setSalvoEm] = useState(() => {
+    try { return localStorage.getItem('louvorSalvoEm') || '' } catch { return '' }
+  })
   const [mensagem, setMensagem] = useState('')
   const [historico, setHistorico] = useState(null)
   const [carregandoHistorico, setCarregandoHistorico] = useState(false)
@@ -59,16 +64,55 @@ export default function Louvor({ user }) {
   async function carregar() {
     setCarregando(true)
     setErro('')
-    try {
-      const [m, e] = await Promise.all([
-        getDocs(collection(db, 'louvorMusicas')),
-        getDocs(collection(db, 'louvorEscalas')),
-      ])
+    const aplicar = (m, e) => {
       setMusicas(m.docs.map((d) => ({ ...d.data(), id: d.id })).sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR')))
       setEscalas(e.docs.map((d) => ({ ...d.data(), id: d.id })))
+    }
+    // 1) Na hora: o que já está salvo neste aparelho (funciona sem internet)
+    let temCopia = false
+    try {
+      const [m, e] = await Promise.all([
+        getDocsFromCache(collection(db, 'louvorMusicas')),
+        getDocsFromCache(collection(db, 'louvorEscalas')),
+      ])
+      if (m.size || e.size) {
+        aplicar(m, e)
+        temCopia = true
+        setCarregando(false)
+      }
+    } catch { /* ainda não há nada salvo */ }
+
+    // 2) Em seguida: a versão mais nova do servidor (desiste após 15 s com internet ruim)
+    try {
+      const limite = new Promise((_, rejeitar) => setTimeout(() => rejeitar(new Error('LENTO')), 15000))
+      const [m, e] = await Promise.race([
+        Promise.all([
+          getDocsFromServer(collection(db, 'louvorMusicas')),
+          getDocsFromServer(collection(db, 'louvorEscalas')),
+        ]),
+        limite,
+      ])
+      aplicar(m, e)
+      setSemInternet(false)
+      const agora = new Date().toISOString()
+      setSalvoEm(agora)
+      try { localStorage.setItem('louvorSalvoEm', agora) } catch { /* sem armazenamento */ }
     } catch (error) {
-      console.error(error)
-      setErro('Não foi possível carregar o ministério de louvor. Tente novamente.')
+      console.warn('Louvor sem conexão com o servidor:', error.message)
+      setSemInternet(true)
+      if (!temCopia) {
+        // Último recurso: leitura normal (usa o cache se o servidor não responder)
+        try {
+          const [m, e] = await Promise.all([
+            getDocs(collection(db, 'louvorMusicas')),
+            getDocs(collection(db, 'louvorEscalas')),
+          ])
+          aplicar(m, e)
+        } catch (falha) {
+          console.error(falha)
+          setErro('Sem internet e ainda não há letras e cifras salvas neste aparelho. Abra esta página uma vez com internet.')
+        }
+      }
     } finally { setCarregando(false) }
   }
 
@@ -246,6 +290,9 @@ export default function Louvor({ user }) {
       {erro && <p role="alert" className="worship-banner worship-banner-erro">{erro}</p>}
       {mensagem && <p role="status" className="worship-banner worship-banner-ok">{mensagem}</p>}
       <LouvorPainel
+        semInternet={semInternet}
+        salvoEm={salvoEm}
+        onAtualizar={carregar}
         escalas={escalas}
         musicas={musicas}
         carregando={carregando}
