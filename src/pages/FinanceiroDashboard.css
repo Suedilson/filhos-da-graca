@@ -689,3 +689,28 @@ button.fd-strip-item:hover {
     flex: 1;
   }
 }
+
+/* Total do ano no rodapé da tabela Mês a mês (fica visível ao rolar) */
+.fd-table tfoot td {
+  position: sticky;
+  bottom: 0;
+  padding: 9px 6px;
+  background: #17105f;
+  color: #ffffff;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fd-table tfoot td:first-child {
+  text-align: left;
+  border-radius: 0 0 0 10px;
+}
+
+.fd-table tfoot td:last-child {
+  border-radius: 0 0 10px 0;
+}
+
+.fd-table tfoot td.fd-negative {
+  color: #ff9c9c;
+}

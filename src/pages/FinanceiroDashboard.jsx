@@ -658,6 +658,14 @@ export default function FinanceiroDashboard({
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr>
+                  <td>Total {ano}</td>
+                  <td>{moeda(dados.anoReceitas)}</td>
+                  <td>{moeda(dados.anoDespesas)}</td>
+                  <td className={resultadoAno < 0 ? 'fd-negative' : ''}>{moeda(resultadoAno)}</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </section>
