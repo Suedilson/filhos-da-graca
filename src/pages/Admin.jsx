@@ -58,6 +58,13 @@ import { gerarPdfCarteirinhas, TEXTO_VERSO_PADRAO } from '../services/carteirinh
 
 const ADMIN_EMAILS = ['suedilsonfilho@gmail.com']
 
+// Foto redonda de perfil: pede ao Cloudinary um quadrado centrado no rosto
+// (fotos com muito espaço acima da cabeça ficavam com o rosto cortado embaixo).
+function fotoDoRosto(url, tamanho = 320) {
+  if (!url || !url.includes('res.cloudinary.com') || !url.includes('/upload/')) return url
+  return url.replace('/upload/', `/upload/c_fill,g_face,w_${tamanho},h_${tamanho},q_auto,f_auto/`)
+}
+
 // CPF: formata como 000.000.000-00 enquanto digita e confere os dígitos verificadores
 function formatarCpf(valor) {
   const d = String(valor || '').replace(/\D/g, '').slice(0, 11)
@@ -5965,7 +5972,7 @@ function renderizarPerfilMeusDados() {
       <div className="md-hero">
         <div className="md-photo">
           {dados.foto ? (
-            <img src={dados.foto} alt={dados.nome || 'Minha foto'} />
+            <img src={fotoDoRosto(dados.foto)} alt={dados.nome || 'Minha foto'} />
           ) : (
             <span>{obterIniciais(dados.nome) || '?'}</span>
           )}
@@ -6143,7 +6150,7 @@ function renderizarMeusDados() {
 
           <div className="my-data-photo">
             {meusDadosForm.foto ? (
-              <img src={meusDadosForm.foto} alt={meusDadosForm.nome} />
+              <img src={fotoDoRosto(meusDadosForm.foto)} alt={meusDadosForm.nome} />
             ) : (
               <span>{meusDadosForm.nome?.charAt(0) || '?'}</span>
             )}

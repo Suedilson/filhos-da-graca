@@ -70,6 +70,7 @@ async function imagemParaDataUrl(url) {
 }
 
 // Recorta a foto no formato 3x4 (preenche sem distorcer, centralizando um pouco acima do meio)
+// e arredonda os cantos no mesmo raio da moldura verde (1,5 mm em 21 mm de largura).
 async function fotoTresPorQuatro(dataUrl) {
   if (!dataUrl) return null
   try {
@@ -88,10 +89,20 @@ async function fotoTresPorQuatro(dataUrl) {
     const escala = Math.max(largura / img.width, altura / img.height)
     const w = img.width * escala
     const h = img.height * escala
+    const raio = Math.round((1.5 / 21) * largura)
+    ctx.beginPath()
+    ctx.moveTo(raio, 0)
+    ctx.arcTo(largura, 0, largura, altura, raio)
+    ctx.arcTo(largura, altura, 0, altura, raio)
+    ctx.arcTo(0, altura, 0, 0, raio)
+    ctx.arcTo(0, 0, largura, 0, raio)
+    ctx.closePath()
+    ctx.clip()
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, largura, altura)
     ctx.drawImage(img, (largura - w) / 2, Math.min(0, (altura - h) * 0.3), w, h)
-    return canvas.toDataURL('image/jpeg', 0.9)
+    // PNG para manter os cantos transparentes
+    return canvas.toDataURL('image/png')
   } catch {
     return dataUrl
   }
@@ -150,7 +161,7 @@ function desenharFrente(pdf, x, y, dados, recursos) {
   pdf.setFillColor(...COR.fundo)
   pdf.roundedRect(fx, fy, fl, fa, 1.5, 1.5, 'F')
   if (recursos.foto) {
-    pdf.addImage(recursos.foto, 'JPEG', fx, fy, fl, fa)
+    pdf.addImage(recursos.foto, /^data:image\/png/i.test(recursos.foto) ? 'PNG' : 'JPEG', fx, fy, fl, fa)
   } else {
     pdf.setTextColor(...COR.roxoClaro)
     pdf.setFont('helvetica', 'bold')
