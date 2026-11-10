@@ -18,6 +18,7 @@ import {
 import './App.css'
 import { mostrarAviso } from './services/avisos'
 import Admin from './pages/Admin'
+import RedesSociais from './components/RedesSociais'
 import VerificarCarteirinha from './pages/VerificarCarteirinha'
 import { db } from './services/firebase'
 
@@ -125,6 +126,13 @@ function Home() {
   const [galeriaHome, setGaleriaHome] = useState([])
   const [aniversariantesHome, setAniversariantesHome] = useState([])
   const [contribuicaoHome, setContribuicaoHome] = useState(null)
+  const [redesSociais, setRedesSociais] = useState(null)
+
+  useEffect(() => {
+    getDoc(doc(db, 'configuracoes', 'redesSociais'))
+      .then((snap) => snap.exists() && setRedesSociais(snap.data()))
+      .catch((error) => console.error('Erro ao carregar as redes sociais:', error))
+  }, [])
   const [pixCopiado, setPixCopiado] = useState(false)
   const [albumAberto, setAlbumAberto] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
@@ -579,6 +587,8 @@ async function carregarVideosYoutube(configYoutube) {
     <a href="#midia">Vídeos</a>
     <a href="#contato">Contato</a>
   </nav>
+
+  <RedesSociais redes={redesSociais} variante="topo" />
 
   <a href="/admin" className="member-link notranslate" translate="no">
     Área do Membro
@@ -1165,6 +1175,8 @@ async function carregarVideosYoutube(configYoutube) {
           <a href="#midia">Vídeos</a>
           <a href="/admin">Área do Membro</a>
         </nav>
+
+        <RedesSociais redes={redesSociais} variante="rodape" />
       </footer>
     </main>
   )

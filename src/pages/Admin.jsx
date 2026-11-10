@@ -291,6 +291,8 @@ const [filtroDataFinalOracao, setFiltroDataFinalOracao] = useState('')
 
   const [videos, setVideos] = useState([])
   const [editandoVideoId, setEditandoVideoId] = useState(null)
+  // Links das redes sociais mostrados no site (configuracoes/redesSociais)
+  const [redesForm, setRedesForm] = useState({ instagram: '', youtube: 'https://www.youtube.com/channel/UCrAKS6wvm3Zx6cnf25xQL4w' })
   const [youtubeConfigForm, setYoutubeConfigForm] = useState({
     apiKey: '',
     channelId: '',
@@ -798,6 +800,7 @@ useEffect(() => {
   if (usuarioPodeAcessar('midia')) {
     carregarVideos()
     carregarYoutubeConfig()
+    carregarRedesSociais()
   }
 
   if (usuarioPodeAcessar('documentos')) {
@@ -3377,6 +3380,53 @@ function pedidoOracaoDentroDoPeriodo(pedido) {
     } catch (error) {
       mostrarAviso('Erro ao carregar vídeos.')
       console.error(error)
+    }
+  }
+
+  async function carregarRedesSociais() {
+    try {
+      const snapshot = await getDoc(doc(db, 'configuracoes', 'redesSociais'))
+      if (!snapshot.exists()) return
+      const dados = snapshot.data()
+      setRedesForm((atual) => ({
+        instagram: dados.instagram || '',
+        youtube: dados.youtube || atual.youtube,
+      }))
+    } catch (error) {
+      console.error('Erro ao carregar as redes sociais.', error)
+    }
+  }
+
+  // Aceita "@usuario", "usuario" ou o link completo
+  function normalizarRede(valor, tipo) {
+    const texto = String(valor || '').trim()
+    if (!texto) return ''
+    if (/^https?:\/\//i.test(texto)) return texto
+    const usuario = texto.replace(/^@/, '')
+    return tipo === 'instagram' ? `https://www.instagram.com/${usuario}` : `https://www.youtube.com/@${usuario}`
+  }
+
+  async function salvarRedesSociais(event) {
+    event.preventDefault()
+    const dados = {
+      instagram: normalizarRede(redesForm.instagram, 'instagram'),
+      youtube: normalizarRede(redesForm.youtube, 'youtube'),
+    }
+    const valido = (url) => !url || /^https:\/\/(www\.)?(instagram\.com|youtube\.com|youtu\.be)\//i.test(url)
+    if (!valido(dados.instagram) || !valido(dados.youtube)) {
+      mostrarAviso('Use links do Instagram (instagram.com) e do YouTube (youtube.com).', 'erro')
+      return
+    }
+    setLoading(true)
+    try {
+      await setDoc(doc(db, 'configuracoes', 'redesSociais'), { ...dados, atualizadoEm: serverTimestamp() })
+      setRedesForm(dados)
+      mostrarAviso('Redes sociais salvas! Os botões já aparecem no site.', 'sucesso')
+    } catch (error) {
+      mostrarAviso('Erro ao salvar as redes sociais.', 'erro')
+      console.error(error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -7769,6 +7819,36 @@ function formatarMoeda(valor) {
                 Cancelar edição
               </button>
             )}
+          </form>
+
+          <form className="admin-card" onSubmit={salvarRedesSociais}>
+            <span className="admin-section-label">Redes sociais</span>
+            <h2>Botões do Instagram e do YouTube</h2>
+            <p>
+              Aparecem no topo e no rodapé do site. Deixe em branco para esconder o botão.
+              Pode escrever o @ ou colar o link completo.
+            </p>
+            <label>
+              Instagram
+              <input
+                value={redesForm.instagram}
+                onChange={(event) => setRedesForm({ ...redesForm, instagram: event.target.value })}
+                placeholder="@igreja ou https://www.instagram.com/igreja"
+                maxLength={200}
+              />
+            </label>
+            <label>
+              YouTube
+              <input
+                value={redesForm.youtube}
+                onChange={(event) => setRedesForm({ ...redesForm, youtube: event.target.value })}
+                placeholder="https://www.youtube.com/@igreja"
+                maxLength={200}
+              />
+            </label>
+            <button type="submit" disabled={loading}>
+              {loading ? 'Salvando...' : 'Salvar redes sociais'}
+            </button>
           </form>
 
           <form className="admin-card" onSubmit={salvarYoutubeConfig}>

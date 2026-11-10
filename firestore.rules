@@ -286,6 +286,17 @@ service cloud.firestore {
         request.resource.data.get('mensagem', '').size() <= 4000;
     }
 
+    // Links das redes sociais exibidos no site
+    match /configuracoes/redesSociais {
+      allow read: if true;
+      allow write: if adminProfile() &&
+        request.resource.data.keys().hasOnly(['instagram', 'youtube', 'atualizadoEm']) &&
+        request.resource.data.get('instagram', '') is string &&
+        request.resource.data.get('instagram', '').size() <= 200 &&
+        request.resource.data.get('youtube', '') is string &&
+        request.resource.data.get('youtube', '').size() <= 200;
+    }
+
     match /configuracoes/youtube {
       allow read: if true;
       allow write: if adminProfile();
