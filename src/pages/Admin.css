@@ -8423,3 +8423,121 @@ textarea {
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
   }
 }
+
+/* Janela Registrar pagamento (botão Pagar) */
+.pay-modal {
+  width: min(560px, calc(100vw - 24px)) !important;
+}
+
+.pay-modal-sub {
+  color: #60708a;
+  font-weight: 700;
+}
+
+.pay-modal-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+}
+
+.pay-wide {
+  grid-column: 1 / -1;
+}
+
+.pay-receipt {
+  display: grid;
+  gap: 6px;
+}
+
+.pay-receipt > span {
+  color: #17105f;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.pay-receipt-drop {
+  position: relative;
+  display: grid !important;
+  justify-items: center;
+  gap: 4px;
+  padding: 18px;
+  border-radius: 14px;
+  border: 2px dashed rgba(23, 16, 95, 0.2);
+  background: #f7f8fc;
+  color: #17105f;
+  text-align: center;
+  cursor: pointer;
+}
+
+.pay-receipt-drop.busy {
+  opacity: 0.7;
+}
+
+.pay-receipt-drop input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.pay-receipt-drop small {
+  color: #60708a;
+  font-weight: 500;
+}
+
+.pay-receipt-ok {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f1faea;
+  border: 1px solid rgba(111, 189, 42, 0.4);
+}
+
+.pay-receipt-ok img,
+.pay-receipt-icon {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  font-size: 1.6rem;
+}
+
+.pay-receipt-ok div {
+  display: grid;
+  flex: 1;
+}
+
+.pay-receipt-ok strong {
+  color: #1a7f37;
+}
+
+.pay-receipt-ok a {
+  color: #3b2aa8;
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+.pay-receipt-ok button {
+  width: auto !important;
+}
+
+.pay-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.pay-actions button {
+  flex: 1;
+}
+
+@media (max-width: 560px) {
+  .pay-modal-form {
+    grid-template-columns: 1fr;
+  }
+}

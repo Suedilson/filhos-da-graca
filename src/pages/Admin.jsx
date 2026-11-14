@@ -648,6 +648,8 @@ const formasPagamentoFinanceiro = [
 const [contasPagar, setContasPagar] = useState([])
 const [editandoContaPagarId, setEditandoContaPagarId] = useState(null)
 const [formContaPagarAberto, setFormContaPagarAberto] = useState(false)
+// Janela "Registrar pagamento" (botão Pagar): data, forma, conta e recibo
+const [pagamentoConta, setPagamentoConta] = useState(null)
 const [enviandoComprovanteContaPagar, setEnviandoComprovanteContaPagar] =
   useState(false)
 
@@ -2998,26 +3000,143 @@ function cancelarEdicaoContaPagar() {
   fecharFormularioContaPagar()
 }
 
-async function marcarContaPagarComoPaga(conta) {
-  const confirmar = confirm(
-    `Deseja marcar "${conta.descricao}" como paga? A data de pagamento será registrada como hoje.`,
-  )
+function marcarContaPagarComoPaga(conta) {
+  const ativas = contasBancarias.filter((c) => c.ativo !== false)
+  setPagamentoConta({
+    conta,
+    dataPagamento: obterHojeISO(),
+    formaPagamento: conta.formaPagamento || 'Pix',
+    contaBancariaId: conta.contaBancariaId || ativas[0]?.id || '',
+    comprovante: conta.comprovante || '',
+    comprovantePublicId: conta.comprovantePublicId || '',
+    salvando: false,
+  })
+}
 
-  if (!confirmar) return
-
+async function enviarReciboPagamento(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) return
+  if (file.size > 10 * 1024 * 1024) {
+    mostrarAviso('O arquivo passa de 10 MB. Envie uma foto ou um PDF menor.', 'erro')
+    return
+  }
+  setEnviandoComprovanteContaPagar(true)
   try {
-    await updateDoc(doc(db, 'contasPagar', conta.id), {
+    const arquivo = await uploadArquivoCloudinary(file)
+    setPagamentoConta((atual) => atual && { ...atual, comprovante: arquivo.url, comprovantePublicId: arquivo.publicId })
+    mostrarAviso('Recibo anexado.', 'sucesso')
+  } catch (error) {
+    mostrarAviso(`Erro ao enviar o recibo: ${error.message}`, 'erro')
+    console.error(error)
+  } finally {
+    setEnviandoComprovanteContaPagar(false)
+  }
+}
+
+async function confirmarPagamentoConta(event) {
+  event.preventDefault()
+  const p = pagamentoConta
+  if (!p?.dataPagamento) {
+    mostrarAviso('Informe a data do pagamento.', 'erro')
+    return
+  }
+  setPagamentoConta({ ...p, salvando: true })
+  try {
+    const contaBanco = contasBancarias.find((c) => c.id === p.contaBancariaId)
+    await updateDoc(doc(db, 'contasPagar', p.conta.id), {
       status: 'Paga',
-      dataPagamento: obterHojeISO(),
+      dataPagamento: p.dataPagamento,
+      formaPagamento: p.formaPagamento,
+      contaBancariaId: p.contaBancariaId,
+      contaBancariaNome: contaBanco?.nome || '',
+      comprovante: p.comprovante,
+      comprovantePublicId: p.comprovantePublicId,
       ativo: true,
       atualizadoEm: serverTimestamp(),
     })
-
+    setPagamentoConta(null)
     await carregarContasPagar()
+    mostrarAviso(p.comprovante ? 'Pagamento registrado com recibo.' : 'Pagamento registrado.', 'sucesso')
   } catch (error) {
-    mostrarAviso('Erro ao marcar despesa como paga.')
+    mostrarAviso('Erro ao registrar o pagamento.', 'erro')
     console.error(error)
+    setPagamentoConta((atual) => atual && { ...atual, salvando: false })
   }
+}
+
+function renderizarModalPagamento() {
+  if (!pagamentoConta) return null
+  const p = pagamentoConta
+  const ehPdf = /\.pdf($|\?)/i.test(p.comprovante) || p.comprovante.includes('/raw/')
+  return (
+    <div className="finance-modal-backdrop" onClick={() => !p.salvando && setPagamentoConta(null)}>
+      <section className="finance-modal-card pay-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="finance-modal-header">
+          <div>
+            <span className="admin-section-label">Registrar pagamento</span>
+            <h2>{p.conta.descricao}</h2>
+            <small className="pay-modal-sub">
+              {formatarMoeda(p.conta.valor)} · vencimento {formatarData(p.conta.vencimento)}
+            </small>
+          </div>
+          <button type="button" className="finance-modal-close" onClick={() => setPagamentoConta(null)} disabled={p.salvando}>×</button>
+        </div>
+
+        <form className="pay-modal-form" onSubmit={confirmarPagamentoConta}>
+          <label>
+            Data do pagamento
+            <input
+              type="date"
+              required
+              value={p.dataPagamento}
+              onChange={(e) => setPagamentoConta({ ...p, dataPagamento: e.target.value })}
+            />
+          </label>
+          <label>
+            Forma de pagamento
+            <select value={p.formaPagamento} onChange={(e) => setPagamentoConta({ ...p, formaPagamento: e.target.value })}>
+              {formasPagamentoFinanceiro.map((forma) => <option key={forma}>{forma}</option>)}
+            </select>
+          </label>
+          <label className="pay-wide">
+            Conta bancária
+            <select value={p.contaBancariaId} onChange={(e) => setPagamentoConta({ ...p, contaBancariaId: e.target.value })}>
+              <option value="">Sem conta definida</option>
+              {contasBancarias.filter((c) => c.ativo !== false).map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
+          </label>
+
+          <div className="pay-wide pay-receipt">
+            <span>Recibo / comprovante</span>
+            {p.comprovante ? (
+              <div className="pay-receipt-ok">
+                {ehPdf ? <span className="pay-receipt-icon">📄</span> : <img src={p.comprovante} alt="Recibo anexado" />}
+                <div>
+                  <strong>Recibo anexado</strong>
+                  <a href={p.comprovante} target="_blank" rel="noreferrer">Abrir</a>
+                </div>
+                <button type="button" className="cancel-button" onClick={() => setPagamentoConta({ ...p, comprovante: '', comprovantePublicId: '' })}>Remover</button>
+              </div>
+            ) : (
+              <label className={`pay-receipt-drop ${enviandoComprovanteContaPagar ? 'busy' : ''}`}>
+                <input type="file" accept="image/*,application/pdf" onChange={enviarReciboPagamento} disabled={enviandoComprovanteContaPagar} />
+                <strong>{enviandoComprovanteContaPagar ? 'Enviando...' : '📎 Anexar recibo'}</strong>
+                <small>Foto do recibo ou PDF do comprovante (opcional)</small>
+              </label>
+            )}
+          </div>
+
+          <div className="pay-wide pay-actions">
+            <button type="submit" disabled={p.salvando || enviandoComprovanteContaPagar}>
+              {p.salvando ? 'Salvando...' : '✓ Confirmar pagamento'}
+            </button>
+            <button type="button" className="cancel-button" onClick={() => setPagamentoConta(null)} disabled={p.salvando}>Cancelar</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  )
 }
 
 async function reabrirContaPagar(conta) {
@@ -8404,6 +8523,8 @@ function formatarMoeda(valor) {
         Relatórios
       </button>
     </div>
+
+    {renderizarModalPagamento()}
 
     {modoFinanceiro === 'conciliacao' && (
       <Conciliacao
