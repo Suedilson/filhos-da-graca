@@ -893,7 +893,7 @@ async function carregarVideosYoutube(configYoutube) {
                 <div className="video-content">
                   <span>Assistir vídeo</span>
                   <h3>{video.titulo}</h3>
-                  {video.descricao && <p>{video.descricao}</p>}
+                  {video.descricao && <p title={video.descricao}>{video.descricao}</p>}
                 </div>
               </a>
             </article>

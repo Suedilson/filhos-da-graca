@@ -5122,3 +5122,19 @@ main.site {
     display: none;
   }
 }
+
+/* Vídeos: descrição longa não estica o card (máx. 3 linhas) */
+.video-content h3 {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.video-content p {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
