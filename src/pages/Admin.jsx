@@ -3083,7 +3083,7 @@ function renderizarModalPagamento() {
           <button type="button" className="finance-modal-close" onClick={() => setPagamentoConta(null)} disabled={p.salvando}>×</button>
         </div>
 
-        <form className="pay-modal-form" onSubmit={confirmarPagamentoConta}>
+        <form className="finance-modal-form pay-modal-form" onSubmit={confirmarPagamentoConta}>
           <label>
             Data do pagamento
             <input
