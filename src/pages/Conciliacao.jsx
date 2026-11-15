@@ -329,7 +329,7 @@ export default function Conciliacao({
             {sincronia?.quando
               ? `Última: ${sincronia.quando.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} · ` +
                 (sincronia.resumo.length
-                  ? sincronia.resumo.map((r) => (r.erro ? `${r.banco}: ${r.erro}` : `${r.conta}: ${r.novos} novo(s), saldo ${formatarSaldoSync(r.saldo)}`)).join(' · ')
+                  ? sincronia.resumo.map((r) => (r.erro ? `${r.banco}: ${r.erro}` : `${r.conta}: ${r.novos} novo(s), ${r.saldoIgnorado ? 'banco mandou saldo zerado (mantido o saldo do último extrato enviado)' : `saldo ${formatarSaldoSync(r.saldo)}`}`)).join(' · ')
                   : 'nenhuma conta conectada')
               : 'Todo dia às 6h30 o site busca os extratos da Cora e da Stone. Ainda não houve sincronização.'}
           </small>

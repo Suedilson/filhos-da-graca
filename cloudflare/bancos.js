@@ -216,16 +216,18 @@ export async function sincronizarBancos(env) {
         })
       }
 
-      // Saldo atual informado pelo banco
-      writes.push({
+      // Saldo atual informado pelo banco. Se a conexão vier zerada e sem nenhum movimento
+      // (a Stone pelo Open Finance às vezes faz isso), mantém o saldo do último extrato enviado.
+      const saldoSuspeito = Number(conta.balance || 0) === 0 && lista.length === 0
+      if (!saldoSuspeito) writes.push({
         update: {
           name: caminhoDoc(env, `extratoSaldos/${destino.id}`),
           fields: campos({ saldo: Number(conta.balance || 0), data: dataBahia(new Date()), origem: 'pluggy', atualizadoEm: new Date() }),
         },
       })
 
-      await gravar(env, token, writes)
-      resumo.push({ banco: rotulo || conector, conta: destino.nome, novos: writes.length - 1, jaPorArquivo, saldo: Number(conta.balance || 0), recebidos: lista.length, conexao })
+      if (writes.length) await gravar(env, token, writes)
+      resumo.push({ banco: rotulo || conector, conta: destino.nome, novos: writes.length - (saldoSuspeito ? 0 : 1), saldoIgnorado: saldoSuspeito, jaPorArquivo, saldo: Number(conta.balance || 0), recebidos: lista.length, conexao })
     }
   }
 
