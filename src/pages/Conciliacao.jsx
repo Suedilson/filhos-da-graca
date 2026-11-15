@@ -340,7 +340,19 @@ export default function Conciliacao({
                 ? ` · dados do banco de ${new Date(r.conexao.atualizadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}`
                 : ' · ainda sem dados do banco'}
               {r.conexao.erro ? ` · ${r.conexao.erro}` : ''}
-              {r.conexao.atualizacaoPedida ? ' · atualização pedida ao banco' : ''}
+              {r.conexao.proximaAtualizacao
+                ? ` · próxima atualização ${new Date(r.conexao.proximaAtualizacao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}`
+                : ''}
+              {r.conexao.saldoDisponivel !== undefined
+                ? ` · disponível ${formatarSaldoSync(r.conexao.saldoDisponivel)}` +
+                  (r.conexao.saldoBloqueado ? ` + bloqueado ${formatarSaldoSync(r.conexao.saldoBloqueado)}` : '') +
+                  ` · saldo em tempo real: ${r.conexao.tempoReal}`
+                : ''}
+              {r.conexao.movimentos !== undefined
+                ? ` · ${r.conexao.movimentos} movimento(s) recebido(s)` +
+                  (r.conexao.pendentes ? `, ${r.conexao.pendentes} pendente(s) (${formatarSaldoSync(r.conexao.valorPendente)})` : '') +
+                  (r.conexao.ultimoMovimento ? `, último em ${new Date(r.conexao.ultimoMovimento).toLocaleDateString('pt-BR')}` : '')
+                : ''}
               {r.conexao.contas ? ` · contas: ${r.conexao.contas}` : ' · nenhuma conta recebida'}
             </small>
           ))}
