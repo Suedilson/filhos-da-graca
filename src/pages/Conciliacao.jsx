@@ -20,6 +20,8 @@ const dataBR = (iso) => (iso ? iso.split('-').reverse().join('/') : '-')
 const diasEntre = (a, b) => Math.abs((new Date(a) - new Date(b)) / 86400000)
 const dataSaida = (d) => d.dataPagamento || d.vencimento || ''
 
+const formatarSaldoSync = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
 export default function Conciliacao({
   contasBancarias,
   arrecadacoes,
@@ -327,10 +329,21 @@ export default function Conciliacao({
             {sincronia?.quando
               ? `Última: ${sincronia.quando.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} · ` +
                 (sincronia.resumo.length
-                  ? sincronia.resumo.map((r) => (r.erro ? `${r.banco}: ${r.erro}` : `${r.conta}: ${r.novos} novo(s)`)).join(' · ')
+                  ? sincronia.resumo.map((r) => (r.erro ? `${r.banco}: ${r.erro}` : `${r.conta}: ${r.novos} novo(s), saldo ${formatarSaldoSync(r.saldo)}`)).join(' · ')
                   : 'nenhuma conta conectada')
               : 'Todo dia às 6h30 o site busca os extratos da Cora e da Stone. Ainda não houve sincronização.'}
           </small>
+          {sincronia?.resumo?.filter((r) => r.conexao).map((r) => (
+            <small key={r.banco} className="cc-sync-conexao">
+              Conexão {r.banco} na Pluggy: {r.conexao.status || '—'}
+              {r.conexao.atualizadoEm
+                ? ` · dados do banco de ${new Date(r.conexao.atualizadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}`
+                : ' · ainda sem dados do banco'}
+              {r.conexao.erro ? ` · ${r.conexao.erro}` : ''}
+              {r.conexao.atualizacaoPedida ? ' · atualização pedida ao banco' : ''}
+              {r.conexao.contas ? ` · contas: ${r.conexao.contas}` : ' · nenhuma conta recebida'}
+            </small>
+          ))}
         </div>
         <button type="button" onClick={sincronizar} disabled={sincronizando}>
           {sincronizando ? 'Sincronizando...' : 'Sincronizar agora'}

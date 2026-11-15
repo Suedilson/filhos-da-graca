@@ -129,7 +129,33 @@ export async function sincronizarBancos(env) {
   for (const { id: itemId, rotulo } of itens) {
     const item = await pluggyGet(chave, `/items/${itemId}`)
     const conector = item.connector?.name || itemId
-    const contas = ((await pluggyGet(chave, '/accounts', { itemId })).results || []).filter((a) => a.type === 'BANK')
+    const todasContas = (await pluggyGet(chave, '/accounts', { itemId })).results || []
+    const contas = todasContas.filter((a) => a.type === 'BANK')
+    const conexao = {
+      status: item.status,
+      execucao: item.executionStatus,
+      atualizadoEm: item.lastUpdatedAt,
+      contas: todasContas.map((a) => `${a.type}:${a.subtype || ''}:${a.name || ''}:${a.balance ?? ''}`).join(' | ').slice(0, 300),
+      erro: item.error?.message || item.statusDetail?.message || '',
+    }
+    console.log('Pluggy item', itemId, JSON.stringify(conexao))
+
+    // Pede à Pluggy que busque dados novos no banco se a última atualização tem mais de 12 h
+    // (o resultado chega na próxima sincronização)
+    const horas = (Date.now() - new Date(item.lastUpdatedAt || 0).getTime()) / 36e5
+    if (item.status !== 'UPDATING' && horas > 12) {
+      const r = await fetch(`${PLUGGY}/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'X-API-KEY': chave, 'Content-Type': 'application/json' },
+        body: '{}',
+      }).catch(() => null)
+      conexao.atualizacaoPedida = r ? r.status : 'falhou'
+    }
+
+    if (!contas.length) {
+      resumo.push({ banco: rotulo || conector, erro: `A conexão não trouxe nenhuma conta corrente (status ${item.status}${conexao.erro ? `: ${conexao.erro}` : ''}).`, conexao })
+      continue
+    }
 
     for (const conta of contas) {
       const destino = rotulo
@@ -199,7 +225,7 @@ export async function sincronizarBancos(env) {
       })
 
       await gravar(env, token, writes)
-      resumo.push({ banco: rotulo || conector, conta: destino.nome, novos: writes.length - 1, jaPorArquivo, saldo: Number(conta.balance || 0) })
+      resumo.push({ banco: rotulo || conector, conta: destino.nome, novos: writes.length - 1, jaPorArquivo, saldo: Number(conta.balance || 0), recebidos: lista.length, conexao })
     }
   }
 

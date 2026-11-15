@@ -372,3 +372,11 @@
     width: 100% !important;
   }
 }
+
+.cc-sync-conexao {
+  display: block;
+  margin-top: 4px;
+  color: #60708a;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
