@@ -380,3 +380,51 @@
   font-size: 0.78rem;
   overflow-wrap: anywhere;
 }
+
+/* Janela "Lançar no site": margens e campos no padrão do painel */
+.cc-modal {
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+.cc-modal .cc-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+  padding: 18px 22px 22px !important;
+}
+
+.cc-modal .cc-form label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cc-modal .cc-form input,
+.cc-modal .cc-form select {
+  box-sizing: border-box;
+  width: 100%;
+  height: 48px !important;
+  min-height: 48px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.cc-modal .cc-note {
+  margin: 0;
+}
+
+.cc-modal .cc-form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cc-modal .cc-form-actions button {
+  flex: 1;
+}
+
+@media (max-width: 560px) {
+  .cc-modal .cc-form {
+    grid-template-columns: 1fr;
+    padding: 14px 16px 18px !important;
+  }
+}

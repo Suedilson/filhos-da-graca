@@ -447,7 +447,7 @@ export default function Conciliacao({
               </div>
               <button type="button" className="finance-modal-close" onClick={() => setLancando(null)}>×</button>
             </div>
-            <div className="cc-form">
+            <div className="finance-modal-form cc-form">
               <label className="cc-wide">
                 Descrição
                 <input value={lancando.descricao} maxLength={200} onChange={(e) => setLancando({ ...lancando, descricao: e.target.value })} />
