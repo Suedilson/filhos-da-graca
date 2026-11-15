@@ -11,8 +11,8 @@ import { sincronizarBancos } from './bancos.js'
 
 const ADMIN_GERAL = 'suedilsonfilho@gmail.com'
 const CRON_BACKUP = '0 6 * * *'
-// 06:30 em Vitória da Conquista: busca os extratos da Cora e da Stone na Pluggy
-const CRON_BANCOS = '30 9 * * *'
+// 13:30 em Vitória da Conquista (depois da atualização diária do Meu Pluggy): busca os extratos da Cora e da Stone na Pluggy
+const CRON_BANCOS = '30 16 * * *'
 const dominios = new Set(['https://filhosdagraca.com.br', 'https://www.filhosdagraca.com.br', 'https://filhos-da-graca.web.app', 'https://filhos-da-graca.firebaseapp.com', 'http://localhost:5173'])
 
 async function listarMembros(env, token) {

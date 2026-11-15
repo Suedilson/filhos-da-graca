@@ -331,7 +331,7 @@ export default function Conciliacao({
                 (sincronia.resumo.length
                   ? sincronia.resumo.map((r) => (r.erro ? `${r.banco}: ${r.erro}` : `${r.conta}: ${r.novos} novo(s), ${r.saldoIgnorado ? 'banco mandou saldo zerado (mantido o saldo do último extrato enviado)' : `saldo ${formatarSaldoSync(r.saldo)}`}`)).join(' · ')
                   : 'nenhuma conta conectada')
-              : 'Todo dia às 6h30 o site busca os extratos da Cora e da Stone. Ainda não houve sincronização.'}
+              : 'Todo dia às 13h30 o site busca os extratos da Cora e da Stone. Ainda não houve sincronização.'}
           </small>
           {sincronia?.resumo?.filter((r) => r.conexao).map((r) => (
             <small key={r.banco} className="cc-sync-conexao">
