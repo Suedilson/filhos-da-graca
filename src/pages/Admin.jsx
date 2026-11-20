@@ -2738,6 +2738,15 @@ function obterHojeISO() {
   return new Date().toISOString().slice(0, 10)
 }
 
+// Divide um total em N parcelas (em centavos); a diferença do arredondamento fica na última
+function dividirEmParcelas(total, quantidade) {
+  const centavos = Math.round(Number(total || 0) * 100)
+  const base = Math.floor(centavos / quantidade)
+  return Array.from({ length: quantidade }, (_, i) =>
+    (i === quantidade - 1 ? centavos - base * (quantidade - 1) : base) / 100,
+  )
+}
+
 function adicionarMesesData(dataBase, quantidadeMeses) {
   if (!dataBase) return ''
 
@@ -2880,6 +2889,8 @@ async function salvarContaPagar(event) {
     } else if (contaPagarForm.parcelada) {
       const grupoParcelamentoId = crypto.randomUUID()
       const batch = writeBatch(db)
+      // O valor informado é o TOTAL: divide em centavos e o resto vai para a última parcela
+      const valoresParcelas = dividirEmParcelas(valor, numeroParcelas)
 
       for (let parcela = 1; parcela <= numeroParcelas; parcela += 1) {
         const vencimentoParcela = adicionarMesesData(
@@ -2891,6 +2902,8 @@ async function salvarContaPagar(event) {
 
         batch.set(ref, {
           ...dadosBase,
+          valor: valoresParcelas[parcela - 1],
+          valorTotal: valor,
           vencimento: vencimentoParcela,
           dataPagamento:
             contaPagarForm.status === 'Paga' && parcela === 1
@@ -9550,7 +9563,7 @@ function formatarMoeda(valor) {
               </label>
 
               <label>
-                Valor
+                {contaPagarForm.parcelada && !editandoContaPagarId ? 'Valor total' : 'Valor'}
                 <input
                   value={contaPagarForm.valor}
                   onChange={(event) =>
@@ -9715,6 +9728,19 @@ function formatarMoeda(valor) {
                   }
                   placeholder="Ex: 6"
                 />
+                {(() => {
+                  const total = Number(String(contaPagarForm.valor || '').replace(',', '.'))
+                  const n = Number(contaPagarForm.numeroParcelas)
+                  if (!total || !n || n < 2) return null
+                  const partes = dividirEmParcelas(total, n)
+                  return (
+                    <small className="finance-parcelas-info">
+                      {partes[0] === partes[n - 1]
+                        ? `${n} parcelas de ${formatarMoeda(partes[0])}`
+                        : `${n - 1} parcelas de ${formatarMoeda(partes[0])} + 1 de ${formatarMoeda(partes[n - 1])}`}
+                    </small>
+                  )
+                })()}
               </label>
             )}
 

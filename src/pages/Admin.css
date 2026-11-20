@@ -8559,3 +8559,8 @@ textarea {
     padding: 14px 16px 18px !important;
   }
 }
+
+.finance-parcelas-info {
+  color: #1a7f37;
+  font-weight: 700;
+}
