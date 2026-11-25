@@ -1,19 +1,26 @@
 import { useEffect, useRef, useState } from 'react'
 
 const MODOS_MEMBROS = ['lista', 'cadastro', 'pastoral', 'aniversariantes', 'carteirinhas', 'boasVindas']
+const MODOS_FINANCEIRO = ['dashboard', 'contas', 'arrecadacoes', 'pagar', 'aprovisionamentos', 'conciliacao', 'relatorios']
 
 // A aba aberta fica no endereço (/admin#membros, /admin#membros/cadastro), assim o botão
 // Voltar do navegador ou do celular volta para a aba anterior em vez de sair do painel.
 function lerNavegacaoAdmin() {
   const [aba, modo] = decodeURIComponent(window.location.hash.slice(1)).split('/')
+  const abaValida = /^[a-zA-Z]+$/.test(aba || '') ? aba : 'programacao'
   return {
-    aba: /^[a-zA-Z]+$/.test(aba || '') ? aba : 'programacao',
-    modo: MODOS_MEMBROS.includes(modo) ? modo : 'lista',
+    aba: abaValida,
+    modo: abaValida === 'membros' && MODOS_MEMBROS.includes(modo) ? modo : 'lista',
+    modoFinanceiro: abaValida === 'financeiro' && MODOS_FINANCEIRO.includes(modo) ? modo : 'dashboard',
   }
 }
 
-function enderecoDaNavegacao(aba, modo) {
-  return `#${aba}${aba === 'membros' && modo !== 'lista' ? `/${modo}` : ''}`
+// A subaba também vai no endereço (#membros/cadastro, #financeiro/conciliacao),
+// assim atualizar a página continua no mesmo lugar.
+function enderecoDaNavegacao(aba, modo, modoFinanceiro) {
+  if (aba === 'membros' && modo !== 'lista') return `#membros/${modo}`
+  if (aba === 'financeiro' && modoFinanceiro && modoFinanceiro !== 'dashboard') return `#financeiro/${modoFinanceiro}`
+  return `#${aba}`
 }
 import {
   createUserWithEmailAndPassword,
@@ -583,7 +590,7 @@ function obterPrimeiraAbaPermitida() {
 
   return () => unsubscribe()
 }, [])
-const [modoFinanceiro, setModoFinanceiro] = useState('dashboard')
+const [modoFinanceiro, setModoFinanceiro] = useState(() => lerNavegacaoAdmin().modoFinanceiro)
 const [gerandoPdfFinanceiro, setGerandoPdfFinanceiro] = useState(false)
 const [contasBancarias, setContasBancarias] = useState([])
 const [editandoContaBancariaId, setEditandoContaBancariaId] = useState(null)
@@ -645,6 +652,30 @@ const formasPagamentoFinanceiro = [
   'Boleto',
   'Outros',
 ]
+// Arrecadações também podem vir do gazofilácio (ofertas em espécie no culto)
+const formasPagamentoArrecadacao = [
+  'Pix',
+  'Dinheiro',
+  'Gazofilácio',
+  'Cartão de débito',
+  'Cartão de crédito',
+  'Transferência',
+  'Boleto',
+  'Outros',
+]
+
+// Campos de valor: só números, vírgula e ponto (e o sinal de menos quando permitido)
+function somenteValor(texto, permitirNegativo = false) {
+  const limpo = String(texto || '').replace(/[^0-9.,-]/g, '')
+  const negativo = permitirNegativo && limpo.startsWith('-')
+  return (negativo ? '-' : '') + limpo.replace(/-/g, '')
+}
+
+// "1.885,00", "1885,00" ou "1885.00" → 1885
+function converterValor(texto) {
+  const t = String(texto || '').trim()
+  return Number(t.includes(',') ? t.replace(/\./g, '').replace(',', '.') : t)
+}
 const [contasPagar, setContasPagar] = useState([])
 const [editandoContaPagarId, setEditandoContaPagarId] = useState(null)
 const [formContaPagarAberto, setFormContaPagarAberto] = useState(false)
@@ -740,7 +771,7 @@ useEffect(() => {
 useEffect(() => {
   if (!isAdmin) return
 
-  const endereco = enderecoDaNavegacao(abaAtiva, modoMembros)
+  const endereco = enderecoDaNavegacao(abaAtiva, modoMembros, modoFinanceiro)
   if (window.location.hash === endereco) return
 
   const substituir = substituirHistorico.current || !window.location.hash
@@ -750,14 +781,15 @@ useEffect(() => {
     '',
     `${window.location.pathname}${window.location.search}${endereco}`,
   )
-}, [isAdmin, abaAtiva, modoMembros])
+}, [isAdmin, abaAtiva, modoMembros, modoFinanceiro])
 
 // Botão Voltar/Avançar: abre a aba que está no endereço.
 useEffect(() => {
   function aoVoltar() {
-    const { aba, modo } = lerNavegacaoAdmin()
+    const { aba, modo, modoFinanceiro: modoFin } = lerNavegacaoAdmin()
     setAbaAtiva(aba)
     setModoMembros(modo)
+    setModoFinanceiro(modoFin)
     setGrupoMenuAberto(null)
     setMenuAdminMobileAberto(false)
     window.scrollTo({ top: 0 })
@@ -2060,7 +2092,7 @@ async function salvarContaBancaria(event) {
   }
 
   const saldoInicial = Number(
-    String(contaBancariaForm.saldoInicial || '0').replace(',', '.'),
+    converterValor(contaBancariaForm.saldoInicial || '0'),
   )
 
   setLoading(true)
@@ -2250,7 +2282,7 @@ async function salvarArrecadacao(event) {
     return
   }
 
-  const valor = Number(String(arrecadacaoForm.valor).replace(',', '.'))
+  const valor = converterValor(arrecadacaoForm.valor)
 
   if (!valor || valor <= 0) {
     mostrarAviso('Informe um valor válido.')
@@ -2836,7 +2868,7 @@ async function salvarContaPagar(event) {
     return
   }
 
-  const valor = Number(String(contaPagarForm.valor).replace(',', '.'))
+  const valor = converterValor(contaPagarForm.valor)
 
   if (!valor || valor <= 0) {
     mostrarAviso('Informe um valor válido.')
@@ -3266,7 +3298,7 @@ async function salvarAprovisionamento(event) {
     return
   }
 
-  const valor = Number(String(aprovisionamentoForm.valor).replace(',', '.'))
+  const valor = converterValor(aprovisionamentoForm.valor)
 
   if (!valor || valor <= 0) {
     mostrarAviso('Informe um valor válido.')
@@ -8685,9 +8717,10 @@ function formatarMoeda(valor) {
               onChange={(event) =>
                 setContaBancariaForm({
                   ...contaBancariaForm,
-                  saldoInicial: event.target.value,
+                  saldoInicial: somenteValor(event.target.value, true),
                 })
               }
+              inputMode="decimal"
               placeholder="Ex: 1500,00"
             />
           </label>
@@ -9061,9 +9094,10 @@ function formatarMoeda(valor) {
                   onChange={(event) =>
                     setArrecadacaoForm({
                       ...arrecadacaoForm,
-                      valor: event.target.value,
+                      valor: somenteValor(event.target.value),
                     })
                   }
+                  inputMode="decimal"
                   placeholder="Ex: 250,00"
                 />
               </label>
@@ -9079,7 +9113,7 @@ function formatarMoeda(valor) {
                     })
                   }
                 >
-                  {formasPagamentoFinanceiro.map((forma) => (
+                  {formasPagamentoArrecadacao.map((forma) => (
                     <option value={forma} key={forma}>
                       {forma}
                     </option>
@@ -9596,9 +9630,10 @@ function formatarMoeda(valor) {
                   onChange={(event) =>
                     setContaPagarForm({
                       ...contaPagarForm,
-                      valor: event.target.value,
+                      valor: somenteValor(event.target.value),
                     })
                   }
+                  inputMode="decimal"
                   placeholder="Ex: 250,00"
                 />
               </label>
@@ -9756,7 +9791,7 @@ function formatarMoeda(valor) {
                   placeholder="Ex: 6"
                 />
                 {(() => {
-                  const total = Number(String(contaPagarForm.valor || '').replace(',', '.'))
+                  const total = converterValor(contaPagarForm.valor)
                   const n = Number(contaPagarForm.numeroParcelas)
                   if (!total || !n || n < 2) return null
                   const partes = dividirEmParcelas(total, n)
@@ -10153,9 +10188,10 @@ function formatarMoeda(valor) {
                   onChange={(event) =>
                     setAprovisionamentoForm({
                       ...aprovisionamentoForm,
-                      valor: event.target.value,
+                      valor: somenteValor(event.target.value),
                     })
                   }
+                  inputMode="decimal"
                   placeholder="Ex: 500,00"
                 />
               </label>
