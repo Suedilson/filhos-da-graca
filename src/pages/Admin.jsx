@@ -5559,20 +5559,15 @@ function renderizarSaldoFinalMes() {
             {formatarMoeda(saldoPeriodoFinanceiro)}
           </strong>
         </article>
+        {saldoFinalMesPorConta.map((conta) => (
+          <article key={conta.id}>
+            <span>{conta.nome}</span>
+            <strong className={classeValor(conta.realizado)}>
+              {formatarMoeda(conta.realizado)}
+            </strong>
+          </article>
+        ))}
       </div>
-
-      {saldoFinalMesPorConta.length > 0 && (
-        <div className="finance-month-balance-accounts">
-          {saldoFinalMesPorConta.map((conta) => (
-            <article key={conta.id}>
-              <span>{conta.nome}</span>
-              <strong className={classeValor(conta.realizado)}>
-                {formatarMoeda(conta.realizado)}
-              </strong>
-            </article>
-          ))}
-        </div>
-      )}
     </section>
   )
 }
