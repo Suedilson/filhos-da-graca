@@ -13,6 +13,7 @@ import { db } from '../services/firebase'
 import { mostrarAviso } from '../services/avisos'
 import { idDoMovimento, lerExtrato } from '../services/extratoBancario'
 import { sincronizarBancosAgora } from '../services/bancos'
+import { planejarCorrecaoDuplicados } from '../services/duplicadosExtrato'
 import './Conciliacao.css'
 
 const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -114,6 +115,71 @@ export default function Conciliacao({
       .filter((d) => d.status !== 'Paga' && d.ativo !== false && !vinculados.has(d.id) &&
         Math.abs(Number(d.valor) + mov.valor) < 0.005 && d.vencimento && diasEntre(d.vencimento, mov.data) <= 7)
       .sort((a, b) => diasEntre(a.vencimento, mov.data) - diasEntre(b.vencimento, mov.data))[0]
+  }
+
+  // Movimentos que entraram duas vezes (mesmo extrato em arquivos diferentes)
+  const planoDuplicados = useMemo(() => planejarCorrecaoDuplicados(daConta), [daConta])
+  const [corrigindo, setCorrigindo] = useState(false)
+
+  async function corrigirDuplicados() {
+    const p = planoDuplicados
+    const total = p.cancelarLancamentos.reduce((t, c) => t + c.valor, 0)
+    const ok = confirm(
+      `Corrigir os duplicados da conta ${conta?.nome}?
+
+` +
+        `• ${p.remover.length} movimento(s) repetido(s) do extrato serão removidos (fica a cópia com o nome de quem pagou/recebeu).
+` +
+        `• ${p.moverVinculo.length} conciliação(ões) passam para a cópia que fica.
+` +
+        `• ${p.cancelarLancamentos.length} lançamento(s) em dobro no site serão CANCELADOS (${moeda(total)}). Eles continuam na lista como "Cancelado".`,
+    )
+    if (!ok) return
+    setCorrigindo(true)
+    try {
+      const porId = Object.fromEntries(daConta.map((m) => [m.id, m]))
+      const operacoes = []
+      for (const v of p.moverVinculo) {
+        const destino = porId[v.para]
+        operacoes.push((lote) => lote.update(doc(db, 'extratoBancario', v.para), {
+          lancamentoId: v.lancamentoId, lancamentoTipo: v.lancamentoTipo, ignorado: false, atualizadoEm: serverTimestamp(),
+        }))
+        const colecao = v.lancamentoTipo === 'despesa' ? 'contasPagar' : 'arrecadacoes'
+        const lanc = (colecao === 'contasPagar' ? contasPagar : arrecadacoes).find((l) => l.id === v.lancamentoId)
+        if (lanc) {
+          operacoes.push((lote) => lote.update(doc(db, colecao, v.lancamentoId), {
+            extratoMovimentoId: v.para,
+            codigoBanco: codigoDoBanco(destino || {}),
+            ...(/^(entrada|sa[ií]da)$/i.test(String(lanc.descricao || '').trim()) ? { descricao: v.descricao.slice(0, 200) } : {}),
+            atualizadoEm: serverTimestamp(),
+          }))
+        }
+      }
+      for (const c of p.cancelarLancamentos) {
+        const colecao = c.tipo === 'despesa' ? 'contasPagar' : 'arrecadacoes'
+        operacoes.push((lote) => lote.update(doc(db, colecao, c.id), {
+          ativo: false,
+          canceladoMotivo: 'Duplicado: o mesmo movimento do banco foi importado duas vezes',
+          atualizadoEm: serverTimestamp(),
+        }))
+      }
+      for (const id of p.remover) operacoes.push((lote) => lote.delete(doc(db, 'extratoBancario', id)))
+      for (let i = 0; i < operacoes.length; i += 400) {
+        const lote = writeBatch(db)
+        operacoes.slice(i, i + 400).forEach((op) => op(lote))
+        await lote.commit()
+      }
+      await Promise.all([recarregar(), aoAtualizar()])
+      mostrarAviso(
+        `Pronto: ${p.remover.length} movimento(s) repetido(s) removido(s) e ${p.cancelarLancamentos.length} lançamento(s) em dobro cancelado(s).`,
+        'sucesso',
+      )
+    } catch (error) {
+      console.error(error)
+      mostrarAviso('Não foi possível corrigir os duplicados.', 'erro')
+    } finally {
+      setCorrigindo(false)
+    }
   }
 
   const situacao = (m) => (m.lancamentoId ? 'conciliado' : m.ignorado ? 'ignorado' : 'pendente')
@@ -455,6 +521,23 @@ export default function Conciliacao({
           {sincronizando ? 'Sincronizando...' : 'Sincronizar agora'}
         </button>
       </div>
+
+      {planoDuplicados.remover.length > 0 && (
+        <div className="cc-duplicados">
+          <div>
+            <strong>⚠ Extrato repetido</strong>
+            <small>
+              {planoDuplicados.remover.length} movimento(s) desta conta entraram duas vezes (mesmo extrato em arquivos diferentes)
+              {planoDuplicados.cancelarLancamentos.length
+                ? ` e ${planoDuplicados.cancelarLancamentos.length} lançamento(s) foram feitos em dobro no site (${moeda(planoDuplicados.cancelarLancamentos.reduce((t, c) => t + c.valor, 0))}).`
+                : '.'}
+            </small>
+          </div>
+          <button type="button" onClick={corrigirDuplicados} disabled={corrigindo}>
+            {corrigindo ? 'Corrigindo...' : '🧹 Corrigir duplicados'}
+          </button>
+        </div>
+      )}
 
       <div className="cc-summary">
         <article>

@@ -428,3 +428,40 @@
     padding: 14px 16px 18px !important;
   }
 }
+
+.cc-duplicados {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 12px 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #fff6e5;
+  border: 1px solid rgba(214, 140, 0, 0.35);
+}
+
+.cc-duplicados div {
+  display: grid;
+  gap: 4px;
+}
+
+.cc-duplicados strong {
+  color: #8a5a00;
+}
+
+.cc-duplicados small {
+  color: #6b5a3a;
+}
+
+.cc-duplicados button {
+  width: auto !important;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .cc-duplicados {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
