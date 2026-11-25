@@ -5506,6 +5506,21 @@ const saldoFinalMesPorConta = contasBancarias.map((conta) => ({
   ...calcularSaldoFinalFinanceiro(conta.id),
 }))
 
+// Totais só dos meses/ano marcados no filtro
+const entradasPeriodoFinanceiro = arrecadacoes
+  .filter((item) => item.ativo !== false && item.data && itemDentroDosMesesFinanceiro(item.data))
+  .reduce((total, item) => total + Number(item.valor || 0), 0)
+const saidasPeriodoFinanceiro = contasPagar
+  .filter(
+    (item) =>
+      item.status === 'Paga' &&
+      item.ativo !== false &&
+      dataPagamentoDespesa(item) &&
+      itemDentroDosMesesFinanceiro(dataPagamentoDespesa(item)),
+  )
+  .reduce((total, item) => total + Number(item.valor || 0), 0)
+const saldoPeriodoFinanceiro = entradasPeriodoFinanceiro - saidasPeriodoFinanceiro
+
 function renderizarSaldoFinalMes() {
   const classeValor = (valor) => (valor < 0 ? 'negative' : '')
 
@@ -5527,6 +5542,23 @@ function renderizarSaldoFinalMes() {
         <small>
           Descontando {formatarMoeda(saldoFinalMesFinanceiro.emAberto)} em despesas abertas até essa data
         </small>
+      </div>
+
+      <div className="finance-month-balance-accounts finance-period-totals">
+        <article className="period-in">
+          <span>Arrecadação total</span>
+          <strong>{formatarMoeda(entradasPeriodoFinanceiro)}</strong>
+        </article>
+        <article className="period-out">
+          <span>Total de saídas</span>
+          <strong>{formatarMoeda(saidasPeriodoFinanceiro)}</strong>
+        </article>
+        <article className="period-balance">
+          <span>Saldo do período</span>
+          <strong className={classeValor(saldoPeriodoFinanceiro)}>
+            {formatarMoeda(saldoPeriodoFinanceiro)}
+          </strong>
+        </article>
       </div>
 
       {saldoFinalMesPorConta.length > 0 && (

@@ -8564,3 +8564,32 @@ textarea {
   color: #1a7f37;
   font-weight: 700;
 }
+
+/* Totais dos meses selecionados (arrecadação, saídas e saldo) */
+.finance-period-totals article {
+  min-width: 150px;
+}
+
+.finance-period-totals .period-in {
+  background: #f1faea;
+  border-color: rgba(111, 189, 42, 0.35);
+}
+
+.finance-period-totals .period-in strong {
+  color: #1a7f37;
+}
+
+.finance-period-totals .period-out {
+  background: #fff1f1;
+  border-color: rgba(198, 40, 40, 0.25);
+}
+
+.finance-period-totals .period-out strong {
+  color: #c62828;
+}
+
+@media (max-width: 560px) {
+  .finance-period-totals article {
+    flex: 1 1 100%;
+  }
+}
