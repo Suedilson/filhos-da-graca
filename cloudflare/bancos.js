@@ -80,7 +80,7 @@ async function movimentosExistentes(env, token, contaId) {
       structuredQuery: {
         from: [{ collectionId: 'extratoBancario' }],
         where: { fieldFilter: { field: { fieldPath: 'contaBancariaId' }, op: 'EQUAL', value: { stringValue: contaId } } },
-        select: { fields: [{ fieldPath: 'data' }, { fieldPath: 'valor' }, { fieldPath: 'origem' }] },
+        select: { fields: [{ fieldPath: 'data' }, { fieldPath: 'valor' }, { fieldPath: 'origem' }, { fieldPath: 'fitid' }, { fieldPath: 'codigoBanco' }] },
       },
     }),
   })
@@ -92,6 +92,8 @@ async function movimentosExistentes(env, token, contaId) {
       data: lerValor(x.document.fields?.data),
       valor: Number(lerValor(x.document.fields?.valor) || 0),
       origem: lerValor(x.document.fields?.origem) || 'arquivo',
+      fitid: lerValor(x.document.fields?.fitid) || '',
+      codigoBanco: lerValor(x.document.fields?.codigoBanco) || '',
     }))
 }
 
@@ -167,6 +169,8 @@ export async function sincronizarBancos(env) {
 
       const existentes = await movimentosExistentes(env, token, destino.id)
       const ids = new Set(existentes.map((m) => m.id))
+      // Código do movimento no banco (FITID do OFX / id do Open Finance) já guardado
+      const codigos = new Set(existentes.flatMap((m) => [m.origem !== 'pluggy' ? m.fitid : '', m.codigoBanco]).filter(Boolean))
       // Movimentos que já vieram por arquivo (OFX/CSV): não repete o mesmo valor no mesmo dia
       const porArquivo = {}
       for (const m of existentes.filter((x) => x.origem !== 'pluggy')) {
@@ -210,6 +214,8 @@ export async function sincronizarBancos(env) {
       for (const t of lista) {
         const id = `pg_${String(t.id).replace(/[^A-Za-z0-9_-]/g, '')}`
         if (ids.has(id)) continue
+        const codigoBanco = String(t.providerId || '').slice(0, 120)
+        if (codigoBanco && codigos.has(codigoBanco)) { jaPorArquivo += 1; continue }
         const valor = Math.round((t.type === 'DEBIT' ? -Math.abs(t.amount) : Math.abs(t.amount)) * 100) / 100
         const data = dataBahia(t.date)
         const k = `${data}|${valor.toFixed(2)}`
@@ -224,6 +230,7 @@ export async function sincronizarBancos(env) {
               descricao: String(t.description || t.descriptionRaw || (valor > 0 ? 'Entrada' : 'Saída')).slice(0, 300),
               valor,
               fitid: String(t.id).slice(0, 120),
+              codigoBanco,
               arquivo: `Pluggy · ${conector}`.slice(0, 120),
               origem: 'pluggy',
               importadoEm: new Date(),

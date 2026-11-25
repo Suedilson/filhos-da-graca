@@ -19,6 +19,8 @@ const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency',
 const dataBR = (iso) => (iso ? iso.split('-').reverse().join('/') : '-')
 const diasEntre = (a, b) => Math.abs((new Date(a) - new Date(b)) / 86400000)
 const dataSaida = (d) => d.dataPagamento || d.vencimento || ''
+// Código do movimento no banco: FITID do OFX ou id do Open Finance (sincronização)
+const codigoDoBanco = (m) => String(m.codigoBanco || (m.origem !== 'pluggy' ? m.fitid : '') || '')
 
 const formatarSaldoSync = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -102,10 +104,16 @@ export default function Conciliacao({
           a.data && diasEntre(a.data, mov.data) <= 3)
         .sort((a, b) => diasEntre(a.data, mov.data) - diasEntre(b.data, mov.data))[0]
     }
-    return contasPagar
+    const pagas = contasPagar
       .filter((d) => d.status === 'Paga' && d.ativo !== false && !vinculados.has(d.id) &&
         Math.abs(Number(d.valor) + mov.valor) < 0.005 && dataSaida(d) && diasEntre(dataSaida(d), mov.data) <= 3)
-      .sort((a, b) => diasEntre(dataSaida(a), mov.data) - diasEntre(dataSaida(b), mov.data))[0]
+      .sort((a, b) => diasEntre(dataSaida(a), mov.data) - diasEntre(dataSaida(b), mov.data))
+    if (pagas.length) return pagas[0]
+    // Despesa ainda em aberto (ex.: parcela) com o mesmo valor e vencimento próximo: é ela que foi paga
+    return contasPagar
+      .filter((d) => d.status !== 'Paga' && d.ativo !== false && !vinculados.has(d.id) &&
+        Math.abs(Number(d.valor) + mov.valor) < 0.005 && d.vencimento && diasEntre(d.vencimento, mov.data) <= 7)
+      .sort((a, b) => diasEntre(a.vencimento, mov.data) - diasEntre(b.vencimento, mov.data))[0]
   }
 
   const situacao = (m) => (m.lancamentoId ? 'conciliado' : m.ignorado ? 'ignorado' : 'pendente')
@@ -150,12 +158,39 @@ export default function Conciliacao({
       }
       const existentes = new Set(movimentos.map((m) => m.id))
       const repeticoes = {}
-      const novos = []
+      const candidatos = []
+      const reconhecidos = new Set()
       for (const mov of lidos) {
         const chave = `${mov.data}|${mov.valor}|${mov.descricao}`
         repeticoes[chave] = (repeticoes[chave] || 0) + 1
         const id = await idDoMovimento(contaId, mov, repeticoes[chave] - 1)
-        if (!existentes.has(id)) novos.push({ id, ...mov })
+        if (existentes.has(id)) reconhecidos.add(id)
+        else candidatos.push({ id, ...mov })
+      }
+      // Movimentos desta conta que já estão guardados com outro id (sincronização automática,
+      // outro formato de arquivo): mesmo dia e mesmo valor contam como o mesmo movimento
+      const jaGuardados = {}
+      for (const m of movimentos) {
+        if (m.contaBancariaId !== contaId || reconhecidos.has(m.id)) continue
+        const k = `${m.data}|${Number(m.valor).toFixed(2)}`
+        jaGuardados[k] = (jaGuardados[k] || 0) + 1
+      }
+      const codigosGuardados = new Set(
+        movimentos.filter((m) => m.contaBancariaId === contaId).map(codigoDoBanco).filter(Boolean),
+      )
+      const novos = []
+      let duplicados = 0
+      for (const mov of candidatos) {
+        const k = `${mov.data}|${Number(mov.valor).toFixed(2)}`
+        if (mov.fitid && codigosGuardados.has(String(mov.fitid))) {
+          duplicados += 1
+          if (jaGuardados[k] > 0) jaGuardados[k] -= 1
+        } else if (jaGuardados[k] > 0) {
+          jaGuardados[k] -= 1
+          duplicados += 1
+        } else {
+          novos.push(mov)
+        }
       }
       for (let i = 0; i < novos.length; i += 400) {
         const lote = writeBatch(db)
@@ -167,6 +202,7 @@ export default function Conciliacao({
             descricao: m.descricao.slice(0, 300),
             valor: m.valor,
             fitid: String(m.fitid || '').slice(0, 120),
+            codigoBanco: String(m.fitid || '').slice(0, 120),
             arquivo: arquivo.name.slice(0, 120),
             origem: 'arquivo',
             importadoEm: serverTimestamp(),
@@ -182,7 +218,8 @@ export default function Conciliacao({
       await recarregar()
       mostrarAviso(
         `${lidos.length} movimentações lidas: ${novos.length} novas` +
-          (lidos.length - novos.length ? `, ${lidos.length - novos.length} já estavam importadas` : '') + '.',
+          (lidos.length - novos.length ? `, ${lidos.length - novos.length} já estavam no site` : '') +
+          (duplicados ? ` (${duplicados} já tinham vindo pela sincronização automática ou por outro arquivo)` : '') + '.',
         'sucesso',
       )
     } catch (error) {
@@ -225,12 +262,43 @@ export default function Conciliacao({
     }
   }
 
-  const vincular = (mov, lanc) =>
-    marcar(mov, { lancamentoId: lanc.id, lancamentoTipo: mov.valor > 0 ? 'arrecadacao' : 'despesa', ignorado: false }, 'Movimento conciliado.')
+  async function vincular(mov, lanc) {
+    if (mov.valor < 0 && lanc.status !== 'Paga') {
+      try {
+        await updateDoc(doc(db, 'contasPagar', lanc.id), {
+          status: 'Paga',
+          dataPagamento: mov.data,
+          contaBancariaId: contaId,
+          contaBancariaNome: conta?.nome || '',
+          extratoMovimentoId: mov.id,
+          codigoBanco: codigoDoBanco(mov),
+          atualizadoEm: serverTimestamp(),
+        })
+      } catch (error) {
+        console.error(error)
+        mostrarAviso('Não foi possível marcar a despesa como paga.', 'erro')
+        return
+      }
+      await marcar(mov, { lancamentoId: lanc.id, lancamentoTipo: 'despesa', ignorado: false }, 'Despesa marcada como paga e conciliada.')
+      await aoAtualizar()
+      return
+    }
+    const entrada = mov.valor > 0
+    await updateDoc(doc(db, entrada ? 'arrecadacoes' : 'contasPagar', lanc.id), {
+      extratoMovimentoId: mov.id,
+      codigoBanco: codigoDoBanco(mov),
+      atualizadoEm: serverTimestamp(),
+    }).catch((error) => console.error(error))
+    await marcar(mov, { lancamentoId: lanc.id, lancamentoTipo: entrada ? 'arrecadacao' : 'despesa', ignorado: false }, 'Movimento conciliado.')
+  }
   const desfazer = (mov) => marcar(mov, { lancamentoId: '', lancamentoTipo: '', ignorado: false })
   const ignorar = (mov) => marcar(mov, { ignorado: true }, 'Movimento ignorado.')
 
   function abrirLancamento(mov) {
+    if (mov.lancamentoId || lancamentoDoMovimento(mov) || sugestao(mov)) {
+      mostrarAviso('Este movimento já tem lançamento no site. Use "✓ É este" para conciliar.', 'erro')
+      return
+    }
     setLancando({
       mov,
       descricao: mov.descricao,
@@ -242,8 +310,32 @@ export default function Conciliacao({
   }
 
   // Cria a arrecadação ou a despesa a partir do movimento do banco e já concilia
+  function lancamentoDoMovimento(mov) {
+    const codigo = codigoDoBanco(mov)
+    const lista = mov.valor > 0 ? arrecadacoes : contasPagar
+    return lista.find((l) => l.ativo !== false &&
+      (l.extratoMovimentoId === mov.id || (codigo && l.codigoBanco === codigo)))
+  }
+
   async function lancar() {
     const { mov } = lancando
+    const ligado = lancamentoDoMovimento(mov)
+    if (ligado) {
+      mostrarAviso(`Este movimento do banco já foi lançado: ${ligado.descricao}.`, 'erro')
+      setLancando(null)
+      return
+    }
+    if (mov.lancamentoId) {
+      mostrarAviso('Este movimento já foi lançado no site.', 'erro')
+      setLancando(null)
+      return
+    }
+    const existente = sugestao(mov)
+    if (existente) {
+      mostrarAviso(`Já existe no site: ${existente.descricao}. Use "✓ É este" para conciliar.`, 'erro')
+      setLancando(null)
+      return
+    }
     setProcessando(mov.id)
     try {
       const base = {
@@ -255,6 +347,8 @@ export default function Conciliacao({
         comprovante: '',
         comprovantePublicId: '',
         observacoes: 'Lançado pela conciliação bancária',
+        extratoMovimentoId: mov.id,
+        codigoBanco: codigoDoBanco(mov),
         ativo: true,
         atualizadoEm: serverTimestamp(),
         criadoEm: serverTimestamp(),
@@ -410,7 +504,8 @@ export default function Conciliacao({
                     {s === 'conciliado' && `✓ Conciliado com ${m.lancamentoTipo === 'arrecadacao' ? 'arrecadação' : 'despesa'} do site`}
                     {s === 'ignorado' && 'Ignorado (não é lançamento da igreja)'}
                     {s === 'pendente' && (sug
-                      ? `Parece ser: ${sug.descricao} · ${dataBR(sug.data || dataSaida(sug))}`
+                      ? `Já lançado no site: ${sug.descricao} · ${dataBR(sug.data || dataSaida(sug) || sug.vencimento)}` +
+                        (m.valor < 0 && sug.status !== 'Paga' ? ' (em aberto — será marcada como paga)' : '')
                       : 'Ainda não lançado no site')}
                   </small>
                 </div>
@@ -419,7 +514,7 @@ export default function Conciliacao({
                   {s === 'pendente' && sug && (
                     <button type="button" className="cc-btn-ok" disabled={ocupado} onClick={() => vincular(m, sug)}>✓ É este</button>
                   )}
-                  {s === 'pendente' && (
+                  {s === 'pendente' && !sug && (
                     <button type="button" className="cc-btn-main" disabled={ocupado} onClick={() => abrirLancamento(m)}>
                       Lançar {m.valor > 0 ? 'entrada' : 'saída'}
                     </button>
