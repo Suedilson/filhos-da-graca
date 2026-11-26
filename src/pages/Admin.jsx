@@ -646,6 +646,7 @@ const tiposArrecadacao = [
 const formasPagamentoFinanceiro = [
   'Pix',
   'Dinheiro',
+  'Gazofilácio',
   'Cartão de débito',
   'Cartão de crédito',
   'Transferência',
@@ -678,6 +679,8 @@ function converterValor(texto) {
 }
 const [contasPagar, setContasPagar] = useState([])
 const [gruposDespesaAbertos, setGruposDespesaAbertos] = useState([])
+// Janela "Associar a uma despesa" das arrecadações do gazofilácio entregues ao pastor
+const [associacaoGazofilacio, setAssociacaoGazofilacio] = useState(null)
 const [editandoContaPagarId, setEditandoContaPagarId] = useState(null)
 const [formContaPagarAberto, setFormContaPagarAberto] = useState(false)
 // Janela "Registrar pagamento" (botão Pagar): data, forma, conta e recibo
@@ -887,6 +890,10 @@ const [statusFiltroContaPagar, setStatusFiltroContaPagar] = useState('Todas')
 // Linha marcada nas tabelas do Financeiro: { tabela, id }
 const [linhaFinanceiroSelecionada, setLinhaFinanceiroSelecionada] = useState(null)
 const [fornecedorFiltroContaPagar, setFornecedorFiltroContaPagar] = useState('')
+// Filtro por forma de pagamento e ordenação das colunas (Arrecadações e Contas a pagar)
+const [formaFiltroArrecadacao, setFormaFiltroArrecadacao] = useState('')
+const [formaFiltroContaPagar, setFormaFiltroContaPagar] = useState('')
+const [ordemTabelas, setOrdemTabelas] = useState({})
 async function carregarEnsinoMateriais() {
   try {
     const q = query(collection(db, 'ensinoMateriais'), orderBy('criadoEm', 'desc'))
@@ -3163,6 +3170,168 @@ async function confirmarPagamentoConta(event) {
   }
 }
 
+// Despesa já criada a partir desta arrecadação (não deixa associar duas vezes)
+function despesaDaArrecadacao(arrecadacaoId) {
+  return contasPagar.find((c) => c.ativo !== false && c.arrecadacaoOrigemId === arrecadacaoId) || null
+}
+
+function primeiraDespesaDoGrupo(nome) {
+  const alvo = String(nome || '').trim().toLowerCase()
+  if (!alvo) return null
+  return contasPagar
+    .filter((c) => c.ativo !== false && String(c.grupo || '').trim().toLowerCase() === alvo)
+    .sort((a, b) => (a.dataPagamento || a.vencimento || '').localeCompare(b.dataPagamento || b.vencimento || ''))[0] || null
+}
+
+function abrirAssociacaoGazofilacio(arrecadacao) {
+  const existente = despesaDaArrecadacao(arrecadacao.id)
+  if (existente) {
+    mostrarAviso(`Esta entrada já foi associada à despesa "${existente.descricao}".`, 'erro')
+    return
+  }
+  setAssociacaoGazofilacio({
+    arrecadacao,
+    descricao: `Gazofilácio entregue ao pastor - ${formatarData(arrecadacao.data)}`,
+    grupo: '',
+    categoria: categoriasContaPagar.includes('Outros') ? 'Outros' : categoriasContaPagar[0],
+    fornecedor: '',
+    data: arrecadacao.data || obterHojeISO(),
+    salvando: false,
+  })
+}
+
+function escolherGrupoGazofilacio(nome) {
+  const primeira = primeiraDespesaDoGrupo(nome)
+  setAssociacaoGazofilacio((atual) => ({
+    ...atual,
+    grupo: nome,
+    ...(primeira
+      ? { categoria: primeira.categoria || atual.categoria, fornecedor: primeira.fornecedor || atual.fornecedor }
+      : {}),
+  }))
+}
+
+// Cria a despesa paga com o valor da entrada; a arrecadação não muda
+async function salvarAssociacaoGazofilacio(event) {
+  event.preventDefault()
+  const a = associacaoGazofilacio
+  if (despesaDaArrecadacao(a.arrecadacao.id)) {
+    mostrarAviso('Esta entrada já foi associada a uma despesa.', 'erro')
+    setAssociacaoGazofilacio(null)
+    return
+  }
+  if (!a.descricao.trim()) {
+    mostrarAviso('Informe a descrição da despesa.', 'erro')
+    return
+  }
+  setAssociacaoGazofilacio({ ...a, salvando: true })
+  try {
+    await addDoc(collection(db, 'contasPagar'), {
+      fornecedor: a.fornecedor.trim(),
+      categoria: a.categoria,
+      descricao: a.descricao.trim().slice(0, 200),
+      valor: Number(a.arrecadacao.valor || 0),
+      formaPagamento: 'Gazofilácio',
+      contaBancariaId: '',
+      contaBancariaNome: '',
+      comprovante: '',
+      comprovantePublicId: '',
+      observacoes: `Valor do gazofilácio de ${formatarData(a.arrecadacao.data)} entregue em mãos`,
+      status: 'Paga',
+      ativo: true,
+      recorrente: false,
+      parcelada: false,
+      numeroParcelas: 1,
+      grupo: String(a.grupo || '').trim().slice(0, 120),
+      vencimento: a.data,
+      dataPagamento: a.data,
+      arrecadacaoOrigemId: a.arrecadacao.id,
+      criadoEm: serverTimestamp(),
+      atualizadoEm: serverTimestamp(),
+    })
+    setAssociacaoGazofilacio(null)
+    await carregarContasPagar()
+    mostrarAviso(`Despesa de ${formatarMoeda(a.arrecadacao.valor)} criada a partir do gazofilácio.`, 'sucesso')
+  } catch (error) {
+    console.error(error)
+    mostrarAviso('Não foi possível criar a despesa.', 'erro')
+    setAssociacaoGazofilacio((atual) => atual && { ...atual, salvando: false })
+  }
+}
+
+function renderizarModalAssociacaoGazofilacio() {
+  if (!associacaoGazofilacio) return null
+  const a = associacaoGazofilacio
+  return (
+    <div className="finance-modal-backdrop">
+      <section className="finance-modal-card pay-modal">
+        <div className="finance-modal-header">
+          <div>
+            <span className="admin-section-label">Associar a uma despesa</span>
+            <h2>{formatarMoeda(a.arrecadacao.valor)} · {formatarData(a.arrecadacao.data)}</h2>
+            <small className="pay-modal-sub">Entrada: {a.arrecadacao.descricao} (não será alterada)</small>
+          </div>
+          <button type="button" className="finance-modal-close" onClick={() => setAssociacaoGazofilacio(null)} disabled={a.salvando}>×</button>
+        </div>
+
+        <form className="finance-modal-form pay-modal-form" onSubmit={salvarAssociacaoGazofilacio}>
+          <label className="pay-wide">
+            Descrição da despesa
+            <input
+              value={a.descricao}
+              maxLength={200}
+              onChange={(e) => setAssociacaoGazofilacio({ ...a, descricao: e.target.value })}
+            />
+          </label>
+          <label className="pay-wide">
+            Agrupar em (opcional)
+            <input
+              list="grupos-despesas-gazofilacio"
+              value={a.grupo}
+              maxLength={120}
+              placeholder="Ex: Prebenda pastoral - Novembro/2026"
+              onChange={(e) => escolherGrupoGazofilacio(e.target.value)}
+            />
+            <datalist id="grupos-despesas-gazofilacio">
+              {gruposDespesasExistentes.map((g) => <option key={g} value={g} />)}
+            </datalist>
+          </label>
+          <label>
+            Categoria
+            <select value={a.categoria} onChange={(e) => setAssociacaoGazofilacio({ ...a, categoria: e.target.value })}>
+              {categoriasContaPagar.map((c) => <option key={c}>{c}</option>)}
+            </select>
+          </label>
+          <label>
+            Fornecedor
+            <input
+              value={a.fornecedor}
+              maxLength={150}
+              placeholder="Ex: Pastor Cristiano"
+              onChange={(e) => setAssociacaoGazofilacio({ ...a, fornecedor: e.target.value })}
+            />
+          </label>
+          <label>
+            Data da entrega
+            <input type="date" required value={a.data} onChange={(e) => setAssociacaoGazofilacio({ ...a, data: e.target.value })} />
+          </label>
+          <label>
+            Valor
+            <input value={formatarMoeda(a.arrecadacao.valor)} disabled />
+          </label>
+          <p className="pay-wide pay-modal-sub">
+            Será criada uma despesa paga (forma Gazofilácio, sem conta bancária) com o mesmo valor. A entrada continua como está.
+          </p>
+          <div className="pay-wide pay-actions">
+            <button type="submit" disabled={a.salvando}>{a.salvando ? 'Salvando...' : '✓ Criar despesa'}</button>
+            <button type="button" className="cancel-button" onClick={() => setAssociacaoGazofilacio(null)} disabled={a.salvando}>Cancelar</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  )
+}
+
 function renderizarModalPagamento() {
   if (!pagamentoConta) return null
   const p = pagamentoConta
@@ -5432,16 +5601,71 @@ function renderizarFiltroAnoFinanceiro() {
     </label>
   )
 }
-const arrecadacoesFiltradasFinanceiro = arrecadacoes.filter((arrecadacao) =>
-  itemDentroDosMesesFinanceiro(arrecadacao.data),
+const arrecadacoesFiltradasFinanceiro = arrecadacoes.filter(
+  (arrecadacao) =>
+    itemDentroDosMesesFinanceiro(arrecadacao.data) &&
+    (modoFinanceiro !== 'arrecadacoes' || !formaFiltroArrecadacao ||
+      (arrecadacao.formaPagamento || '') === formaFiltroArrecadacao),
 )
 
 const contasPagarFiltradasFinanceiro = contasPagar.filter(
   (conta) =>
     itemDentroDosMesesFinanceiro(conta.vencimento) &&
     contaPagarCorrespondeStatus(conta) &&
-    contaPagarCorrespondeFornecedor(conta),
+    contaPagarCorrespondeFornecedor(conta) &&
+    (modoFinanceiro !== 'pagar' || !formaFiltroContaPagar ||
+      (conta.formaPagamento || '') === formaFiltroContaPagar),
 )
+
+// Ordenação ao clicar no título da coluna: crescente → decrescente → original
+function alternarOrdemTabela(tabela, coluna) {
+  setOrdemTabelas((atual) => {
+    const ordem = atual[tabela]
+    if (!ordem || ordem.coluna !== coluna) return { ...atual, [tabela]: { coluna, direcao: 'asc' } }
+    if (ordem.direcao === 'asc') return { ...atual, [tabela]: { coluna, direcao: 'desc' } }
+    return { ...atual, [tabela]: null }
+  })
+}
+
+function ordenarTabela(tabela, lista, valorDaColuna) {
+  const ordem = ordemTabelas[tabela]
+  if (!ordem) return lista
+  const fator = ordem.direcao === 'asc' ? 1 : -1
+  return [...lista].sort((a, b) => {
+    const va = valorDaColuna(a, ordem.coluna)
+    const vb = valorDaColuna(b, ordem.coluna)
+    if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * fator
+    return String(va ?? '').localeCompare(String(vb ?? ''), 'pt-BR', { sensitivity: 'base', numeric: true }) * fator
+  })
+}
+
+function cabecalhoOrdenavel(tabela, coluna, rotulo, className = '') {
+  const ordem = ordemTabelas[tabela]
+  const ativo = ordem?.coluna === coluna
+  return (
+    <th
+      className={`${className} finance-th-sort ${ativo ? 'active' : ''}`}
+      onClick={() => alternarOrdemTabela(tabela, coluna)}
+      title="Clique para ordenar"
+      aria-sort={ativo ? (ordem.direcao === 'asc' ? 'ascending' : 'descending') : 'none'}
+    >
+      {rotulo}
+      <span className="finance-th-arrow">{ativo ? (ordem.direcao === 'asc' ? ' ▲' : ' ▼') : ' ↕'}</span>
+    </th>
+  )
+}
+
+const arrecadacoesTabela = ordenarTabela('arrecadacoes', arrecadacoesFiltradasFinanceiro, (item, coluna) => {
+  if (coluna === 'valor') return Number(item.valor || 0)
+  if (coluna === 'status') return item.ativo === false ? 'Cancelada' : 'Ativa'
+  return item[coluna] || ''
+})
+
+const contasPagarTabela = ordenarTabela('contasPagar', contasPagarFiltradasFinanceiro, (item, coluna) => {
+  if (coluna === 'valor') return Number(item.valor || 0)
+  if (coluna === 'status') return obterStatusVisualContaPagar(item)
+  return item[coluna] || ''
+})
 
 const arrecadacoesAtivas = arrecadacoesFiltradasFinanceiro.filter(
   (arrecadacao) => arrecadacao.ativo !== false,
@@ -5612,7 +5836,7 @@ const gruposDespesasExistentes = [...new Set(contasPagar.map((c) => c.grupo).fil
 const itensTabelaContasPagar = (() => {
   const itens = []
   const porGrupo = {}
-  for (const conta of contasPagarFiltradasFinanceiro) {
+  for (const conta of contasPagarTabela) {
     const grupo = String(conta.grupo || '').trim()
     if (!grupo) {
       itens.push({ tipo: 'conta', conta })
@@ -8865,6 +9089,7 @@ function formatarMoeda(valor) {
     </div>
 
     {renderizarModalPagamento()}
+    {renderizarModalAssociacaoGazofilacio()}
 
     {modoFinanceiro === 'conciliacao' && (
       <Conciliacao
@@ -9165,6 +9390,16 @@ function formatarMoeda(valor) {
           </button>
         ))}
       </div>
+
+      <div className="finance-extra-filters">
+        <label>
+          Forma
+          <select value={formaFiltroArrecadacao} onChange={(event) => setFormaFiltroArrecadacao(event.target.value)}>
+            <option value="">Todas</option>
+            {formasPagamentoArrecadacao.map((forma) => <option key={forma}>{forma}</option>)}
+          </select>
+        </label>
+      </div>
     </div>
     <div className="finance-table-summary">
       <article>
@@ -9211,14 +9446,14 @@ function formatarMoeda(valor) {
         <table className="finance-spreadsheet-table">
           <thead>
             <tr>
-              <th>Data</th>
-              <th>Tipo</th>
-              <th>Descrição</th>
-              <th>Forma</th>
-              <th>Conta</th>
-              <th>Responsável</th>
-              <th>Status</th>
-              <th className="finance-money-column">Valor</th>
+              {cabecalhoOrdenavel('arrecadacoes', 'data', 'Data')}
+              {cabecalhoOrdenavel('arrecadacoes', 'tipo', 'Tipo')}
+              {cabecalhoOrdenavel('arrecadacoes', 'descricao', 'Descrição')}
+              {cabecalhoOrdenavel('arrecadacoes', 'formaPagamento', 'Forma')}
+              {cabecalhoOrdenavel('arrecadacoes', 'contaBancariaNome', 'Conta')}
+              {cabecalhoOrdenavel('arrecadacoes', 'responsavel', 'Responsável')}
+              {cabecalhoOrdenavel('arrecadacoes', 'status', 'Status')}
+              {cabecalhoOrdenavel('arrecadacoes', 'valor', 'Valor', 'finance-money-column')}
             </tr>
           </thead>
 
@@ -9231,7 +9466,7 @@ function formatarMoeda(valor) {
               </tr>
             )}
 
-            {arrecadacoesFiltradasFinanceiro.map((arrecadacao) => (
+            {arrecadacoesTabela.map((arrecadacao) => (
               <tr
                 key={arrecadacao.id}
                 className={`${arrecadacao.ativo === false ? 'finance-row-canceled' : ''} ${
@@ -9259,6 +9494,24 @@ function formatarMoeda(valor) {
                   {arrecadacao.observacoes && (
                     <small>{arrecadacao.observacoes}</small>
                   )}
+
+                  {arrecadacao.formaPagamento === 'Gazofilácio' && arrecadacao.ativo !== false && (() => {
+                    const despesa = despesaDaArrecadacao(arrecadacao.id)
+                    return despesa ? (
+                      <small className="finance-gazo-ok">✓ Entregue: {despesa.descricao}</small>
+                    ) : (
+                      <button
+                        type="button"
+                        className="finance-gazo-button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          abrirAssociacaoGazofilacio(arrecadacao)
+                        }}
+                      >
+                        ↪ Associar a uma despesa
+                      </button>
+                    )
+                  })()}
 
                   {arrecadacao.comprovante && (
                     <small>
@@ -9619,6 +9872,14 @@ function formatarMoeda(valor) {
             placeholder="Buscar fornecedor"
           />
         </label>
+
+        <label>
+          Forma
+          <select value={formaFiltroContaPagar} onChange={(event) => setFormaFiltroContaPagar(event.target.value)}>
+            <option value="">Todas</option>
+            {formasPagamentoFinanceiro.map((forma) => <option key={forma}>{forma}</option>)}
+          </select>
+        </label>
       </div>
     </div>
     <div className="finance-table-summary finance-alert-summary">
@@ -9659,15 +9920,15 @@ function formatarMoeda(valor) {
         <table className="finance-spreadsheet-table">
           <thead>
             <tr>
-              <th>Vencimento</th>
-              <th>Pagamento</th>
-              <th>Fornecedor</th>
-              <th>Categoria</th>
-              <th>Descrição</th>
-              <th>Forma</th>
-              <th>Conta</th>
-              <th>Status</th>
-              <th className="finance-money-column">Valor</th>
+              {cabecalhoOrdenavel('contasPagar', 'vencimento', 'Vencimento')}
+              {cabecalhoOrdenavel('contasPagar', 'dataPagamento', 'Pagamento')}
+              {cabecalhoOrdenavel('contasPagar', 'fornecedor', 'Fornecedor')}
+              {cabecalhoOrdenavel('contasPagar', 'categoria', 'Categoria')}
+              {cabecalhoOrdenavel('contasPagar', 'descricao', 'Descrição')}
+              {cabecalhoOrdenavel('contasPagar', 'formaPagamento', 'Forma')}
+              {cabecalhoOrdenavel('contasPagar', 'contaBancariaNome', 'Conta')}
+              {cabecalhoOrdenavel('contasPagar', 'status', 'Status')}
+              {cabecalhoOrdenavel('contasPagar', 'valor', 'Valor', 'finance-money-column')}
               <th>Ações</th>
             </tr>
           </thead>
