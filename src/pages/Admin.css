@@ -8613,3 +8613,8 @@ textarea {
   border-left: 4px solid #6f4cff;
   padding-left: 18px;
 }
+
+.pay-parcial-info {
+  color: #b26a00;
+  font-weight: 700;
+}

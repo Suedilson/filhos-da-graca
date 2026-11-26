@@ -3059,6 +3059,7 @@ function marcarContaPagarComoPaga(conta) {
     contaBancariaId: conta.contaBancariaId || ativas[0]?.id || '',
     comprovante: conta.comprovante || '',
     comprovantePublicId: conta.comprovantePublicId || '',
+    valorPago: String(Number(conta.valor || 0).toFixed(2)).replace('.', ','),
     salvando: false,
   })
 }
@@ -3091,9 +3092,25 @@ async function confirmarPagamentoConta(event) {
     mostrarAviso('Informe a data do pagamento.', 'erro')
     return
   }
+  const valorTotal = Math.round(Number(p.conta.valor || 0) * 100) / 100
+  const valorPago = Math.round(converterValor(p.valorPago) * 100) / 100
+  if (!valorPago || valorPago <= 0) {
+    mostrarAviso('Informe o valor pago.', 'erro')
+    return
+  }
+  if (valorPago > valorTotal + 0.001) {
+    mostrarAviso(`O valor pago não pode passar de ${formatarMoeda(valorTotal)}.`, 'erro')
+    return
+  }
+  const restante = Math.round((valorTotal - valorPago) * 100) / 100
   setPagamentoConta({ ...p, salvando: true })
   try {
     const contaBanco = contasBancarias.find((c) => c.id === p.contaBancariaId)
+    // Pagamento parcial: esta despesa fica paga com o valor pago e o restante vira
+    // uma nova despesa em aberto, as duas no mesmo grupo (mostra o total e o saldo devedor)
+    const grupo = restante > 0
+      ? p.conta.grupo || `${p.conta.descricao} - ${formatarData(p.conta.vencimento)}`.slice(0, 120)
+      : p.conta.grupo || ''
     await updateDoc(doc(db, 'contasPagar', p.conta.id), {
       status: 'Paga',
       dataPagamento: p.dataPagamento,
@@ -3103,11 +3120,42 @@ async function confirmarPagamentoConta(event) {
       comprovante: p.comprovante,
       comprovantePublicId: p.comprovantePublicId,
       ativo: true,
+      ...(restante > 0 ? { valor: valorPago, valorOriginal: valorTotal, grupo } : {}),
       atualizadoEm: serverTimestamp(),
     })
+    if (restante > 0) {
+      await addDoc(collection(db, 'contasPagar'), {
+        fornecedor: p.conta.fornecedor || '',
+        categoria: p.conta.categoria || '',
+        descricao: `${String(p.conta.descricao || '').replace(/ \(saldo restante\)$/, '')} (saldo restante)`.slice(0, 200),
+        valor: restante,
+        valorOriginal: valorTotal,
+        formaPagamento: p.formaPagamento,
+        contaBancariaId: p.contaBancariaId,
+        contaBancariaNome: contaBanco?.nome || '',
+        comprovante: '',
+        comprovantePublicId: '',
+        observacoes: `Saldo devedor do pagamento parcial de ${formatarData(p.dataPagamento)}`,
+        status: 'Aberta',
+        ativo: true,
+        recorrente: false,
+        parcelada: false,
+        numeroParcelas: 1,
+        grupo,
+        vencimento: p.conta.vencimento || p.dataPagamento,
+        dataPagamento: '',
+        criadoEm: serverTimestamp(),
+        atualizadoEm: serverTimestamp(),
+      })
+    }
     setPagamentoConta(null)
     await carregarContasPagar()
-    mostrarAviso(p.comprovante ? 'Pagamento registrado com recibo.' : 'Pagamento registrado.', 'sucesso')
+    mostrarAviso(
+      restante > 0
+        ? `Pagamento parcial de ${formatarMoeda(valorPago)} registrado. Saldo devedor: ${formatarMoeda(restante)}.`
+        : p.comprovante ? 'Pagamento registrado com recibo.' : 'Pagamento registrado.',
+      'sucesso',
+    )
   } catch (error) {
     mostrarAviso('Erro ao registrar o pagamento.', 'erro')
     console.error(error)
@@ -3134,6 +3182,22 @@ function renderizarModalPagamento() {
         </div>
 
         <form className="finance-modal-form pay-modal-form" onSubmit={confirmarPagamentoConta}>
+          <label className="pay-wide">
+            Valor pago
+            <input
+              inputMode="decimal"
+              value={p.valorPago}
+              onChange={(e) => setPagamentoConta({ ...p, valorPago: somenteValor(e.target.value) })}
+            />
+            {(() => {
+              const resta = Math.round((Number(p.conta.valor || 0) - converterValor(p.valorPago)) * 100) / 100
+              return resta > 0 && converterValor(p.valorPago) > 0 ? (
+                <small className="pay-parcial-info">
+                  Pagamento parcial: fica um saldo devedor de {formatarMoeda(resta)} em aberto, no mesmo grupo desta despesa.
+                </small>
+              ) : null
+            })()}
+          </label>
           <label>
             Data do pagamento
             <input
@@ -9651,12 +9715,22 @@ function formatarMoeda(valor) {
                   <td>{comum('formaPagamento')}</td>
                   <td>{comum('contaBancariaNome')}</td>
                   <td>
-                    <span className={todasPagas ? 'finance-status paid' : 'finance-status open'}>
-                      {todasPagas ? 'Paga' : 'Em aberto'}
+                    <span className={todasPagas ? 'finance-status paid' : 'finance-status warning'}>
+                      {todasPagas ? 'Paga' : pagas > 0 ? 'Parcialmente paga' : 'Em aberto'}
                     </span>
                   </td>
                   <td className="finance-money-column">
                     <strong>{formatarMoeda(item.contas.reduce((t, c) => t + Number(c.valor || 0), 0))}</strong>
+                    {!todasPagas && (
+                      <small className="finance-alert-text">
+                        Saldo devedor{' '}
+                        {formatarMoeda(
+                          item.contas
+                            .filter((c) => c.status !== 'Paga' && c.status !== 'Cancelada')
+                            .reduce((t, c) => t + Number(c.valor || 0), 0),
+                        )}
+                      </small>
+                    )}
                   </td>
                   <td>
                     <div className="finance-table-actions">
