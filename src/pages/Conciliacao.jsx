@@ -381,6 +381,30 @@ export default function Conciliacao({
 
   const gruposDespesas = [...new Set(contasPagar.map((c) => c.grupo).filter(Boolean))].sort()
 
+  // Primeira despesa lançada no grupo: dela vêm categoria, fornecedor e forma
+  function primeiraDoGrupo(nome) {
+    const alvo = String(nome || '').trim().toLowerCase()
+    if (!alvo) return null
+    return contasPagar
+      .filter((c) => c.ativo !== false && String(c.grupo || '').trim().toLowerCase() === alvo)
+      .sort((a, b) => (a.dataPagamento || a.vencimento || '').localeCompare(b.dataPagamento || b.vencimento || ''))[0] || null
+  }
+
+  function escolherGrupo(nome) {
+    const primeira = primeiraDoGrupo(nome)
+    setLancando((atual) => ({
+      ...atual,
+      grupo: nome,
+      ...(primeira
+        ? {
+          categoria: primeira.categoria || atual.categoria,
+          fornecedor: primeira.fornecedor || atual.fornecedor,
+          formaPagamento: primeira.formaPagamento || atual.formaPagamento,
+        }
+        : {}),
+    }))
+  }
+
   function alternarSelecao(mov) {
     setSelecionados((atual) => (atual.includes(mov.id) ? atual.filter((id) => id !== mov.id) : [...atual, mov.id]))
   }
@@ -688,7 +712,7 @@ export default function Conciliacao({
       )}
 
       {lancando && (
-        <div className="finance-modal-backdrop" onClick={() => setLancando(null)}>
+        <div className="finance-modal-backdrop">
           <section className="finance-modal-card cc-modal" onClick={(e) => e.stopPropagation()}>
             <div className="finance-modal-header">
               <div>
@@ -728,7 +752,7 @@ export default function Conciliacao({
                     value={lancando.grupo || ''}
                     maxLength={120}
                     placeholder="Ex: Prebenda pastoral - Novembro/2026"
-                    onChange={(e) => setLancando({ ...lancando, grupo: e.target.value })}
+                    onChange={(e) => escolherGrupo(e.target.value)}
                   />
                   <datalist id="cc-grupos-despesas">
                     {gruposDespesas.map((g) => <option key={g} value={g} />)}

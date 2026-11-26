@@ -3120,7 +3120,7 @@ function renderizarModalPagamento() {
   const p = pagamentoConta
   const ehPdf = /\.pdf($|\?)/i.test(p.comprovante) || p.comprovante.includes('/raw/')
   return (
-    <div className="finance-modal-backdrop" onClick={() => !p.salvando && setPagamentoConta(null)}>
+    <div className="finance-modal-backdrop">
       <section className="finance-modal-card pay-modal" onClick={(e) => e.stopPropagation()}>
         <div className="finance-modal-header">
           <div>
@@ -9968,12 +9968,28 @@ function formatarMoeda(valor) {
                 list="grupos-despesas"
                 value={contaPagarForm.grupo || ''}
                 maxLength={120}
-                onChange={(event) =>
+                onChange={(event) => {
+                  const nome = event.target.value
+                  // Grupo já existente: copia categoria, fornecedor e forma da primeira despesa dele
+                  const alvo = nome.trim().toLowerCase()
+                  const primeira = alvo
+                    ? contasPagar
+                      .filter((c) => c.ativo !== false && c.id !== editandoContaPagarId &&
+                        String(c.grupo || '').trim().toLowerCase() === alvo)
+                      .sort((a, b) => (a.dataPagamento || a.vencimento || '').localeCompare(b.dataPagamento || b.vencimento || ''))[0]
+                    : null
                   setContaPagarForm({
                     ...contaPagarForm,
-                    grupo: event.target.value,
+                    grupo: nome,
+                    ...(primeira
+                      ? {
+                        categoria: primeira.categoria || contaPagarForm.categoria,
+                        fornecedor: primeira.fornecedor || contaPagarForm.fornecedor,
+                        formaPagamento: primeira.formaPagamento || contaPagarForm.formaPagamento,
+                      }
+                      : {}),
                   })
-                }
+                }}
                 placeholder="Ex: Prebenda pastoral - Novembro/2026"
               />
               <datalist id="grupos-despesas">
