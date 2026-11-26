@@ -541,3 +541,39 @@
     grid-template-columns: 18px 48px minmax(0, 1fr) auto;
   }
 }
+
+/* Observação do movimento do extrato */
+.cc-obs {
+  display: block;
+  margin-top: 3px;
+  color: #3b2aa8 !important;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.cc-obs-editor {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.cc-obs-editor textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 54px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(23, 16, 95, 0.2);
+  font: inherit;
+  resize: vertical;
+}
+
+.cc-obs-editor div {
+  display: flex;
+  gap: 8px;
+}
+
+.cc-obs-editor button {
+  width: auto !important;
+  padding: 6px 14px !important;
+}

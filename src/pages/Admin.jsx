@@ -5926,6 +5926,8 @@ function renderizarLinhaContaPagar(conta, classeExtra = '') {
                       <small className="finance-bank-desc">🏦 {conta.descricaoBanco}</small>
                     )}
 
+                    {conta.observacaoExtrato && <small className="finance-bank-desc">📝 {conta.observacaoExtrato}</small>}
+
                     {conta.observacoes && <small>{conta.observacoes}</small>}
 
                     {conta.comprovante && (
@@ -9498,6 +9500,8 @@ function formatarMoeda(valor) {
                   {arrecadacao.descricaoBanco && arrecadacao.descricaoBanco.trim() !== String(arrecadacao.descricao || '').trim() && (
                     <small className="finance-bank-desc">🏦 {arrecadacao.descricaoBanco}</small>
                   )}
+
+                  {arrecadacao.observacaoExtrato && <small className="finance-bank-desc">📝 {arrecadacao.observacaoExtrato}</small>}
 
                   {arrecadacao.observacoes && (
                     <small>{arrecadacao.observacoes}</small>

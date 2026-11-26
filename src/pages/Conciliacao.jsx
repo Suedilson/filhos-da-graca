@@ -43,6 +43,8 @@ export default function Conciliacao({
   const [lancando, setLancando] = useState(null)
   // Saídas marcadas para lançar juntas num grupo (ex.: prebenda em várias retiradas)
   const [selecionados, setSelecionados] = useState([])
+  // Observação de um movimento do extrato (edição aberta)
+  const [editandoObs, setEditandoObs] = useState(null)
   const [sincronia, setSincronia] = useState(null)
   const [sincronizando, setSincronizando] = useState(false)
 
@@ -370,6 +372,31 @@ export default function Conciliacao({
     }
   }
 
+  // Salva a observação no movimento e, se ele já estiver conciliado, também no lançamento
+  // (em campo próprio: descrição, observações e demais dados continuam como estão)
+  async function salvarObservacao() {
+    const { mov, texto } = editandoObs
+    const observacao = String(texto || '').trim().slice(0, 500)
+    setProcessando(mov.id)
+    try {
+      await updateDoc(doc(db, 'extratoBancario', mov.id), { observacao, atualizadoEm: serverTimestamp() })
+      if (mov.lancamentoId) {
+        await updateDoc(doc(db, mov.lancamentoTipo === 'arrecadacao' ? 'arrecadacoes' : 'contasPagar', mov.lancamentoId), {
+          observacaoExtrato: observacao,
+          atualizadoEm: serverTimestamp(),
+        }).catch((error) => console.error(error))
+      }
+      setEditandoObs(null)
+      await Promise.all([recarregar(), mov.lancamentoId ? aoAtualizar() : null])
+      mostrarAviso(observacao ? 'Observação salva.' : 'Observação removida.', 'sucesso')
+    } catch (error) {
+      console.error(error)
+      mostrarAviso('Não foi possível salvar a observação.', 'erro')
+    } finally {
+      setProcessando('')
+    }
+  }
+
   async function vincular(mov, lanc) {
     if (mov.valor < 0 && lanc.status !== 'Paga') {
       try {
@@ -381,6 +408,7 @@ export default function Conciliacao({
           extratoMovimentoId: mov.id,
           codigoBanco: codigoDoBanco(mov),
           descricaoBanco: String(mov.descricao || '').slice(0, 300),
+          ...(mov.observacao ? { observacaoExtrato: mov.observacao } : {}),
           atualizadoEm: serverTimestamp(),
         })
       } catch (error) {
@@ -397,6 +425,7 @@ export default function Conciliacao({
       extratoMovimentoId: mov.id,
       codigoBanco: codigoDoBanco(mov),
       descricaoBanco: String(mov.descricao || '').slice(0, 300),
+          ...(mov.observacao ? { observacaoExtrato: mov.observacao } : {}),
       atualizadoEm: serverTimestamp(),
     }).catch((error) => console.error(error))
     await marcar(mov, { lancamentoId: lanc.id, lancamentoTipo: entrada ? 'arrecadacao' : 'despesa', ignorado: false }, 'Movimento conciliado.')
@@ -526,6 +555,7 @@ export default function Conciliacao({
           extratoMovimentoId: mov.id,
           codigoBanco: codigoDoBanco(mov),
           descricaoBanco: String(mov.descricao || '').slice(0, 300),
+          ...(mov.observacao ? { observacaoExtrato: mov.observacao } : {}),
           ativo: true,
           atualizadoEm: serverTimestamp(),
           criadoEm: serverTimestamp(),
@@ -728,6 +758,23 @@ export default function Conciliacao({
                 <div className="cc-date"><b>{m.data.slice(8, 10)}</b><small>{m.data.slice(5, 7)}/{m.data.slice(2, 4)}</small></div>
                 <div className="cc-desc">
                   <strong>{m.origem === 'pluggy' && <span className="cc-auto" title="Veio pela sincronização automática">⚡</span>}{m.descricao}</strong>
+                  {m.observacao && editandoObs?.mov.id !== m.id && <small className="cc-obs">📝 {m.observacao}</small>}
+                  {editandoObs?.mov.id === m.id && (
+                    <div className="cc-obs-editor">
+                      <textarea
+                        value={editandoObs.texto}
+                        maxLength={500}
+                        rows={2}
+                        autoFocus
+                        placeholder="Ex: retirada referente à prebenda de novembro"
+                        onChange={(e) => setEditandoObs({ ...editandoObs, texto: e.target.value })}
+                      />
+                      <div>
+                        <button type="button" onClick={salvarObservacao} disabled={ocupado}>Salvar</button>
+                        <button type="button" className="cancel-button" onClick={() => setEditandoObs(null)}>Cancelar</button>
+                      </div>
+                    </div>
+                  )}
                   <small>
                     {s === 'conciliado' && `✓ Conciliado com ${m.lancamentoTipo === 'arrecadacao' ? 'arrecadação' : 'despesa'} do site`}
                     {s === 'ignorado' && 'Ignorado (não é lançamento da igreja)'}
@@ -758,6 +805,15 @@ export default function Conciliacao({
                   {s !== 'pendente' && (
                     <button type="button" className="cc-btn-ghost" disabled={ocupado} onClick={() => desfazer(m)}>Desfazer</button>
                   )}
+                  <button
+                    type="button"
+                    className="cc-btn-ghost"
+                    title={m.observacao ? 'Editar observação' : 'Incluir observação'}
+                    disabled={ocupado}
+                    onClick={() => setEditandoObs({ mov: m, texto: m.observacao || '' })}
+                  >
+                    📝
+                  </button>
                 </div>
               </li>
             )
