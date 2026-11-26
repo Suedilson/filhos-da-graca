@@ -41,6 +41,8 @@ export default function Conciliacao({
   const [importando, setImportando] = useState(false)
   const [processando, setProcessando] = useState('')
   const [lancando, setLancando] = useState(null)
+  // Saídas marcadas para lançar juntas num grupo (ex.: prebenda em várias retiradas)
+  const [selecionados, setSelecionados] = useState([])
   const [sincronia, setSincronia] = useState(null)
   const [sincronizando, setSincronizando] = useState(false)
 
@@ -367,10 +369,42 @@ export default function Conciliacao({
     }
     setLancando({
       mov,
+      movs: [mov],
+      grupo: '',
       descricao: mov.descricao,
       tipo: mov.valor > 0 ? 'Oferta' : '',
       categoria: mov.valor < 0 ? (categoriasContaPagar.includes('Outros') ? 'Outros' : categoriasContaPagar[0]) : '',
       formaPagamento: /pix/i.test(mov.descricao) ? 'Pix' : /boleto/i.test(mov.descricao) ? 'Boleto' : 'Transferência',
+      fornecedor: '',
+    })
+  }
+
+  const gruposDespesas = [...new Set(contasPagar.map((c) => c.grupo).filter(Boolean))].sort()
+
+  function alternarSelecao(mov) {
+    setSelecionados((atual) => (atual.includes(mov.id) ? atual.filter((id) => id !== mov.id) : [...atual, mov.id]))
+  }
+
+  function abrirLancamentoEmGrupo() {
+    const movs = daConta.filter((m) => selecionados.includes(m.id) && m.valor < 0 && !m.lancamentoId)
+    if (movs.length < 2) {
+      mostrarAviso('Marque pelo menos duas saídas para lançar em grupo.', 'erro')
+      return
+    }
+    const jaLancado = movs.find((m) => lancamentoDoMovimento(m) || sugestao(m))
+    if (jaLancado) {
+      mostrarAviso(`A saída "${jaLancado.descricao}" já tem lançamento no site. Desmarque-a.`, 'erro')
+      return
+    }
+    movs.sort((a, b) => a.data.localeCompare(b.data))
+    setLancando({
+      mov: movs[0],
+      movs,
+      grupo: '',
+      descricao: '',
+      tipo: '',
+      categoria: categoriasContaPagar.includes('Outros') ? 'Outros' : categoriasContaPagar[0],
+      formaPagamento: movs.every((m) => /pix/i.test(m.descricao)) ? 'Pix' : 'Transferência',
       fornecedor: '',
     })
   }
@@ -384,63 +418,77 @@ export default function Conciliacao({
   }
 
   async function lancar() {
-    const { mov } = lancando
-    const ligado = lancamentoDoMovimento(mov)
-    if (ligado) {
-      mostrarAviso(`Este movimento do banco já foi lançado: ${ligado.descricao}.`, 'erro')
-      setLancando(null)
+    const movs = lancando.movs || [lancando.mov]
+    const emGrupo = movs.length > 1
+    const grupo = String(lancando.grupo || '').trim().slice(0, 120)
+    if (emGrupo && !grupo) {
+      mostrarAviso('Dê um nome ao grupo (ex.: Prebenda pastoral - Novembro/2026).', 'erro')
       return
     }
-    if (mov.lancamentoId) {
-      mostrarAviso('Este movimento já foi lançado no site.', 'erro')
-      setLancando(null)
-      return
-    }
-    const existente = sugestao(mov)
-    if (existente) {
-      mostrarAviso(`Já existe no site: ${existente.descricao}. Use "✓ É este" para conciliar.`, 'erro')
-      setLancando(null)
-      return
-    }
-    setProcessando(mov.id)
-    try {
-      const base = {
-        descricao: lancando.descricao.trim() || mov.descricao,
-        valor: Math.abs(mov.valor),
-        formaPagamento: lancando.formaPagamento,
-        contaBancariaId: contaId,
-        contaBancariaNome: conta?.nome || '',
-        comprovante: '',
-        comprovantePublicId: '',
-        observacoes: 'Lançado pela conciliação bancária',
-        extratoMovimentoId: mov.id,
-        codigoBanco: codigoDoBanco(mov),
-        ativo: true,
-        atualizadoEm: serverTimestamp(),
-        criadoEm: serverTimestamp(),
+    for (const mov of movs) {
+      const ligado = lancamentoDoMovimento(mov)
+      if (mov.lancamentoId || ligado) {
+        mostrarAviso(`Este movimento do banco já foi lançado: ${ligado?.descricao || mov.descricao}.`, 'erro')
+        setLancando(null)
+        return
       }
-      const ref = mov.valor > 0
-        ? await addDoc(collection(db, 'arrecadacoes'), { ...base, data: mov.data, tipo: lancando.tipo, responsavel: '' })
-        : await addDoc(collection(db, 'contasPagar'), {
-          ...base,
-          fornecedor: lancando.fornecedor.trim(),
-          categoria: lancando.categoria,
-          vencimento: mov.data,
-          dataPagamento: mov.data,
-          status: 'Paga',
-          recorrente: false,
-          parcelada: false,
-          numeroParcelas: 1,
+      const existente = sugestao(mov)
+      if (existente) {
+        mostrarAviso(`Já existe no site: ${existente.descricao}. Use "✓ É este" para conciliar.`, 'erro')
+        setLancando(null)
+        return
+      }
+    }
+    setProcessando(lancando.mov.id)
+    try {
+      for (const mov of movs) {
+        const base = {
+          descricao: (emGrupo ? mov.descricao : lancando.descricao.trim() || mov.descricao).slice(0, 200),
+          valor: Math.abs(mov.valor),
+          formaPagamento: lancando.formaPagamento,
+          contaBancariaId: contaId,
+          contaBancariaNome: conta?.nome || '',
+          comprovante: '',
+          comprovantePublicId: '',
+          observacoes: 'Lançado pela conciliação bancária',
+          extratoMovimentoId: mov.id,
+          codigoBanco: codigoDoBanco(mov),
+          descricaoBanco: String(mov.descricao || '').slice(0, 300),
+          ativo: true,
+          atualizadoEm: serverTimestamp(),
+          criadoEm: serverTimestamp(),
+        }
+        const ref = mov.valor > 0
+          ? await addDoc(collection(db, 'arrecadacoes'), { ...base, data: mov.data, tipo: lancando.tipo, responsavel: '' })
+          : await addDoc(collection(db, 'contasPagar'), {
+            ...base,
+            fornecedor: lancando.fornecedor.trim(),
+            categoria: lancando.categoria,
+            grupo,
+            vencimento: mov.data,
+            dataPagamento: mov.data,
+            status: 'Paga',
+            recorrente: false,
+            parcelada: false,
+            numeroParcelas: 1,
+          })
+        await updateDoc(doc(db, 'extratoBancario', mov.id), {
+          lancamentoId: ref.id,
+          lancamentoTipo: mov.valor > 0 ? 'arrecadacao' : 'despesa',
+          ignorado: false,
+          atualizadoEm: serverTimestamp(),
         })
-      await updateDoc(doc(db, 'extratoBancario', mov.id), {
-        lancamentoId: ref.id,
-        lancamentoTipo: mov.valor > 0 ? 'arrecadacao' : 'despesa',
-        ignorado: false,
-        atualizadoEm: serverTimestamp(),
-      })
+      }
       setLancando(null)
+      setSelecionados([])
       await Promise.all([recarregar(), aoAtualizar()])
-      mostrarAviso(mov.valor > 0 ? 'Arrecadação lançada e conciliada.' : 'Despesa lançada e conciliada.', 'sucesso')
+      const total = movs.reduce((t, m) => t + Math.abs(m.valor), 0)
+      mostrarAviso(
+        emGrupo
+          ? `${movs.length} saídas lançadas no grupo "${grupo}" (${moeda(total)}) e conciliadas.`
+          : movs[0].valor > 0 ? 'Arrecadação lançada e conciliada.' : 'Despesa lançada e conciliada.',
+        'sucesso',
+      )
     } catch (error) {
       console.error(error)
       mostrarAviso('Não foi possível lançar.', 'erro')
@@ -568,6 +616,19 @@ export default function Conciliacao({
         ))}
       </div>
 
+      {selecionados.length > 0 && (
+        <div className="cc-grupo-barra">
+          <span>
+            <b>{selecionados.length}</b> saída(s) marcada(s) ·{' '}
+            {moeda(daConta.filter((m) => selecionados.includes(m.id)).reduce((t, m) => t + Math.abs(m.valor), 0))}
+          </span>
+          <button type="button" onClick={abrirLancamentoEmGrupo} disabled={selecionados.length < 2}>
+            📁 Lançar em grupo
+          </button>
+          <button type="button" className="cancel-button" onClick={() => setSelecionados([])}>Limpar</button>
+        </div>
+      )}
+
       {lista.length === 0 ? (
         <p className="cc-empty">
           {daConta.length === 0 ? 'Nenhum extrato enviado para esta conta ainda.' : 'Nada por aqui. 🎉'}
@@ -579,7 +640,18 @@ export default function Conciliacao({
             const sug = s === 'pendente' ? sugestao(m) : null
             const ocupado = processando === m.id
             return (
-              <li key={m.id} className={`cc-item cc-${s}`}>
+              <li key={m.id} className={`cc-item cc-${s}${selecionados.includes(m.id) ? ' cc-selecionado' : ''}`}>
+                {s === 'pendente' && !sug && m.valor < 0 ? (
+                  <input
+                    type="checkbox"
+                    className="cc-check"
+                    title="Marcar para lançar em grupo"
+                    checked={selecionados.includes(m.id)}
+                    onChange={() => alternarSelecao(m)}
+                  />
+                ) : (
+                  <span className="cc-check-vazio" />
+                )}
                 <div className="cc-date"><b>{m.data.slice(8, 10)}</b><small>{m.data.slice(5, 7)}/{m.data.slice(2, 4)}</small></div>
                 <div className="cc-desc">
                   <strong>{m.origem === 'pluggy' && <span className="cc-auto" title="Veio pela sincronização automática">⚡</span>}{m.descricao}</strong>
@@ -620,16 +692,49 @@ export default function Conciliacao({
           <section className="finance-modal-card cc-modal" onClick={(e) => e.stopPropagation()}>
             <div className="finance-modal-header">
               <div>
-                <span className="admin-section-label">{lancando.mov.valor > 0 ? 'Nova arrecadação' : 'Nova despesa paga'}</span>
-                <h2>{moeda(Math.abs(lancando.mov.valor))} · {dataBR(lancando.mov.data)}</h2>
+                <span className="admin-section-label">
+                  {lancando.movs?.length > 1 ? `Grupo de ${lancando.movs.length} saídas` : lancando.mov.valor > 0 ? 'Nova arrecadação' : 'Nova despesa paga'}
+                </span>
+                <h2>
+                  {lancando.movs?.length > 1
+                    ? `${moeda(lancando.movs.reduce((t, m) => t + Math.abs(m.valor), 0))} · ${dataBR(lancando.movs[0].data)} a ${dataBR(lancando.movs[lancando.movs.length - 1].data)}`
+                    : `${moeda(Math.abs(lancando.mov.valor))} · ${dataBR(lancando.mov.data)}`}
+                </h2>
               </div>
               <button type="button" className="finance-modal-close" onClick={() => setLancando(null)}>×</button>
             </div>
             <div className="finance-modal-form cc-form">
-              <label className="cc-wide">
-                Descrição
-                <input value={lancando.descricao} maxLength={200} onChange={(e) => setLancando({ ...lancando, descricao: e.target.value })} />
-              </label>
+              {lancando.movs?.length > 1 ? (
+                <ul className="cc-wide cc-grupo-itens">
+                  {lancando.movs.map((m) => (
+                    <li key={m.id}>
+                      <span>{dataBR(m.data)}</span>
+                      <span>{m.descricao}</span>
+                      <b>{moeda(Math.abs(m.valor))}</b>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <label className="cc-wide">
+                  Descrição
+                  <input value={lancando.descricao} maxLength={200} onChange={(e) => setLancando({ ...lancando, descricao: e.target.value })} />
+                </label>
+              )}
+              {lancando.mov.valor < 0 && (
+                <label className="cc-wide">
+                  {lancando.movs?.length > 1 ? 'Nome do grupo' : 'Agrupar em (opcional)'}
+                  <input
+                    list="cc-grupos-despesas"
+                    value={lancando.grupo || ''}
+                    maxLength={120}
+                    placeholder="Ex: Prebenda pastoral - Novembro/2026"
+                    onChange={(e) => setLancando({ ...lancando, grupo: e.target.value })}
+                  />
+                  <datalist id="cc-grupos-despesas">
+                    {gruposDespesas.map((g) => <option key={g} value={g} />)}
+                  </datalist>
+                </label>
+              )}
               {lancando.mov.valor > 0 ? (
                 <label>
                   Tipo
@@ -657,7 +762,12 @@ export default function Conciliacao({
                   {['Pix', 'Transferência', 'Boleto', 'Cartão de débito', 'Dinheiro', 'Outros'].map((f) => <option key={f}>{f}</option>)}
                 </select>
               </label>
-              <p className="cc-wide cc-note">Conta: <b>{conta?.nome}</b>. O lançamento fica marcado como conciliado com este movimento do banco.</p>
+              <p className="cc-wide cc-note">
+                Conta: <b>{conta?.nome}</b>.{' '}
+                {lancando.movs?.length > 1
+                  ? 'Cada saída vira uma despesa paga com a data, o valor e a descrição do banco, todas no mesmo grupo e já conciliadas.'
+                  : 'O lançamento fica marcado como conciliado com este movimento do banco.'}
+              </p>
               <div className="cc-wide cc-form-actions">
                 <button type="button" onClick={lancar} disabled={processando === lancando.mov.id}>
                   {processando === lancando.mov.id ? 'Lançando...' : 'Lançar no site'}

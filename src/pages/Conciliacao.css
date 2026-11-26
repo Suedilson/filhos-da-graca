@@ -465,3 +465,79 @@
     align-items: stretch;
   }
 }
+
+/* Lançar várias saídas num grupo */
+.cc-check,
+.cc-check-vazio {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin: 0 4px 0 0;
+}
+
+.cc-check {
+  accent-color: #6f4cff;
+  cursor: pointer;
+}
+
+.cc-item.cc-selecionado {
+  outline: 2px solid #6f4cff;
+  background: #f5f3ff;
+}
+
+.cc-grupo-barra {
+  position: sticky;
+  top: 8px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #17105f;
+  color: #ffffff;
+}
+
+.cc-grupo-barra span {
+  flex: 1;
+}
+
+.cc-grupo-barra button {
+  width: auto !important;
+}
+
+.cc-grupo-itens {
+  display: grid;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 10px;
+  list-style: none;
+  border-radius: 12px;
+  background: #f7f8fc;
+}
+
+.cc-grupo-itens li {
+  display: grid;
+  grid-template-columns: 82px 1fr auto;
+  gap: 8px;
+  font-size: 0.86rem;
+}
+
+.cc-grupo-itens li span:nth-child(2) {
+  overflow-wrap: anywhere;
+}
+
+/* coluna extra para a caixa de marcar */
+.cc-item {
+  grid-template-columns: 18px 52px minmax(0, 1fr) auto auto;
+}
+
+@media (max-width: 640px) {
+  .cc-item {
+    grid-template-columns: 18px 48px minmax(0, 1fr) auto;
+  }
+}

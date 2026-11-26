@@ -677,6 +677,7 @@ function converterValor(texto) {
   return Number(t.includes(',') ? t.replace(/\./g, '').replace(',', '.') : t)
 }
 const [contasPagar, setContasPagar] = useState([])
+const [gruposDespesaAbertos, setGruposDespesaAbertos] = useState([])
 const [editandoContaPagarId, setEditandoContaPagarId] = useState(null)
 const [formContaPagarAberto, setFormContaPagarAberto] = useState(false)
 // Janela "Registrar pagamento" (botão Pagar): data, forma, conta e recibo
@@ -701,6 +702,7 @@ const [contaPagarForm, setContaPagarForm] = useState({
   recorrente: false,
   parcelada: false,
   numeroParcelas: '2',
+  grupo: '',
 })
 
 const categoriasContaPagar = [
@@ -2443,6 +2445,7 @@ function limparFormularioContaPagar() {
     recorrente: false,
     parcelada: false,
     numeroParcelas: '2',
+    grupo: '',
   })
 
   setEditandoContaPagarId(null)
@@ -2900,6 +2903,7 @@ async function salvarContaPagar(event) {
       comprovante: contaPagarForm.comprovante,
       comprovantePublicId: contaPagarForm.comprovantePublicId,
       observacoes: contaPagarForm.observacoes,
+      grupo: String(contaPagarForm.grupo || '').trim().slice(0, 120),
       status: contaPagarForm.status,
       ativo: contaPagarForm.ativo,
       recorrente: contaPagarForm.recorrente,
@@ -3038,6 +3042,7 @@ function editarContaPagar(conta) {
     recorrente: conta.recorrente === true,
     parcelada: conta.parcelada === true,
     numeroParcelas: conta.numeroParcelas ? String(conta.numeroParcelas) : '2',
+    grupo: conta.grupo || '',
   })
 }
 
@@ -5537,6 +5542,205 @@ const saldoFinalMesPorConta = contasBancarias.map((conta) => ({
   nome: conta.nome,
   ...calcularSaldoFinalFinanceiro(conta.id),
 }))
+
+// Despesas com o mesmo "grupo" (ex.: prebenda paga em várias retiradas) viram uma linha só
+const gruposDespesasExistentes = [...new Set(contasPagar.map((c) => c.grupo).filter(Boolean))].sort()
+const itensTabelaContasPagar = (() => {
+  const itens = []
+  const porGrupo = {}
+  for (const conta of contasPagarFiltradasFinanceiro) {
+    const grupo = String(conta.grupo || '').trim()
+    if (!grupo) {
+      itens.push({ tipo: 'conta', conta })
+      continue
+    }
+    const chave = grupo.toLowerCase()
+    if (!porGrupo[chave]) {
+      porGrupo[chave] = { tipo: 'grupo', chave, grupo, contas: [] }
+      itens.push(porGrupo[chave])
+    }
+    porGrupo[chave].contas.push(conta)
+  }
+  // Grupo com um lançamento só aparece como linha normal
+  return itens.map((item) =>
+    item.tipo === 'grupo' && item.contas.length === 1 ? { tipo: 'conta', conta: item.contas[0] } : item,
+  )
+})()
+
+function alternarGrupoDespesa(chave) {
+  setGruposDespesaAbertos((atual) =>
+    atual.includes(chave) ? atual.filter((c) => c !== chave) : [...atual, chave],
+  )
+}
+
+function renderizarLinhaContaPagar(conta, classeExtra = '') {
+              const statusVisual = obterStatusVisualContaPagar(conta)
+              const diasVencimento = calcularDiasParaVencimento(conta.vencimento)
+
+              return (
+                <tr
+                  key={conta.id}
+                  className={`${classeExtra} ${
+                    statusVisual === 'Vencida'
+                      ? 'finance-row-overdue'
+                      : statusVisual === 'Paga'
+                        ? 'finance-row-paid'
+                        : statusVisual === 'Cancelada'
+                          ? 'finance-row-canceled'
+                          : ''
+                  } ${linhaFinanceiroEstaSelecionada('contasPagar', conta.id) ? 'finance-row-selected' : ''}`}
+                  onClick={() => alternarLinhaFinanceiro('contasPagar', conta.id)}
+                  onDoubleClick={() => editarContaPagar(conta)}
+                  aria-selected={linhaFinanceiroEstaSelecionada('contasPagar', conta.id)}
+                >
+                  <td>
+                    {formatarData(conta.vencimento)}
+
+                    {statusVisual === 'Vencida' && (
+                      <small className="finance-alert-text">Vencida</small>
+                    )}
+
+                    {statusVisual === 'Vence hoje' && (
+                      <small className="finance-warning-text">Vence hoje</small>
+                    )}
+
+                    {diasVencimento !== null &&
+                      diasVencimento > 0 &&
+                      diasVencimento <= 7 && (
+                        <small className="finance-warning-text">
+                          Vence em {diasVencimento} dia
+                          {diasVencimento > 1 ? 's' : ''}
+                        </small>
+                      )}
+                  </td>
+
+                  <td>
+                    {conta.dataPagamento ? formatarData(conta.dataPagamento) : '-'}
+                  </td>
+
+                  <td>{conta.fornecedor || '-'}</td>
+                  <td>{conta.categoria}</td>
+
+                  <td>
+                    <strong>{conta.descricao}</strong>
+
+                    {conta.parcelada && (
+                      <small>
+                        Parcela {conta.parcelaAtual || 1}/{conta.numeroParcelas}
+                      </small>
+                    )}
+
+                    {conta.recorrente && !conta.parcelada && (
+                      <small>Despesa recorrente mensal</small>
+                    )}
+
+                    {conta.observacoes && <small>{conta.observacoes}</small>}
+
+                    {conta.comprovante && (
+                      <small>
+                        <a
+                          href={conta.comprovante}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          Abrir comprovante
+                        </a>
+                      </small>
+                    )}
+                  </td>
+
+                  <td>{conta.formaPagamento}</td>
+                  <td>{conta.contaBancariaNome || '-'}</td>
+
+                  <td>
+                    <span
+                      className={
+                        statusVisual === 'Paga'
+                          ? 'finance-status paid'
+                          : statusVisual === 'Vencida'
+                            ? 'finance-status overdue'
+                            : statusVisual === 'Cancelada'
+                              ? 'finance-status canceled'
+                              : statusVisual === 'Vence hoje'
+                                ? 'finance-status warning'
+                                : 'finance-status open'
+                      }
+                    >
+                      {statusVisual}
+                    </span>
+                  </td>
+
+                  <td className="finance-money-column">
+                    {formatarMoeda(conta.valor)}
+                  </td>
+
+                  <td>
+                    <div className="finance-table-actions">
+                      {conta.status !== 'Paga' && conta.status !== 'Cancelada' && (
+                        <button
+                          type="button"
+                          className="activate-button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            marcarContaPagarComoPaga(conta)
+                          }}
+                        >
+                          Pagar
+                        </button>
+                      )}
+
+                      {conta.status === 'Paga' && (
+                        <button
+                          type="button"
+                          className="deactivate-button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            reabrirContaPagar(conta)
+                          }}
+                        >
+                          Reabrir
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className="edit-button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          editarContaPagar(conta)
+                        }}
+                      >
+                        Editar
+                      </button>
+
+                      {conta.status !== 'Cancelada' && (
+                        <button
+                          type="button"
+                          className="deactivate-button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            cancelarContaPagar(conta)
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          excluirContaPagar(conta.id)
+                        }}
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )
+}
 
 // Totais só dos meses/ano marcados no filtro
 const entradasPeriodoFinanceiro = arrecadacoes
@@ -9413,173 +9617,64 @@ function formatarMoeda(valor) {
               </tr>
             )}
 
-             {contasPagarFiltradasFinanceiro.map((conta) => {
-              const statusVisual = obterStatusVisualContaPagar(conta)
-              const diasVencimento = calcularDiasParaVencimento(conta.vencimento)
-
-              return (
+             {itensTabelaContasPagar.map((item) => {
+              if (item.tipo === 'conta') return renderizarLinhaContaPagar(item.conta)
+              const aberto = gruposDespesaAbertos.includes(item.chave)
+              const pagas = item.contas.filter((c) => c.status === 'Paga').length
+              const datas = item.contas.map((c) => c.dataPagamento || c.vencimento).filter(Boolean).sort()
+              const comum = (campo) => {
+                const valores = [...new Set(item.contas.map((c) => c[campo] || ''))]
+                return valores.length === 1 && valores[0] ? valores[0] : '-'
+              }
+              const todasPagas = pagas === item.contas.length
+              return [
                 <tr
-                  key={conta.id}
-                  className={`${
-                    statusVisual === 'Vencida'
-                      ? 'finance-row-overdue'
-                      : statusVisual === 'Paga'
-                        ? 'finance-row-paid'
-                        : statusVisual === 'Cancelada'
-                          ? 'finance-row-canceled'
-                          : ''
-                  } ${linhaFinanceiroEstaSelecionada('contasPagar', conta.id) ? 'finance-row-selected' : ''}`}
-                  onClick={() => alternarLinhaFinanceiro('contasPagar', conta.id)}
-                  onDoubleClick={() => editarContaPagar(conta)}
-                  aria-selected={linhaFinanceiroEstaSelecionada('contasPagar', conta.id)}
+                  key={`grupo-${item.chave}`}
+                  className="finance-row-group"
+                  onClick={() => alternarGrupoDespesa(item.chave)}
                 >
                   <td>
-                    {formatarData(conta.vencimento)}
-
-                    {statusVisual === 'Vencida' && (
-                      <small className="finance-alert-text">Vencida</small>
-                    )}
-
-                    {statusVisual === 'Vence hoje' && (
-                      <small className="finance-warning-text">Vence hoje</small>
-                    )}
-
-                    {diasVencimento !== null &&
-                      diasVencimento > 0 &&
-                      diasVencimento <= 7 && (
-                        <small className="finance-warning-text">
-                          Vence em {diasVencimento} dia
-                          {diasVencimento > 1 ? 's' : ''}
-                        </small>
-                      )}
-                  </td>
-
-                  <td>
-                    {conta.dataPagamento ? formatarData(conta.dataPagamento) : '-'}
-                  </td>
-
-                  <td>{conta.fornecedor || '-'}</td>
-                  <td>{conta.categoria}</td>
-
-                  <td>
-                    <strong>{conta.descricao}</strong>
-
-                    {conta.parcelada && (
-                      <small>
-                        Parcela {conta.parcelaAtual || 1}/{conta.numeroParcelas}
-                      </small>
-                    )}
-
-                    {conta.recorrente && !conta.parcelada && (
-                      <small>Despesa recorrente mensal</small>
-                    )}
-
-                    {conta.observacoes && <small>{conta.observacoes}</small>}
-
-                    {conta.comprovante && (
-                      <small>
-                        <a
-                          href={conta.comprovante}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          Abrir comprovante
-                        </a>
-                      </small>
+                    {datas.length ? formatarData(datas[0]) : '-'}
+                    {datas.length > 1 && datas[0] !== datas[datas.length - 1] && (
+                      <small>até {formatarData(datas[datas.length - 1])}</small>
                     )}
                   </td>
-
-                  <td>{conta.formaPagamento}</td>
-                  <td>{conta.contaBancariaNome || '-'}</td>
-
+                  <td>{todasPagas ? 'Todas pagas' : `${pagas} de ${item.contas.length} pagas`}</td>
+                  <td>{comum('fornecedor')}</td>
+                  <td>{comum('categoria')}</td>
                   <td>
-                    <span
-                      className={
-                        statusVisual === 'Paga'
-                          ? 'finance-status paid'
-                          : statusVisual === 'Vencida'
-                            ? 'finance-status overdue'
-                            : statusVisual === 'Cancelada'
-                              ? 'finance-status canceled'
-                              : statusVisual === 'Vence hoje'
-                                ? 'finance-status warning'
-                                : 'finance-status open'
-                      }
-                    >
-                      {statusVisual}
+                    <strong>{aberto ? '▾' : '▸'} 📁 {item.grupo}</strong>
+                    <small>
+                      {item.contas.length} lançamentos · clique para {aberto ? 'ocultar' : 'ver'} os detalhes
+                    </small>
+                  </td>
+                  <td>{comum('formaPagamento')}</td>
+                  <td>{comum('contaBancariaNome')}</td>
+                  <td>
+                    <span className={todasPagas ? 'finance-status paid' : 'finance-status open'}>
+                      {todasPagas ? 'Paga' : 'Em aberto'}
                     </span>
                   </td>
-
                   <td className="finance-money-column">
-                    {formatarMoeda(conta.valor)}
+                    <strong>{formatarMoeda(item.contas.reduce((t, c) => t + Number(c.valor || 0), 0))}</strong>
                   </td>
-
                   <td>
                     <div className="finance-table-actions">
-                      {conta.status !== 'Paga' && conta.status !== 'Cancelada' && (
-                        <button
-                          type="button"
-                          className="activate-button"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            marcarContaPagarComoPaga(conta)
-                          }}
-                        >
-                          Pagar
-                        </button>
-                      )}
-
-                      {conta.status === 'Paga' && (
-                        <button
-                          type="button"
-                          className="deactivate-button"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            reabrirContaPagar(conta)
-                          }}
-                        >
-                          Reabrir
-                        </button>
-                      )}
-
                       <button
                         type="button"
                         className="edit-button"
                         onClick={(event) => {
                           event.stopPropagation()
-                          editarContaPagar(conta)
+                          alternarGrupoDespesa(item.chave)
                         }}
                       >
-                        Editar
-                      </button>
-
-                      {conta.status !== 'Cancelada' && (
-                        <button
-                          type="button"
-                          className="deactivate-button"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            cancelarContaPagar(conta)
-                          }}
-                        >
-                          Cancelar
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          excluirContaPagar(conta.id)
-                        }}
-                      >
-                        Excluir
+                        {aberto ? 'Ocultar' : 'Detalhes'}
                       </button>
                     </div>
                   </td>
-                </tr>
-              )
+                </tr>,
+                ...(aberto ? item.contas.map((c) => renderizarLinhaContaPagar(c, 'finance-row-group-item')) : []),
+              ]
             })}
           </tbody>
         </table>
@@ -9866,6 +9961,28 @@ function formatarMoeda(valor) {
                 Abrir comprovante enviado
               </a>
             )}
+
+            <label>
+              Agrupar em (opcional)
+              <input
+                list="grupos-despesas"
+                value={contaPagarForm.grupo || ''}
+                maxLength={120}
+                onChange={(event) =>
+                  setContaPagarForm({
+                    ...contaPagarForm,
+                    grupo: event.target.value,
+                  })
+                }
+                placeholder="Ex: Prebenda pastoral - Novembro/2026"
+              />
+              <datalist id="grupos-despesas">
+                {gruposDespesasExistentes.map((grupo) => (
+                  <option key={grupo} value={grupo} />
+                ))}
+              </datalist>
+              <small>Despesas com o mesmo grupo aparecem juntas na lista, com o total.</small>
+            </label>
 
             <label>
               Observações

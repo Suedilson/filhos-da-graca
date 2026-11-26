@@ -8593,3 +8593,23 @@ textarea {
     flex: 1 1 100%;
   }
 }
+
+/* Despesas agrupadas (ex.: prebenda paga em várias retiradas) */
+.finance-spreadsheet-table tr.finance-row-group td {
+  background: #f5f3ff;
+  cursor: pointer;
+}
+
+.finance-spreadsheet-table tr.finance-row-group td strong {
+  color: #17105f;
+}
+
+.finance-spreadsheet-table tr.finance-row-group-item td {
+  background: #fbfaff;
+  font-size: 0.92em;
+}
+
+.finance-spreadsheet-table tr.finance-row-group-item td:first-child {
+  border-left: 4px solid #6f4cff;
+  padding-left: 18px;
+}
