@@ -9945,13 +9945,15 @@ function formatarMoeda(valor) {
              {itensTabelaContasPagar.map((item) => {
               if (item.tipo === 'conta') return renderizarLinhaContaPagar(item.conta)
               const aberto = gruposDespesaAbertos.includes(item.chave)
-              const pagas = item.contas.filter((c) => c.status === 'Paga').length
+              // Canceladas aparecem nos detalhes, mas não entram no total nem na contagem
+              const validas = item.contas.filter((c) => c.status !== 'Cancelada' && c.ativo !== false)
+              const pagas = validas.filter((c) => c.status === 'Paga').length
               const datas = item.contas.map((c) => c.dataPagamento || c.vencimento).filter(Boolean).sort()
               const comum = (campo) => {
                 const valores = [...new Set(item.contas.map((c) => c[campo] || ''))]
                 return valores.length === 1 && valores[0] ? valores[0] : '-'
               }
-              const todasPagas = pagas === item.contas.length
+              const todasPagas = validas.length > 0 && pagas === validas.length
               return [
                 <tr
                   key={`grupo-${item.chave}`}
@@ -9964,7 +9966,7 @@ function formatarMoeda(valor) {
                       <small>até {formatarData(datas[datas.length - 1])}</small>
                     )}
                   </td>
-                  <td>{todasPagas ? 'Todas pagas' : `${pagas} de ${item.contas.length} pagas`}</td>
+                  <td>{todasPagas ? 'Todas pagas' : `${pagas} de ${validas.length} pagas`}</td>
                   <td>{comum('fornecedor')}</td>
                   <td>{comum('categoria')}</td>
                   <td>
@@ -9981,7 +9983,7 @@ function formatarMoeda(valor) {
                     </span>
                   </td>
                   <td className="finance-money-column">
-                    <strong>{formatarMoeda(item.contas.reduce((t, c) => t + Number(c.valor || 0), 0))}</strong>
+                    <strong>{formatarMoeda(validas.reduce((t, c) => t + Number(c.valor || 0), 0))}</strong>
                     {!todasPagas && (
                       <small className="finance-alert-text">
                         Saldo devedor{' '}
