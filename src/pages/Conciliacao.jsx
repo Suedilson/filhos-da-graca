@@ -107,16 +107,35 @@ export default function Conciliacao({
           a.data && diasEntre(a.data, mov.data) <= 3)
         .sort((a, b) => diasEntre(a.data, mov.data) - diasEntre(b.data, mov.data))[0]
     }
+    // Despesa paga: compara com a data do pagamento E com o vencimento (o pagamento pode
+    // ter sido registrado no sistema dias depois de sair do banco)
+    const distancia = (d) => Math.min(
+      d.dataPagamento ? diasEntre(d.dataPagamento, mov.data) : Infinity,
+      d.vencimento ? diasEntre(d.vencimento, mov.data) : Infinity,
+    )
     const pagas = contasPagar
       .filter((d) => d.status === 'Paga' && d.ativo !== false && !vinculados.has(d.id) &&
-        Math.abs(Number(d.valor) + mov.valor) < 0.005 && dataSaida(d) && diasEntre(dataSaida(d), mov.data) <= 3)
-      .sort((a, b) => diasEntre(dataSaida(a), mov.data) - diasEntre(dataSaida(b), mov.data))
+        Math.abs(Number(d.valor) + mov.valor) < 0.005 && distancia(d) <= 3)
+      .sort((a, b) => distancia(a) - distancia(b))
     if (pagas.length) return pagas[0]
     // Despesa ainda em aberto (ex.: parcela) com o mesmo valor e vencimento próximo: é ela que foi paga
     return contasPagar
       .filter((d) => d.status !== 'Paga' && d.ativo !== false && !vinculados.has(d.id) &&
         Math.abs(Number(d.valor) + mov.valor) < 0.005 && d.vencimento && diasEntre(d.vencimento, mov.data) <= 7)
       .sort((a, b) => diasEntre(a.vencimento, mov.data) - diasEntre(b.vencimento, mov.data))[0]
+  }
+
+  // Lançamento do site com o mesmo valor, sem conciliação, até 30 dias de distância:
+  // provavelmente é o mesmo pagamento registrado com outra data
+  function possivelDuplicado(mov) {
+    const lista = mov.valor > 0
+      ? arrecadacoes.filter((a) => a.ativo !== false && Math.abs(Number(a.valor) - mov.valor) < 0.005)
+      : contasPagar.filter((d) => d.status === 'Paga' && d.ativo !== false && Math.abs(Number(d.valor) + mov.valor) < 0.005)
+    const dist = (l) => Math.min(
+      ...[l.data, l.dataPagamento, l.vencimento].filter(Boolean).map((d) => diasEntre(d, mov.data)),
+      Infinity,
+    )
+    return lista.filter((l) => !vinculados.has(l.id) && dist(l) <= 30).sort((a, b) => dist(a) - dist(b))[0] || null
   }
 
   // Movimentos que entraram duas vezes (mesmo extrato em arquivos diferentes)
@@ -463,6 +482,12 @@ export default function Conciliacao({
         return
       }
     }
+    const parecido = movs.map(possivelDuplicado).find(Boolean)
+    if (parecido && !confirm(
+      `Já existe no site "${parecido.descricao}" com o mesmo valor (${moeda(parecido.valor)}), ` +
+        `registrado em ${dataBR(parecido.dataPagamento || parecido.data || parecido.vencimento)}.\n\n` +
+        'Se for o mesmo pagamento, cancele e use "✓ É este". Lançar mesmo assim?',
+    )) return
     setProcessando(lancando.mov.id)
     try {
       for (const mov of movs) {
@@ -662,6 +687,7 @@ export default function Conciliacao({
           {lista.map((m) => {
             const s = situacao(m)
             const sug = s === 'pendente' ? sugestao(m) : null
+            const parecido = s === 'pendente' && !sug ? possivelDuplicado(m) : null
             const ocupado = processando === m.id
             return (
               <li key={m.id} className={`cc-item cc-${s}${selecionados.includes(m.id) ? ' cc-selecionado' : ''}`}>
@@ -685,13 +711,18 @@ export default function Conciliacao({
                     {s === 'pendente' && (sug
                       ? `Já lançado no site: ${sug.descricao} · ${dataBR(sug.data || dataSaida(sug) || sug.vencimento)}` +
                         (m.valor < 0 && sug.status !== 'Paga' ? ' (em aberto — será marcada como paga)' : '')
-                      : 'Ainda não lançado no site')}
+                      : parecido
+                        ? `⚠ Possível duplicado: ${parecido.descricao} · ${moeda(parecido.valor)} em ${dataBR(parecido.dataPagamento || parecido.data || parecido.vencimento)}`
+                        : 'Ainda não lançado no site')}
                   </small>
                 </div>
                 <span className={`cc-value ${m.valor > 0 ? 'in' : 'out'}`}>{m.valor > 0 ? '+' : '−'}{moeda(Math.abs(m.valor))}</span>
                 <div className="cc-actions">
                   {s === 'pendente' && sug && (
                     <button type="button" className="cc-btn-ok" disabled={ocupado} onClick={() => vincular(m, sug)}>✓ É este</button>
+                  )}
+                  {s === 'pendente' && !sug && parecido && (
+                    <button type="button" className="cc-btn-ok" disabled={ocupado} onClick={() => vincular(m, parecido)}>✓ É este</button>
                   )}
                   {s === 'pendente' && !sug && (
                     <button type="button" className="cc-btn-main" disabled={ocupado} onClick={() => abrirLancamento(m)}>
