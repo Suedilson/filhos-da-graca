@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   addDoc,
   collection,
@@ -92,6 +92,27 @@ export default function Conciliacao({
       ativo = false
     }
   }, [])
+
+  // Lançamentos conciliados antes de existir este campo: copia a descrição do extrato
+  const descricoesCompletadas = useRef(false)
+  useEffect(() => {
+    if (descricoesCompletadas.current || !movimentos.length) return
+    const porId = { arrecadacao: Object.fromEntries(arrecadacoes.map((a) => [a.id, a])), despesa: Object.fromEntries(contasPagar.map((d) => [d.id, d])) }
+    const faltando = movimentos.filter((m) => {
+      if (!m.lancamentoId || !m.descricao) return false
+      const lanc = porId[m.lancamentoTipo === 'arrecadacao' ? 'arrecadacao' : 'despesa'][m.lancamentoId]
+      return lanc && !lanc.descricaoBanco
+    })
+    descricoesCompletadas.current = true
+    if (!faltando.length) return
+    const lote = writeBatch(db)
+    faltando.slice(0, 450).forEach((m) => {
+      lote.update(doc(db, m.lancamentoTipo === 'arrecadacao' ? 'arrecadacoes' : 'contasPagar', m.lancamentoId), {
+        descricaoBanco: String(m.descricao).slice(0, 300),
+      })
+    })
+    lote.commit().then(() => aoAtualizar()).catch((error) => console.error('Erro ao completar a descrição do banco.', error))
+  }, [movimentos, arrecadacoes, contasPagar, aoAtualizar])
 
   const conta = contasBancarias.find((c) => c.id === contaId)
   const daConta = movimentos.filter((m) => m.contaBancariaId === contaId)
@@ -359,6 +380,7 @@ export default function Conciliacao({
           contaBancariaNome: conta?.nome || '',
           extratoMovimentoId: mov.id,
           codigoBanco: codigoDoBanco(mov),
+          descricaoBanco: String(mov.descricao || '').slice(0, 300),
           atualizadoEm: serverTimestamp(),
         })
       } catch (error) {
@@ -374,6 +396,7 @@ export default function Conciliacao({
     await updateDoc(doc(db, entrada ? 'arrecadacoes' : 'contasPagar', lanc.id), {
       extratoMovimentoId: mov.id,
       codigoBanco: codigoDoBanco(mov),
+      descricaoBanco: String(mov.descricao || '').slice(0, 300),
       atualizadoEm: serverTimestamp(),
     }).catch((error) => console.error(error))
     await marcar(mov, { lancamentoId: lanc.id, lancamentoTipo: entrada ? 'arrecadacao' : 'despesa', ignorado: false }, 'Movimento conciliado.')

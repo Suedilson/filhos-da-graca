@@ -8658,3 +8658,8 @@ textarea {
 .finance-th-sort.active .finance-th-arrow {
   opacity: 1;
 }
+
+.finance-bank-desc {
+  color: #3b2aa8 !important;
+  font-weight: 600;
+}

@@ -5922,6 +5922,10 @@ function renderizarLinhaContaPagar(conta, classeExtra = '') {
                       <small>Despesa recorrente mensal</small>
                     )}
 
+                    {conta.descricaoBanco && conta.descricaoBanco.trim() !== String(conta.descricao || '').trim() && (
+                      <small className="finance-bank-desc">🏦 {conta.descricaoBanco}</small>
+                    )}
+
                     {conta.observacoes && <small>{conta.observacoes}</small>}
 
                     {conta.comprovante && (
@@ -9490,6 +9494,10 @@ function formatarMoeda(valor) {
                 <td>{arrecadacao.tipo}</td>
                 <td>
                   <strong>{arrecadacao.descricao}</strong>
+
+                  {arrecadacao.descricaoBanco && arrecadacao.descricaoBanco.trim() !== String(arrecadacao.descricao || '').trim() && (
+                    <small className="finance-bank-desc">🏦 {arrecadacao.descricaoBanco}</small>
+                  )}
 
                   {arrecadacao.observacoes && (
                     <small>{arrecadacao.observacoes}</small>
